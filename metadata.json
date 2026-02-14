@@ -1,0 +1,7 @@
+{
+  "name": "Ediflow - Gestión de Comunidades",
+  "description": "Plataforma integral para la gestión de edificios, conserjería y comunidad.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
