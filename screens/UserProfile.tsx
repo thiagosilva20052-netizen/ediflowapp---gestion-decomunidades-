@@ -1,11 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ScreenName } from '../App';
+import { UserRole } from './LoginScreen';
 
 interface Props {
   navigate: (screen: ScreenName) => void;
+  onLogout?: () => void;
+  role: UserRole;
 }
 
-const UserProfile: React.FC<Props> = ({ navigate }) => {
+const UserProfile: React.FC<Props> = ({ navigate, onLogout, role }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
   
@@ -129,7 +132,13 @@ const UserProfile: React.FC<Props> = ({ navigate }) => {
       {/* Header */}
       <div className="flex items-center gap-4 px-5 pt-6 pb-4 dark:bg-[#101c22] bg-white sticky top-0 z-30 border-b dark:border-white/5 border-gray-200 transition-colors duration-300">
         <button 
-            onClick={() => !isSaving && navigate('ConciergeDashboard')} 
+            onClick={() => {
+                if (!isSaving) {
+                    if (role === 'admin') navigate('AdminDashboard');
+                    else if (role === 'concierge') navigate('ConciergeDashboard');
+                    else navigate('ResidentServices');
+                }
+            }} 
             className={`w-8 h-8 flex items-center justify-center rounded-full dark:hover:bg-white/10 hover:bg-gray-100 active:scale-90 transition-all dark:text-white text-gray-800 ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
             <span className="material-symbols-outlined">arrow_back</span>
@@ -383,7 +392,10 @@ const UserProfile: React.FC<Props> = ({ navigate }) => {
                     <span className="material-symbols-outlined text-gray-500">chevron_right</span>
                 </button>
 
-                <button className="w-full flex items-center justify-center gap-2 p-4 mt-6 text-red-500 font-bold text-sm active:scale-95 transition-transform">
+                <button 
+                    onClick={() => onLogout && onLogout()}
+                    className="w-full flex items-center justify-center gap-2 p-4 mt-6 text-red-500 font-bold text-sm active:scale-95 transition-transform"
+                >
                     <span className="material-symbols-outlined">logout</span>
                     Cerrar Sesión
                 </button>

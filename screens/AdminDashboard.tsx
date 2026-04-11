@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ScreenName } from '../App';
+import { Logo } from '../components/Logo';
 
 interface Props {
   navigate: (screen: ScreenName) => void;
@@ -10,7 +11,7 @@ const AdminDashboard: React.FC<Props> = ({ navigate }) => {
     <div className="flex flex-col min-h-full bg-[#101c22]">
       <div className="sticky top-0 z-20 bg-[#101c22]/95 backdrop-blur-sm px-5 py-4 flex items-center justify-between border-b border-white/5">
          <div>
-            <h1 className="text-xl font-bold text-white">Panel de Control</h1>
+            <Logo variant="horizontal" className="scale-90 origin-left mb-1" />
             <div className="flex items-center gap-2 mt-1">
                 <span className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]"></span>
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Vista Administrador</span>
@@ -42,14 +43,20 @@ const AdminDashboard: React.FC<Props> = ({ navigate }) => {
         <div>
              <h2 className="text-xs font-bold text-gray-500 uppercase mb-3 ml-1">Administración</h2>
              <div className="grid grid-cols-2 gap-3">
-                <button className="bg-white text-[#101c22] p-4 rounded-xl shadow-lg active:scale-[0.98] transition-all flex flex-col items-start gap-3 h-32 relative overflow-hidden">
+                <button 
+                  onClick={() => navigate('ManageExpenses')}
+                  className="bg-white text-[#101c22] p-4 rounded-xl shadow-lg active:scale-[0.98] transition-all flex flex-col items-start gap-3 h-32 relative overflow-hidden"
+                >
                     <div className="bg-[#101c22]/10 w-10 h-10 rounded-lg flex items-center justify-center">
-                        <span className="material-symbols-outlined text-2xl">settings_b_roll</span>
+                        <span className="material-symbols-outlined text-2xl">account_balance_wallet</span>
                     </div>
-                    <span className="text-sm font-bold leading-tight text-left">Configuración<br/>de Edificio</span>
-                    <span className="material-symbols-outlined absolute -right-2 -bottom-2 text-[80px] text-black/5">apartment</span>
+                    <span className="text-sm font-bold leading-tight text-left">Gastos<br/>Comunes</span>
+                    <span className="material-symbols-outlined absolute -right-2 -bottom-2 text-[80px] text-black/5">payments</span>
                 </button>
-                <button className="bg-[#13a4ec] text-white p-4 rounded-xl shadow-lg active:scale-[0.98] transition-all flex flex-col items-start gap-3 h-32 relative overflow-hidden">
+                <button 
+                  onClick={() => navigate('StaffManagement')}
+                  className="bg-[#13a4ec] text-white p-4 rounded-xl shadow-lg active:scale-[0.98] transition-all flex flex-col items-start gap-3 h-32 relative overflow-hidden"
+                >
                      <div className="bg-white/20 w-10 h-10 rounded-lg flex items-center justify-center backdrop-blur-sm">
                         <span className="material-symbols-outlined text-2xl">badge</span>
                     </div>
@@ -77,9 +84,9 @@ const AdminDashboard: React.FC<Props> = ({ navigate }) => {
 
       <nav className="fixed bottom-0 w-full max-w-[420px] bg-[#151e24] border-t border-white/5 pb-6 pt-2 px-6 flex justify-between items-center z-30">
         <NavButton icon="dashboard" label="Resumen" active />
-        <NavButton icon="admin_panel_settings" label="Gestión" onClick={() => navigate('AccessControl')} />
-        <NavButton icon="analytics" label="Finanzas" onClick={() => navigate('PaymentsScreen')} />
-        <NavButton icon="forum" label="Comunidad" onClick={() => navigate('CommunityWall')} />
+        <NavButton icon="account_balance_wallet" label="Finanzas" onClick={() => navigate('ManageExpenses')} />
+        <NavButton icon="chat" label="Mensajes" onClick={() => navigate('MessagesScreen')} />
+        <NavButton icon="campaign" label="Comunidad" onClick={() => navigate('CommunityWall')} />
       </nav>
 
     </div>

@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { ScreenName } from '../App';
+import { UserRole } from './LoginScreen';
 
 interface Props {
   navigate: (screen: ScreenName) => void;
+  role: UserRole;
 }
 
-const NotificationSettings: React.FC<Props> = ({ navigate }) => {
+const NotificationSettings: React.FC<Props> = ({ navigate, role }) => {
   const [settings, setSettings] = useState({
     packages: true,
     visits: true,
@@ -47,7 +49,11 @@ const NotificationSettings: React.FC<Props> = ({ navigate }) => {
       {/* Header */}
       <div className="sticky top-0 z-20 bg-[#101c22]/95 backdrop-blur-sm px-5 py-4 flex items-center border-b border-white/5">
         <button 
-          onClick={() => navigate('ResidentServices')}
+          onClick={() => {
+            if (role === 'admin') navigate('AdminDashboard');
+            else if (role === 'concierge') navigate('ConciergeDashboard');
+            else navigate('ResidentServices');
+          }}
           className="w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center transition-all active:scale-90 mr-3"
         >
           <span className="material-symbols-outlined text-white">arrow_back</span>

@@ -11,6 +11,11 @@ import MessagesScreen from './screens/MessagesScreen';
 import PaymentsScreen from './screens/PaymentsScreen';
 import HistoryScreen from './screens/HistoryScreen';
 import UserProfile from './screens/UserProfile';
+import RegisterNovelty from './screens/RegisterNovelty';
+import LoginScreen, { User, UserRole } from './screens/LoginScreen';
+import ManageExpenses from './screens/ManageExpenses';
+import ManualVisitorRegistration from './screens/ManualVisitorRegistration';
+import StaffManagement from './screens/StaffManagement';
 
 // Navigation types
 export type ScreenName = 
@@ -25,9 +30,14 @@ export type ScreenName =
   | 'MessagesScreen'
   | 'PaymentsScreen'
   | 'HistoryScreen'
-  | 'UserProfile';
+  | 'UserProfile'
+  | 'RegisterNovelty'
+  | 'ManageExpenses'
+  | 'ManualVisitorRegistration'
+  | 'StaffManagement';
 
 const App: React.FC = () => {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentScreen, setCurrentScreen] = useState<ScreenName>('ConciergeDashboard');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -42,22 +52,81 @@ const App: React.FC = () => {
     }
   }, []);
 
+  const handleLogin = (user: User) => {
+    setCurrentUser(user);
+    // Route to default screen based on role
+    if (user.role === 'admin') setCurrentScreen('AdminDashboard');
+    else if (user.role === 'concierge') setCurrentScreen('ConciergeDashboard');
+    else if (user.role === 'resident') setCurrentScreen('ResidentServices');
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+  };
+
   const renderScreen = () => {
+    if (!currentUser) {
+      return <LoginScreen onLogin={handleLogin} />;
+    }
+
+    const roleAccess: Record<UserRole, ScreenName[]> = {
+      admin: ['AdminDashboard', 'ManageExpenses', 'CommunityWall', 'MessagesScreen', 'PaymentsScreen', 'HistoryScreen', 'UserProfile', 'NotificationSettings', 'StaffManagement'],
+      concierge: ['ConciergeDashboard', 'PackageEntry', 'AccessControl', 'RegisterNovelty', 'MessagesScreen', 'HistoryScreen', 'UserProfile', 'NotificationSettings', 'ManualVisitorRegistration'],
+      resident: ['ResidentServices', 'CommunityWall', 'MessagesScreen', 'PaymentsScreen', 'UserProfile', 'NotificationSettings', 'QRCodeScreen']
+    };
+
+    if (!roleAccess[currentUser.role].includes(currentScreen)) {
+      // Fallback to default screen for role
+      return currentUser.role === 'admin' ? <AdminDashboard navigate={setCurrentScreen} /> :
+             currentUser.role === 'concierge' ? <ConciergeDashboard navigate={setCurrentScreen} onLogout={handleLogout} /> :
+             <ResidentServices navigate={setCurrentScreen} />;
+    }
+
     switch (currentScreen) {
-      case 'ConciergeDashboard': return <ConciergeDashboard navigate={setCurrentScreen} />;
+      case 'ConciergeDashboard': return <ConciergeDashboard navigate={setCurrentScreen} onLogout={handleLogout} />;
       case 'PackageEntry': return <PackageEntry navigate={setCurrentScreen} />;
-      case 'CommunityWall': return <CommunityWall navigate={setCurrentScreen} />;
+      case 'CommunityWall': return <CommunityWall navigate={setCurrentScreen} role={currentUser.role} />;
       case 'ResidentServices': return <ResidentServices navigate={setCurrentScreen} />;
       case 'AdminDashboard': return <AdminDashboard navigate={setCurrentScreen} />;
       case 'QRCodeScreen': return <QRCodeScreen navigate={setCurrentScreen} />;
       case 'AccessControl': return <AccessControl navigate={setCurrentScreen} />;
-      case 'NotificationSettings': return <NotificationSettings navigate={setCurrentScreen} />;
-      case 'MessagesScreen': return <MessagesScreen navigate={setCurrentScreen} />;
-      case 'PaymentsScreen': return <PaymentsScreen navigate={setCurrentScreen} />;
-      case 'HistoryScreen': return <HistoryScreen navigate={setCurrentScreen} />;
-      case 'UserProfile': return <UserProfile navigate={setCurrentScreen} />;
-      default: return <ConciergeDashboard navigate={setCurrentScreen} />;
+      case 'NotificationSettings': return <NotificationSettings navigate={setCurrentScreen} role={currentUser.role} />;
+      case 'MessagesScreen': return <MessagesScreen navigate={setCurrentScreen} role={currentUser.role} />;
+      case 'PaymentsScreen': return <PaymentsScreen navigate={setCurrentScreen} role={currentUser.role} />;
+      case 'HistoryScreen': return <HistoryScreen navigate={setCurrentScreen} role={currentUser.role} />;
+      case 'UserProfile': return <UserProfile navigate={setCurrentScreen} onLogout={handleLogout} role={currentUser.role} />;
+      case 'RegisterNovelty': return <RegisterNovelty navigate={setCurrentScreen} />;
+      case 'ManageExpenses': return <ManageExpenses navigate={setCurrentScreen} />;
+      case 'ManualVisitorRegistration': return <ManualVisitorRegistration navigate={setCurrentScreen} />;
+      case 'StaffManagement': return <StaffManagement navigate={setCurrentScreen} />;
+      default: 
+        return currentUser.role === 'admin' ? <AdminDashboard navigate={setCurrentScreen} /> :
+               currentUser.role === 'concierge' ? <ConciergeDashboard navigate={setCurrentScreen} onLogout={handleLogout} /> :
+               <ResidentServices navigate={setCurrentScreen} />;
     }
+  };
+
+  // Define which screens are accessible to which roles
+  const getMenuItems = () => {
+    if (!currentUser) return [];
+
+    const allItems = [
+      { id: 'AdminDashboard', label: 'Panel Admin', roles: ['admin'] },
+      { id: 'ConciergeDashboard', label: 'Panel Conserje', roles: ['concierge'] },
+      { id: 'ResidentServices', label: 'Servicios Residente', roles: ['resident'] },
+      { id: 'CommunityWall', label: 'Muro Comunidad', roles: ['admin', 'resident'] },
+      { id: 'PackageEntry', label: 'Ingresar Encomienda', roles: ['concierge'] },
+      { id: 'AccessControl', label: 'Control Visitas', roles: ['concierge'] },
+      { id: 'RegisterNovelty', label: 'Registrar Novedad', roles: ['concierge'] },
+      { id: 'ManageExpenses', label: 'Gestión de Gastos', roles: ['admin'] },
+      { id: 'StaffManagement', label: 'Gestión de Personal', roles: ['admin'] },
+      { id: 'MessagesScreen', label: 'Mensajería', roles: ['concierge', 'resident', 'admin'] },
+      { id: 'PaymentsScreen', label: 'Pagos / Finanzas', roles: ['resident', 'admin'] },
+      { id: 'HistoryScreen', label: 'Historial', roles: ['concierge', 'admin'] },
+      { id: 'UserProfile', label: 'Mi Perfil', roles: ['admin', 'concierge', 'resident'] },
+    ];
+
+    return allItems.filter(item => item.roles.includes(currentUser.role));
   };
 
   return (
@@ -71,31 +140,22 @@ const App: React.FC = () => {
         </div>
 
         {/* Floating Navigation Menu Trigger (For Demo Purposes) */}
-        <div className="absolute bottom-6 right-6 z-50">
-          <button 
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="w-12 h-12 bg-white text-black rounded-full flex items-center justify-center shadow-lg hover:bg-gray-200 transition-all active:scale-90 active:bg-gray-300"
-          >
-            <span className="material-symbols-outlined">{isMenuOpen ? 'close' : 'menu'}</span>
-          </button>
-        </div>
+        {currentUser && (
+          <div className="absolute bottom-6 right-6 z-50">
+            <button 
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="w-12 h-12 bg-white text-black rounded-full flex items-center justify-center shadow-lg hover:bg-gray-200 transition-all active:scale-90 active:bg-gray-300"
+            >
+              <span className="material-symbols-outlined">{isMenuOpen ? 'close' : 'menu'}</span>
+            </button>
+          </div>
+        )}
 
         {/* Navigation Overlay */}
-        {isMenuOpen && (
+        {isMenuOpen && currentUser && (
           <div className="absolute inset-0 bg-black/90 z-40 flex flex-col items-center justify-center space-y-4 backdrop-blur-sm p-6 animate-fade-in">
-            <h2 className="text-ediflow-primary text-xl font-bold mb-4">Seleccionar Pantalla</h2>
-            {[
-              { id: 'ConciergeDashboard', label: 'Panel Conserje' },
-              { id: 'ResidentServices', label: 'Servicios Residente' },
-              { id: 'UserProfile', label: 'Mi Perfil' },
-              { id: 'AdminDashboard', label: 'Panel Admin' },
-              { id: 'CommunityWall', label: 'Muro Comunidad' },
-              { id: 'PackageEntry', label: 'Ingresar Encomienda' },
-              { id: 'AccessControl', label: 'Control Visitas' },
-              { id: 'MessagesScreen', label: 'Mensajería' },
-              { id: 'PaymentsScreen', label: 'Pagos / Finanzas' },
-              { id: 'HistoryScreen', label: 'Historial' },
-            ].map((screen) => (
+            <h2 className="text-ediflow-primary text-xl font-bold mb-4">Menú ({currentUser.role})</h2>
+            {getMenuItems().map((screen) => (
               <button
                 key={screen.id}
                 onClick={() => {
@@ -111,6 +171,16 @@ const App: React.FC = () => {
                 {screen.label}
               </button>
             ))}
+            
+            <button
+              onClick={() => {
+                handleLogout();
+                setIsMenuOpen(false);
+              }}
+              className="w-full py-3 px-6 rounded-xl font-medium transition-all active:scale-[0.98] mt-4 bg-red-500/10 text-red-500 hover:bg-red-500/20"
+            >
+              Cerrar Sesión
+            </button>
           </div>
         )}
       </div>

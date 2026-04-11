@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ScreenName } from '../App';
+import { Logo } from '../components/Logo';
 
 interface Props {
   navigate: (screen: ScreenName) => void;
@@ -12,7 +13,7 @@ const ResidentServices: React.FC<Props> = ({ navigate }) => {
     <div className="flex flex-col min-h-full bg-[#101c22]">
       {/* Header */}
       <div className="flex items-center justify-between px-5 pt-6 pb-4 bg-[#101c22] sticky top-0 z-30">
-        <h1 className="text-2xl font-bold tracking-tight text-white">Servicios</h1>
+        <Logo variant="horizontal" className="scale-90 origin-left" />
         <button 
             onClick={() => navigate('NotificationSettings')} 
             className="w-10 h-10 rounded-full bg-[#1c262c] text-white flex items-center justify-center hover:bg-gray-700 active:scale-90 transition-all border border-white/5"
@@ -100,15 +101,15 @@ const ResidentServices: React.FC<Props> = ({ navigate }) => {
                     subtitle="Por retirar" 
                     color="text-[#13a4ec]" 
                     bgColor="bg-[#13a4ec]/10"
-                    onClick={() => navigate('PackageEntry')}
+                    onClick={() => {}} 
                 />
                 <ServiceCard 
                     icon="qr_code_scanner" 
-                    title="Gestionar Visitas" 
-                    subtitle="QR y Registro" 
+                    title="Mis Visitas" 
+                    subtitle="Generar QR" 
                     color="text-purple-400" 
                     bgColor="bg-purple-500/10"
-                    onClick={() => navigate('AccessControl')}
+                    onClick={() => navigate('QRCodeScreen')}
                 />
                 <ServiceCard 
                     icon="deck" 

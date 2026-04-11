@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ScreenName } from '../App';
+import { Html5Qrcode } from 'html5-qrcode';
+import { Logo } from '../components/Logo';
 
 interface Props {
   navigate: (screen: ScreenName) => void;
@@ -13,45 +15,53 @@ const AccessControl: React.FC<Props> = ({ navigate }) => {
 
   // Handle Camera Stream
   useEffect(() => {
-    let stream: MediaStream | null = null;
-
-    const startCamera = async () => {
-      if (isScanning) {
-        try {
-          stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: 'environment' } 
-          });
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-          }
-          setCameraError(null);
-        } catch (err) {
-          console.error("Error accessing camera:", err);
-          setCameraError("No se pudo acceder a la cámara. Verifique los permisos.");
-        }
-      }
-    };
+    let html5QrCode: Html5Qrcode | null = null;
 
     if (isScanning) {
-      startCamera();
+      // Small delay to ensure the DOM element is rendered
+      const timer = setTimeout(() => {
+        html5QrCode = new Html5Qrcode("qr-reader");
+        html5QrCode.start(
+          { facingMode: "environment" },
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 250 }
+          },
+          (decodedText) => {
+            setScanResult(decodedText);
+            if (html5QrCode) {
+              try {
+                html5QrCode.stop().catch(console.error);
+              } catch (e) {
+                console.error(e);
+              }
+            }
+            setTimeout(() => {
+              setIsScanning(false);
+              setScanResult(null);
+            }, 3000);
+          },
+          (errorMessage) => {
+            // Ignore parse errors
+          }
+        ).catch((err) => {
+          console.error("Error accessing camera:", err);
+          setCameraError("No se pudo acceder a la cámara. Verifique los permisos.");
+        });
+      }, 100);
+
+      return () => {
+        clearTimeout(timer);
+        if (html5QrCode) {
+          try {
+            html5QrCode.stop().catch(console.error);
+          } catch (err) {
+            console.error(err);
+          }
+        }
+      };
     }
-
-    // Cleanup function to stop tracks when component unmounts or scanning stops
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-    };
   }, [isScanning]);
-
-  // Simulate a scan success (since we don't have a QR decoder library installed)
-  const handleSimulateScan = () => {
-    setScanResult("Juan Pérez - Depto 402 (Acceso Autorizado)");
-    setTimeout(() => {
-      setIsScanning(false);
-      setScanResult(null);
-    }, 2000);
-  };
 
   return (
     <div className="flex flex-col min-h-full bg-[#101c22]">
@@ -70,20 +80,14 @@ const AccessControl: React.FC<Props> = ({ navigate }) => {
            </div>
 
            {/* Camera Feed */}
-           <div className="relative flex-1 flex items-center justify-center overflow-hidden bg-black" onClick={handleSimulateScan}>
+           <div className="relative flex-1 flex items-center justify-center overflow-hidden bg-black">
               {cameraError ? (
                 <div className="text-white text-center p-6">
                   <span className="material-symbols-outlined text-4xl text-red-500 mb-2">videocam_off</span>
                   <p>{cameraError}</p>
                 </div>
               ) : (
-                <video 
-                  ref={videoRef} 
-                  autoPlay 
-                  playsInline 
-                  muted 
-                  className="absolute inset-0 w-full h-full object-cover opacity-80"
-                />
+                <div id="qr-reader" className="absolute inset-0 w-full h-full opacity-80" />
               )}
 
               {/* Scanning UI / Viewfinder */}
@@ -140,7 +144,7 @@ const AccessControl: React.FC<Props> = ({ navigate }) => {
                     <h1 className="text-lg font-bold text-white">Control de Acceso</h1>
                 </div>
             </div>
-            <span className="text-ediflow-primary font-bold">Ediflow</span>
+            <Logo variant="icon" className="w-8 h-8" />
         </div>
       </header>
 
@@ -157,7 +161,10 @@ const AccessControl: React.FC<Props> = ({ navigate }) => {
             </div>
             
             <div className="grid grid-cols-[1fr_auto] gap-3">
-                <button className="bg-[#1c262c] text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 border border-white/5 hover:bg-[#25323a] active:scale-[0.98] transition-all">
+                <button 
+                    onClick={() => navigate('ManualVisitorRegistration')}
+                    className="bg-[#1c262c] text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 border border-white/5 hover:bg-[#25323a] active:scale-[0.98] transition-all"
+                >
                     <span className="material-symbols-outlined text-gray-400">edit_square</span>
                     Registro Manual
                 </button>
@@ -236,7 +243,7 @@ const AccessControl: React.FC<Props> = ({ navigate }) => {
         <div className="flex justify-around">
             <NavButton icon="shield_person" label="Control" active />
             <NavButton icon="inventory_2" label="Encomiendas" onClick={() => navigate('PackageEntry')} />
-            <NavButton icon="apartment" label="Espacios" onClick={() => navigate('ResidentServices')} />
+            <NavButton icon="dashboard" label="Panel" onClick={() => navigate('ConciergeDashboard')} />
             <NavButton icon="manage_accounts" label="Perfil" onClick={() => navigate('UserProfile')} />
         </div>
       </nav>
@@ -249,6 +256,16 @@ const AccessControl: React.FC<Props> = ({ navigate }) => {
         @keyframes fade-in-up {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+        #qr-reader {
+          width: 100%;
+          height: 100%;
+          border: none !important;
+        }
+        #qr-reader video {
+          object-fit: cover !important;
+          width: 100% !important;
+          height: 100% !important;
         }
       `}</style>
     </div>

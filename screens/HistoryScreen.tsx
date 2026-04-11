@@ -1,17 +1,19 @@
 import React from 'react';
 import { ScreenName } from '../App';
+import { UserRole } from './LoginScreen';
 
 interface Props {
   navigate: (screen: ScreenName) => void;
+  role: UserRole;
 }
 
-const HistoryScreen: React.FC<Props> = ({ navigate }) => {
+const HistoryScreen: React.FC<Props> = ({ navigate, role }) => {
   return (
     <div className="flex flex-col min-h-full bg-[#181811]">
       {/* Header */}
       <div className="flex items-center gap-4 px-5 pt-6 pb-4 bg-[#181811] sticky top-0 z-30 border-b border-white/5">
         <button 
-            onClick={() => navigate('ConciergeDashboard')}
+            onClick={() => navigate(role === 'admin' ? 'AdminDashboard' : 'ConciergeDashboard')}
             className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 active:scale-90 transition-all text-white"
         >
             <span className="material-symbols-outlined">arrow_back</span>
