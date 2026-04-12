@@ -17,13 +17,13 @@ const CommunityWall: React.FC<Props> = ({ navigate, role }) => {
   };
 
   return (
-    <div className="flex flex-col min-h-full bg-[#101c22]">
+    <div className="flex flex-col min-h-full bg-[#0A0A0A]">
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-[#101c22]/95 backdrop-blur-md border-b border-white/5 p-4 flex items-center justify-between">
+      <header className="sticky top-0 z-30 bg-[#0A0A0A]/95 backdrop-blur-md border-b border-white/5 p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
             <button 
                 onClick={handleBack}
-                className="w-10 h-10 flex items-center justify-center rounded-full bg-[#1c262c] hover:bg-[#25323a] active:scale-90 transition-all text-white border border-white/5"
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-[#141414] hover:bg-[#1F1F1F] active:scale-90 transition-all text-white border border-white/5"
             >
                 <span className="material-symbols-outlined">arrow_back</span>
             </button>
@@ -53,7 +53,7 @@ const CommunityWall: React.FC<Props> = ({ navigate, role }) => {
             
             <div className="space-y-3">
                 {/* Urgent Announcement */}
-                <div className="bg-gradient-to-br from-red-500/10 to-[#1c262c] border border-red-500/20 p-4 rounded-2xl relative overflow-hidden">
+                <div className="bg-gradient-to-br from-red-500/10 to-[#141414] border border-red-500/20 p-4 rounded-2xl relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-1 h-full bg-red-500"></div>
                     <div className="flex gap-4">
                         <div className="w-10 h-10 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center shrink-0">
@@ -73,7 +73,7 @@ const CommunityWall: React.FC<Props> = ({ navigate, role }) => {
                 </div>
 
                 {/* Info Announcement */}
-                <div className="bg-[#1c262c] border border-white/5 p-4 rounded-2xl relative overflow-hidden">
+                <div className="bg-[#141414] border border-white/5 p-4 rounded-2xl relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
                     <div className="flex gap-4">
                         <div className="w-10 h-10 rounded-full bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0">
@@ -93,7 +93,7 @@ const CommunityWall: React.FC<Props> = ({ navigate, role }) => {
                 </div>
 
                 {/* Maintenance Announcement */}
-                <div className="bg-[#1c262c] border border-white/5 p-4 rounded-2xl relative overflow-hidden">
+                <div className="bg-[#141414] border border-white/5 p-4 rounded-2xl relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-1 h-full bg-amber-500"></div>
                     <div className="flex gap-4">
                         <div className="w-10 h-10 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
@@ -127,7 +127,7 @@ const CommunityWall: React.FC<Props> = ({ navigate, role }) => {
 
             <div className="grid grid-cols-2 gap-3">
                 {/* Classified 1 */}
-                <div className="bg-[#1c262c] border border-white/5 rounded-2xl overflow-hidden group cursor-pointer active:scale-[0.98] transition-all">
+                <div className="bg-[#141414] border border-white/5 rounded-2xl overflow-hidden group cursor-pointer active:scale-[0.98] transition-all">
                     <div className="h-24 bg-gray-800 relative">
                         <img src="https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&q=80&w=300" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
                         <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2 py-1 rounded-lg">
@@ -141,7 +141,7 @@ const CommunityWall: React.FC<Props> = ({ navigate, role }) => {
                 </div>
 
                 {/* Classified 2 */}
-                <div className="bg-[#1c262c] border border-white/5 rounded-2xl overflow-hidden group cursor-pointer active:scale-[0.98] transition-all">
+                <div className="bg-[#141414] border border-white/5 rounded-2xl overflow-hidden group cursor-pointer active:scale-[0.98] transition-all">
                     <div className="h-24 bg-gray-800 relative">
                         <img src="https://images.unsplash.com/photo-1573311568358-1158b8131615?auto=format&fit=crop&q=80&w=300" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
                         <div className="absolute top-2 right-2 bg-ediflow-primary text-black text-[10px] font-bold px-2 py-1 rounded-lg">
@@ -155,8 +155,8 @@ const CommunityWall: React.FC<Props> = ({ navigate, role }) => {
                 </div>
                 
                 {/* Classified 3 */}
-                <div className="bg-[#1c262c] border border-white/5 rounded-2xl overflow-hidden group cursor-pointer active:scale-[0.98] transition-all">
-                    <div className="h-24 bg-[#101c22] relative flex items-center justify-center">
+                <div className="bg-[#141414] border border-white/5 rounded-2xl overflow-hidden group cursor-pointer active:scale-[0.98] transition-all">
+                    <div className="h-24 bg-[#0A0A0A] relative flex items-center justify-center">
                         <span className="material-symbols-outlined text-4xl text-purple-500/50">pets</span>
                         <div className="absolute top-2 right-2 bg-purple-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg">
                             Servicio
@@ -175,7 +175,7 @@ const CommunityWall: React.FC<Props> = ({ navigate, role }) => {
       {/* Modal for New Official Post (Admin Only) */}
       {showNewPostModal && (
           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col justify-end">
-              <div className="bg-[#1c262c] rounded-t-3xl p-6 border-t border-white/10 animate-fade-in-up">
+              <div className="bg-[#141414] rounded-t-3xl p-6 border-t border-white/10 animate-fade-in-up">
                   <div className="flex justify-between items-center mb-6">
                       <h2 className="text-xl font-bold text-white">Nuevo Anuncio Oficial</h2>
                       <button onClick={() => setShowNewPostModal(false)} className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors">
@@ -194,11 +194,11 @@ const CommunityWall: React.FC<Props> = ({ navigate, role }) => {
                       </div>
                       <div>
                           <label className="text-xs font-bold text-gray-400 uppercase mb-2 block">Título</label>
-                          <input type="text" placeholder="Ej. Corte de luz programado" className="w-full bg-[#101c22] border border-white/5 rounded-xl px-4 py-3 text-white text-sm focus:border-ediflow-primary outline-none transition-colors" />
+                          <input type="text" placeholder="Ej. Corte de luz programado" className="w-full bg-[#0A0A0A] border border-white/5 rounded-xl px-4 py-3 text-white text-sm focus:border-ediflow-primary outline-none transition-colors" />
                       </div>
                       <div>
                           <label className="text-xs font-bold text-gray-400 uppercase mb-2 block">Mensaje</label>
-                          <textarea placeholder="Detalles del anuncio..." rows={4} className="w-full bg-[#101c22] border border-white/5 rounded-xl px-4 py-3 text-white text-sm focus:border-ediflow-primary outline-none transition-colors resize-none"></textarea>
+                          <textarea placeholder="Detalles del anuncio..." rows={4} className="w-full bg-[#0A0A0A] border border-white/5 rounded-xl px-4 py-3 text-white text-sm focus:border-ediflow-primary outline-none transition-colors resize-none"></textarea>
                       </div>
                   </div>
 

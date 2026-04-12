@@ -8,8 +8,8 @@ interface Props {
 
 const AdminDashboard: React.FC<Props> = ({ navigate }) => {
   return (
-    <div className="flex flex-col min-h-full bg-[#101c22]">
-      <div className="sticky top-0 z-20 bg-[#101c22]/95 backdrop-blur-sm px-5 py-4 flex items-center justify-between border-b border-white/5">
+    <div className="flex flex-col min-h-full bg-[#0A0A0A]">
+      <div className="sticky top-0 z-20 bg-[#0A0A0A]/95 backdrop-blur-sm px-5 py-4 flex items-center justify-between border-b border-white/5">
          <div>
             <Logo variant="horizontal" className="scale-90 origin-left mb-1" />
             <div className="flex items-center gap-2 mt-1">
@@ -17,7 +17,7 @@ const AdminDashboard: React.FC<Props> = ({ navigate }) => {
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Vista Administrador</span>
             </div>
          </div>
-         <button onClick={() => navigate('ConciergeDashboard')} className="w-10 h-10 rounded-full bg-[#1c262c] flex items-center justify-center text-white hover:bg-[#2a363e] active:scale-90 transition-all">
+         <button onClick={() => navigate('ConciergeDashboard')} className="w-10 h-10 rounded-full bg-[#141414] flex items-center justify-center text-white hover:bg-[#242424] active:scale-90 transition-all">
             <span className="material-symbols-outlined">settings_account_box</span>
          </button>
       </div>
@@ -45,9 +45,9 @@ const AdminDashboard: React.FC<Props> = ({ navigate }) => {
              <div className="grid grid-cols-2 gap-3">
                 <button 
                   onClick={() => navigate('ManageExpenses')}
-                  className="bg-white text-[#101c22] p-4 rounded-xl shadow-lg active:scale-[0.98] transition-all flex flex-col items-start gap-3 h-32 relative overflow-hidden"
+                  className="bg-white text-[#0A0A0A] p-4 rounded-xl shadow-lg active:scale-[0.98] transition-all flex flex-col items-start gap-3 h-32 relative overflow-hidden"
                 >
-                    <div className="bg-[#101c22]/10 w-10 h-10 rounded-lg flex items-center justify-center">
+                    <div className="bg-[#0A0A0A]/10 w-10 h-10 rounded-lg flex items-center justify-center">
                         <span className="material-symbols-outlined text-2xl">account_balance_wallet</span>
                     </div>
                     <span className="text-sm font-bold leading-tight text-left">Gastos<br/>Comunes</span>
@@ -82,7 +82,7 @@ const AdminDashboard: React.FC<Props> = ({ navigate }) => {
 
       </div>
 
-      <nav className="fixed bottom-0 w-full max-w-[420px] bg-[#151e24] border-t border-white/5 pb-6 pt-2 px-6 flex justify-between items-center z-30">
+      <nav className="fixed bottom-0 w-full max-w-[420px] bg-[#0F0F0F] border-t border-white/5 pb-6 pt-2 px-6 flex justify-between items-center z-30">
         <NavButton icon="dashboard" label="Resumen" active />
         <NavButton icon="account_balance_wallet" label="Finanzas" onClick={() => navigate('ManageExpenses')} />
         <NavButton icon="chat" label="Mensajes" onClick={() => navigate('MessagesScreen')} />
@@ -120,30 +120,30 @@ const StatsChart = () => {
     }
 
     return (
-        <div className="bg-[#1c262c] p-5 rounded-2xl border border-white/5 shadow-lg">
+        <div className="bg-[#141414] p-5 rounded-2xl border border-white/5 shadow-lg">
              <div className="flex justify-between items-center mb-6">
                 <div>
                      <h2 className="text-sm font-bold text-white">{getTitle()}</h2>
                      <p className="text-[10px] text-gray-500">Últimos 7 días</p>
                 </div>
-                <div className="flex bg-[#101c22] rounded-lg p-0.5 border border-white/5">
+                <div className="flex bg-[#0A0A0A] rounded-lg p-0.5 border border-white/5">
                     <button 
                         onClick={() => setActiveTab('packages')}
-                        className={`p-1.5 rounded-md transition-all active:scale-95 ${activeTab === 'packages' ? 'bg-[#1c262c] text-blue-400 shadow-sm ring-1 ring-white/10' : 'text-gray-500 hover:text-white'}`}
+                        className={`p-1.5 rounded-md transition-all active:scale-95 ${activeTab === 'packages' ? 'bg-[#141414] text-blue-400 shadow-sm ring-1 ring-white/10' : 'text-gray-500 hover:text-white'}`}
                         title="Encomiendas"
                     >
                         <span className="material-symbols-outlined text-[18px]">package_2</span>
                     </button>
                     <button 
                         onClick={() => setActiveTab('visitors')}
-                        className={`p-1.5 rounded-md transition-all active:scale-95 ${activeTab === 'visitors' ? 'bg-[#1c262c] text-purple-400 shadow-sm ring-1 ring-white/10' : 'text-gray-500 hover:text-white'}`}
+                        className={`p-1.5 rounded-md transition-all active:scale-95 ${activeTab === 'visitors' ? 'bg-[#141414] text-purple-400 shadow-sm ring-1 ring-white/10' : 'text-gray-500 hover:text-white'}`}
                         title="Visitas"
                     >
                         <span className="material-symbols-outlined text-[18px]">group</span>
                     </button>
                     <button 
                         onClick={() => setActiveTab('requests')}
-                        className={`p-1.5 rounded-md transition-all active:scale-95 ${activeTab === 'requests' ? 'bg-[#1c262c] text-amber-400 shadow-sm ring-1 ring-white/10' : 'text-gray-500 hover:text-white'}`}
+                        className={`p-1.5 rounded-md transition-all active:scale-95 ${activeTab === 'requests' ? 'bg-[#141414] text-amber-400 shadow-sm ring-1 ring-white/10' : 'text-gray-500 hover:text-white'}`}
                         title="Solicitudes"
                     >
                         <span className="material-symbols-outlined text-[18px]">assignment</span>
@@ -166,7 +166,7 @@ const StatsChart = () => {
                             ></div>
                             
                             {/* Tooltip on hover */}
-                            <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-white text-[#101c22] text-[10px] font-bold px-2 py-1 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100 z-10 pointer-events-none whitespace-nowrap">
+                            <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-white text-[#0A0A0A] text-[10px] font-bold px-2 py-1 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100 z-10 pointer-events-none whitespace-nowrap">
                                 {value}
                                 <div className="absolute bottom-[-4px] left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-white"></div>
                             </div>
@@ -190,7 +190,7 @@ const StatsChart = () => {
 };
 
 const MetricCard = ({ icon, color, value, label, progress, progressColor, warning }: any) => (
-    <div className="min-w-[140px] bg-[#1c262c] p-4 rounded-xl border border-white/5 flex flex-col justify-between h-32 relative overflow-hidden">
+    <div className="min-w-[140px] bg-[#141414] p-4 rounded-xl border border-white/5 flex flex-col justify-between h-32 relative overflow-hidden">
         <div className="flex justify-between items-start z-10">
             <span className={`material-symbols-outlined ${color}`}>{icon}</span>
             {warning && <span className="text-[10px] font-bold bg-amber-500/20 text-amber-500 px-1.5 rounded">!</span>}
@@ -207,7 +207,7 @@ const MetricCard = ({ icon, color, value, label, progress, progressColor, warnin
 );
 
 const ModuleItem = ({ icon, title, desc, badge, badgeColor, color }: any) => (
-    <div className="flex items-center justify-between p-3 bg-[#1c262c] rounded-xl border border-white/5">
+    <div className="flex items-center justify-between p-3 bg-[#141414] rounded-xl border border-white/5">
         <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${color}`}>
                 <span className="material-symbols-outlined">{icon}</span>

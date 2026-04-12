@@ -1,5 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { ScreenName } from '../App';
+import { useAppContext } from '../src/context/AppContext';
+import { useVoiceAssistant } from '../src/hooks/useVoiceAssistant';
+import { Button } from '../src/components/ui/Button';
+import { Input } from '../src/components/ui/Input';
+import { Card } from '../src/components/ui/Card';
+import { LogEntry } from '../src/types';
+import { NotificationDrawer } from '../src/components/notifications/NotificationDrawer';
 
 interface Props {
   navigate: (screen: ScreenName) => void;
@@ -8,19 +15,10 @@ interface Props {
 
 type OperationType = 'encomienda' | 'visita' | 'novedad' | 'pago' | null;
 
-interface LogEntry {
-  id: string;
-  icon: string;
-  color: string;
-  title: string;
-  time: string;
-  desc: string;
-}
-
 const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
-  const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState('');
+  const { currentUser, currentTenant } = useAppContext();
   const [toast, setToast] = useState<string | null>(null);
+  const [isNotificationDrawerOpen, setIsNotificationDrawerOpen] = useState(false);
   
   // Unified Manual Entry State
   const [activeOperation, setActiveOperation] = useState<OperationType>(null);
@@ -29,57 +27,9 @@ const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
 
   // Dynamic Logs State
   const [logs, setLogs] = useState<LogEntry[]>([
-    { id: '1', icon: 'package_2', color: 'text-blue-400', title: 'Encomienda entregada', time: '10:45', desc: 'Recibido por Depto 402' },
-    { id: '2', icon: 'person_check', color: 'text-purple-400', title: 'Visita ingresada', time: '10:30', desc: 'Para Depto 1105 (Juanito S.)' }
+    { id: '1', icon: 'package_2', color: 'text-blue-400', title: 'Encomienda entregada', time: '10:45', desc: 'Recibido por Depto 402', tenantId: 'tenant-1' },
+    { id: '2', icon: 'person_check', color: 'text-purple-400', title: 'Visita ingresada', time: '10:30', desc: 'Para Depto 1105 (Juanito S.)', tenantId: 'tenant-1' }
   ]);
-
-  const recognitionRef = useRef<any>(null);
-
-  useEffect(() => {
-    // Initialize Speech Recognition API
-    const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = true;
-      recognition.lang = 'es-ES';
-
-      recognition.onresult = (event: any) => {
-        let currentTranscript = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          currentTranscript += event.results[i][0].transcript;
-        }
-        setTranscript(currentTranscript);
-      };
-
-      recognition.onend = () => {
-        setIsListening(false);
-        // Process the final transcript when audio stops
-        if (recognitionRef.current?.finalTranscript) {
-           processCommand(recognitionRef.current.finalTranscript);
-           recognitionRef.current.finalTranscript = ''; // reset
-        }
-      };
-
-      recognition.onerror = (event: any) => {
-        console.error("Speech recognition error", event.error);
-        setIsListening(false);
-        if (event.error === 'not-allowed') {
-            showToast("❌ Permiso de micrófono denegado por el navegador.");
-        }
-      };
-
-      recognitionRef.current = recognition;
-    }
-  }, []);
-
-  // Update ref so onend closure has access to the latest transcript
-  useEffect(() => {
-      if (recognitionRef.current && !isListening && transcript) {
-          recognitionRef.current.finalTranscript = transcript;
-      }
-  }, [transcript, isListening]);
-
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -93,88 +43,51 @@ const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
           color,
           title,
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          desc
+          desc,
+          tenantId: currentTenant?.id || ''
       };
       setLogs(prev => [newLog, ...prev]);
   };
 
-  const processCommand = (text: string) => {
-      if (!text.trim()) return;
-      
-      const lowerText = text.toLowerCase();
-      let matched = false;
-
-      // 1. Comando: ENCOMIENDA
-      if (lowerText.includes('encomienda') || lowerText.includes('paquete')) {
-          matched = true;
-          // Extract all numbers (deptos)
-          const deptos = text.match(/\d+/g) || [];
-          if (deptos.length > 0) {
-              addLog('package_2', 'text-blue-400', `${deptos.length} Encomienda(s) (Voz)`, `Deptos: ${deptos.join(', ')}`);
-              showToast(`📦 Registradas encomiendas para: ${deptos.join(', ')}`);
-          } else {
-              showToast('❌ Comando de encomienda detectado, pero no escuché el número de departamento.');
-          }
-      } 
-      // 2. Comando: VISITA
-      else if (lowerText.includes('visita')) {
-          matched = true;
-          const deptoMatch = text.match(/\d+/);
-          const depto = deptoMatch ? deptoMatch[0] : 'Desconocido';
-          // Clean up text to get the name
-          let name = lowerText.replace(/visita/g, '').replace(depto, '').replace(/al|para|el|de/g, '').trim();
-          // Capitalize name
-          name = name.charAt(0).toUpperCase() + name.slice(1);
-          
-          addLog('person_check', 'text-purple-400', 'Visita (Voz)', `${name || 'Persona'} al Depto ${depto}`);
-          showToast(`👤 Visita registrada: ${name || 'Persona'} al ${depto}`);
-      }
-      // 3. Comando: PAGO
-      else if (lowerText.includes('pago') || lowerText.includes('pagó')) {
-          matched = true;
-          const deptoMatch = text.match(/\d+/);
-          const depto = deptoMatch ? deptoMatch[0] : 'Desconocido';
-          
-          addLog('payments', 'text-green-400', 'Pago GC (Voz)', `Depto ${depto} pagó en conserjería`);
-          showToast(`💵 Pago registrado para Depto ${depto}`);
-      }
-      // 4. Comando: NOVEDAD / LIBRO DE NOVEDADES
-      else if (lowerText.includes('novedad') || lowerText.includes('libro')) {
-          matched = true;
-          let desc = text.replace(/libro de novedades/gi, '').replace(/novedad/gi, '').replace(/registrar/gi, '').trim();
-          desc = desc.charAt(0).toUpperCase() + desc.slice(1);
-          
-          addLog('warning', 'text-orange-400', 'Novedad (Voz)', desc || 'Sin descripción');
-          showToast(`⚠️ Novedad registrada en bitácora.`);
-      }
-
-      if (!matched) {
-          showToast('❌ Comando no reconocido. Inicia con: "Encomienda", "Visita", "Pago" o "Novedad".');
-      }
-      
-      setTranscript(''); // Clear after processing
+  const handleCommandMatch = (operation: OperationType, details: any) => {
+    if (operation === 'encomienda') {
+        if (details.deptos.length > 0) {
+            addLog('package_2', 'text-blue-400', `${details.deptos.length} Encomienda(s) (Voz)`, `Deptos: ${details.deptos.join(', ')}`);
+            showToast(`📦 Registradas encomiendas para: ${details.deptos.join(', ')}`);
+        } else {
+            showToast('❌ Comando de encomienda detectado, pero no escuché el número de departamento.');
+        }
+    } else if (operation === 'visita') {
+        addLog('person_check', 'text-purple-400', 'Visita (Voz)', `${details.name || 'Persona'} al Depto ${details.depto}`);
+        showToast(`👤 Visita registrada: ${details.name || 'Persona'} al ${details.depto}`);
+    } else if (operation === 'pago') {
+        addLog('payments', 'text-green-400', 'Pago GC (Voz)', `Depto ${details.depto} pagó en conserjería`);
+        showToast(`💵 Pago registrado para Depto ${details.depto}`);
+    } else if (operation === 'novedad') {
+        addLog('warning', 'text-orange-400', 'Novedad (Voz)', details.desc || 'Sin descripción');
+        showToast(`⚠️ Novedad registrada en bitácora.`);
+    } else {
+        showToast('❌ Comando no reconocido. Inicia con: "Encomienda", "Visita", "Pago" o "Novedad".');
+    }
   };
+
+  const { isListening, transcript, startListening, stopListening, simulateCommand, error } = useVoiceAssistant(handleCommandMatch);
 
   const handleVoiceRecord = () => {
-    if (!recognitionRef.current) {
-        showToast("❌ Tu navegador no soporta reconocimiento de voz.");
+    if (error) {
+        showToast(`❌ ${error}`);
         return;
     }
-
     if (isListening) {
-      recognitionRef.current.stop();
-      setIsListening(false);
+      stopListening();
     } else {
-      setTranscript('');
-      recognitionRef.current.start();
-      setIsListening(true);
+      startListening();
     }
   };
 
-  // Fallback for testing without mic
   const handleSimulateCommand = (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === 'Enter') {
-          processCommand(e.currentTarget.value);
+          simulateCommand(e.currentTarget.value);
           e.currentTarget.value = '';
       }
   };
@@ -206,216 +119,269 @@ const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
   };
 
   return (
-    <div className="flex flex-col min-h-full pb-20 bg-[#101c22] relative">
+    <div className="flex w-full h-full bg-gray-100 dark:bg-[#000000] relative">
       {/* Toast Notification */}
       {toast && (
-          <div className="absolute top-24 left-4 right-4 z-50 bg-[#25323a] border border-white/10 text-white px-4 py-3 rounded-2xl shadow-2xl font-bold text-sm flex items-center gap-3 animate-fade-in-up">
-              <span className="material-symbols-outlined text-2xl text-ediflow-primary">info</span>
+          <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-[#121212] border-2 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white px-6 py-4 rounded-2xl shadow-lg font-bold text-lg flex items-center gap-3">
+              <span className="material-symbols-outlined text-3xl text-ediflow-light-accent dark:text-ediflow-dark-accent">info</span>
               <p className="leading-tight">{toast}</p>
           </div>
       )}
 
-      {/* Header */}
-      <header className="px-6 pt-10 pb-4 flex justify-between items-center bg-[#101c22] sticky top-0 z-20 border-b border-white/5">
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <button 
-              onClick={() => navigate('UserProfile')}
-              className="w-12 h-12 rounded-full border-2 border-ediflow-primary p-0.5 active:scale-95 transition-transform"
-            >
-              <img 
-                src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" 
-                alt="Profile" 
-                className="w-full h-full rounded-full object-cover"
-              />
-            </button>
-            <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-[#101c22]"></div>
-          </div>
-          <div>
-            <p className="text-ediflow-primary text-[10px] font-bold tracking-wider uppercase mb-0.5">Turno Día</p>
-            <h1 className="text-lg font-bold text-white leading-tight">Juan Pérez</h1>
-          </div>
+      {/* FIXED LEFT SIDEBAR */}
+      <aside className="hidden md:flex w-[300px] flex-col border-r-2 border-gray-200 dark:border-gray-800 bg-white dark:bg-[#121212] p-8 z-20 h-full">
+        <div className="mb-12">
+          <h1 className="text-3xl font-black tracking-tighter text-gray-900 dark:text-white uppercase">EDIFLOW</h1>
+          <p className="text-sm text-gray-500 font-bold tracking-widest uppercase mt-1">{currentTenant?.name || 'Comunidad'}</p>
         </div>
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => onLogout && onLogout()}
-            className="w-10 h-10 rounded-full bg-[#1c262c] flex items-center justify-center text-white/80 hover:bg-[#25323a] active:scale-90 transition-all border border-white/5"
-          >
-            <span className="material-symbols-outlined">logout</span>
+        
+        <div className="flex items-center gap-4 mb-12 p-4 bg-gray-100 dark:bg-[#1A1A1A] rounded-2xl">
+            <img 
+              src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" 
+              alt="Profile" 
+              className="w-14 h-14 rounded-full object-cover border-2 border-gray-300 dark:border-gray-700" 
+            />
+            <div>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">{currentUser?.name || 'Juan Pérez'}</h2>
+              <p className="text-sm text-gray-500 font-medium">Conserje</p>
+            </div>
+        </div>
+
+        <nav className="flex-1 space-y-4">
+          <SidebarButton icon="dashboard" label="Panel Principal" active />
+          <SidebarButton icon="contacts" label="Directorio" onClick={() => navigate('ResidentDirectory')} />
+          <SidebarButton icon="history" label="Bitácora" onClick={() => navigate('HistoryScreen')} />
+          <SidebarButton icon="chat" label="Mensajes" onClick={() => navigate('MessagesScreen')} />
+          <SidebarButton icon="settings" label="Ajustes" onClick={() => navigate('NotificationSettings')} />
+        </nav>
+        <div className="mt-auto pt-8 border-t-2 border-gray-200 dark:border-gray-800">
+          <button onClick={() => onLogout && onLogout()} className="flex items-center gap-4 text-gray-600 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors w-full p-4 rounded-2xl hover:bg-red-50 dark:hover:bg-red-900/20">
+            <span className="material-symbols-outlined text-2xl">logout</span>
+            <span className="font-bold text-lg">Cerrar Sesión</span>
           </button>
         </div>
-      </header>
+      </aside>
 
-      <main className="px-4 pt-6 space-y-6 flex-1">
-        
-        {/* Pareto 80/20: AI Voice Assistant */}
-        <section className="bg-gradient-to-br from-[#1c262c] to-[#101c22] rounded-3xl p-6 border border-white/5 shadow-xl relative overflow-hidden text-center">
-            <div className="relative z-10">
-                <h2 className="text-white font-bold text-lg mb-2">Asistente de Portería IA</h2>
-                <p className="text-gray-400 text-xs mb-6">Inicia con: "Encomienda", "Visita", "Pago" o "Novedad"</p>
-                
-                <button 
-                    onClick={handleVoiceRecord}
-                    className={`w-24 h-24 rounded-full mx-auto flex items-center justify-center transition-all duration-300 shadow-2xl ${
-                        isListening 
-                            ? 'bg-red-500 text-white scale-110 animate-pulse shadow-red-500/50' 
-                            : 'bg-ediflow-primary text-black hover:scale-105 shadow-ediflow-primary/30'
-                    }`}
-                >
-                    <span className="material-symbols-outlined text-4xl">
-                        {isListening ? 'mic_off' : 'mic'}
-                    </span>
-                </button>
-
-                <div className="mt-6 min-h-[24px]">
-                    {isListening ? (
-                        <p className="text-white text-sm font-bold italic">"{transcript || 'Escuchando...'}"</p>
-                    ) : (
-                        <p className="text-gray-500 text-xs font-medium">Toca para hablar</p>
-                    )}
-                </div>
-
-                {/* Fallback Input for testing if mic is blocked */}
-                <div className="mt-4 pt-4 border-t border-white/5">
-                    <input 
-                        type="text" 
-                        placeholder="O escribe el comando aquí y presiona Enter..." 
-                        onKeyDown={handleSimulateCommand}
-                        className="w-full bg-[#101c22] border border-white/10 rounded-xl px-4 py-2 text-xs text-white focus:border-ediflow-primary outline-none"
-                    />
-                </div>
+      {/* CENTER CONTENT */}
+      <main className="flex-1 flex flex-col h-full overflow-y-auto relative pb-24 md:pb-0 no-scrollbar">
+        {/* Header for Mobile only */}
+        <header className="md:hidden px-6 pt-10 pb-4 flex justify-between items-center sticky top-0 z-20 bg-white dark:bg-[#121212] border-b-2 border-gray-200 dark:border-gray-800">
+          <div className="flex items-center gap-4">
+            <img 
+              src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" 
+              alt="Profile" 
+              className="w-12 h-12 rounded-full object-cover"
+            />
+            <div>
+              <p className="text-gray-500 text-xs font-bold tracking-wider uppercase mb-0.5">{currentTenant?.name || 'Turno Día'}</p>
+              <h1 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">{currentUser?.name || 'Juan Pérez'}</h1>
             </div>
-            {/* Decorative background waves */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full pointer-events-none opacity-10">
-                <div className={`absolute inset-0 border-4 border-ediflow-primary rounded-full transition-all duration-1000 ${isListening ? 'scale-150 opacity-0 animate-ping' : 'scale-50 opacity-0'}`}></div>
-            </div>
-        </section>
+          </div>
+          <div className="flex items-center gap-4">
+            <button onClick={() => setIsNotificationDrawerOpen(true)} className="relative text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
+              <span className="material-symbols-outlined text-3xl">notifications</span>
+              <span className="absolute top-0 right-0 w-3 h-3 bg-[#00AEEF] rounded-full border-2 border-white dark:border-[#121212]"></span>
+            </button>
+            <button onClick={() => onLogout && onLogout()} className="text-gray-500 hover:text-red-500 transition-colors">
+              <span className="material-symbols-outlined text-3xl">logout</span>
+            </button>
+          </div>
+        </header>
 
-        {/* Unified Manual Operations */}
-        <section>
-            <h2 className="text-xs font-bold text-gray-500 uppercase mb-3 ml-1">Registro Manual Rápido</h2>
-            <div className="grid grid-cols-2 gap-3">
-                <button 
-                    onClick={() => setActiveOperation('encomienda')}
-                    className={`p-4 rounded-2xl border flex flex-col items-center gap-2 transition-all active:scale-95 ${activeOperation === 'encomienda' ? 'bg-blue-500/20 border-blue-500 text-blue-400' : 'bg-[#1c262c] border-white/5 text-gray-400 hover:text-white'}`}
-                >
-                    <span className="material-symbols-outlined text-2xl">package_2</span>
-                    <span className="text-[10px] font-bold">Paquete</span>
-                </button>
-                <button 
-                    onClick={() => setActiveOperation('visita')}
-                    className={`p-4 rounded-2xl border flex flex-col items-center gap-2 transition-all active:scale-95 ${activeOperation === 'visita' ? 'bg-purple-500/20 border-purple-500 text-purple-400' : 'bg-[#1c262c] border-white/5 text-gray-400 hover:text-white'}`}
-                >
-                    <span className="material-symbols-outlined text-2xl">person_add</span>
-                    <span className="text-[10px] font-bold">Visita</span>
-                </button>
-                <button 
-                    onClick={() => setActiveOperation('pago')}
-                    className={`p-4 rounded-2xl border flex flex-col items-center gap-2 transition-all active:scale-95 ${activeOperation === 'pago' ? 'bg-green-500/20 border-green-500 text-green-400' : 'bg-[#1c262c] border-white/5 text-gray-400 hover:text-white'}`}
-                >
-                    <span className="material-symbols-outlined text-2xl">payments</span>
-                    <span className="text-[10px] font-bold">Pago GC</span>
-                </button>
-                <button 
-                    onClick={() => setActiveOperation('novedad')}
-                    className={`p-4 rounded-2xl border flex flex-col items-center gap-2 transition-all active:scale-95 ${activeOperation === 'novedad' ? 'bg-orange-500/20 border-orange-500 text-orange-400' : 'bg-[#1c262c] border-white/5 text-gray-400 hover:text-white'}`}
-                >
-                    <span className="material-symbols-outlined text-2xl">warning</span>
-                    <span className="text-[10px] font-bold">Novedad</span>
-                </button>
+        <div className="p-6 md:p-10 w-full max-w-6xl mx-auto space-y-8">
+          
+          <div className="flex justify-between items-end">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white mb-2">Panel de Control</h2>
+              <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400">Seleccione una acción para registrar.</p>
             </div>
+            <button 
+              onClick={() => setIsNotificationDrawerOpen(true)} 
+              className="hidden md:flex relative w-14 h-14 rounded-2xl bg-white dark:bg-[#121212] border-2 border-gray-200 dark:border-gray-800 items-center justify-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            >
+              <span className="material-symbols-outlined text-3xl">notifications</span>
+              <span className="absolute top-3 right-3 w-3 h-3 bg-[#00AEEF] rounded-full border-2 border-white dark:border-[#121212]"></span>
+            </button>
+          </div>
 
-            {/* Inline Form for Manual Entry */}
-            {activeOperation && (
-                <form onSubmit={handleManualSubmit} className="mt-4 bg-[#1c262c] p-4 rounded-2xl border border-white/5 animate-fade-in-up">
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-white font-bold text-sm">
-                            {activeOperation === 'encomienda' && 'Registrar Encomienda'}
-                            {activeOperation === 'visita' && 'Registrar Visita'}
-                            {activeOperation === 'pago' && 'Registrar Pago GC'}
-                            {activeOperation === 'novedad' && 'Reportar Novedad'}
-                        </h3>
-                        <button type="button" onClick={() => setActiveOperation(null)} className="text-gray-500 hover:text-white">
-                            <span className="material-symbols-outlined text-sm">close</span>
-                        </button>
-                    </div>
+          {/* SIMPLE GRID */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            {/* AI Voice Assistant */}
+            <Card className="text-center flex flex-col justify-center min-h-[320px] border-4 border-ediflow-light-accent dark:border-ediflow-dark-accent">
+                <div className="relative z-10">
+                    <h2 className="text-gray-900 dark:text-white font-black text-2xl md:text-3xl mb-4">Asistente de Voz</h2>
+                    <p className="text-gray-600 dark:text-gray-400 text-lg mb-8">Diga: "Encomienda", "Visita", "Pago" o "Novedad"</p>
                     
-                    <div className="space-y-3">
-                        {activeOperation !== 'novedad' && (
-                            <input 
-                                type="text" 
-                                placeholder="Nº Departamento" 
-                                value={deptoInput}
-                                onChange={(e) => setDeptoInput(e.target.value)}
-                                className="w-full bg-[#101c22] border border-white/5 rounded-xl px-4 py-3 text-white text-sm focus:border-ediflow-primary outline-none"
-                                required
-                            />
+                    <button 
+                        onClick={handleVoiceRecord}
+                        className={`w-32 h-32 rounded-full mx-auto flex items-center justify-center transition-all duration-300 ${
+                            isListening 
+                                ? 'bg-red-500 text-white scale-105' 
+                                : 'bg-ediflow-light-accent dark:bg-ediflow-dark-accent text-white dark:text-black hover:opacity-90'
+                        }`}
+                    >
+                        <span className="material-symbols-outlined text-6xl">
+                            {isListening ? 'mic_off' : 'mic'}
+                        </span>
+                    </button>
+
+                    <div className="mt-8 min-h-[32px]">
+                        {isListening ? (
+                            <p className="text-gray-900 dark:text-white text-xl font-bold italic">"{transcript || 'Escuchando...'}"</p>
+                        ) : (
+                            <p className="text-gray-500 text-lg font-medium">Toque el micrófono para hablar</p>
                         )}
-                        <input 
-                            type="text" 
-                            placeholder={
-                                activeOperation === 'encomienda' ? 'Empresa (ej. MercadoLibre)' : 
-                                activeOperation === 'visita' ? 'Nombre del visitante' : 
-                                activeOperation === 'pago' ? 'Monto y método (ej. $125.400 Efectivo)' :
-                                'Descripción de la novedad'
-                            }
-                            value={manualInput}
-                            onChange={(e) => setManualInput(e.target.value)}
-                            className="w-full bg-[#101c22] border border-white/5 rounded-xl px-4 py-3 text-white text-sm focus:border-ediflow-primary outline-none"
-                            required
-                        />
-                        <button type="submit" className="w-full bg-ediflow-primary text-black font-bold py-3 rounded-xl active:scale-[0.98] transition-all">
-                            Guardar Registro
-                        </button>
                     </div>
-                </form>
-            )}
-        </section>
-
-        {/* Feed Section */}
-        <section className="pt-2">
-          <div className="flex items-center justify-between mb-4 ml-1">
-            <h2 className="text-xs font-bold text-gray-500 uppercase">Últimos Movimientos</h2>
-            <button onClick={() => navigate('HistoryScreen')} className="text-xs font-bold text-ediflow-primary hover:text-white active:opacity-70 transition-all">Ver bitácora</button>
-          </div>
-
-          <div className="space-y-3 relative">
-             {/* Timeline Line */}
-             <div className="absolute left-[19px] top-4 bottom-4 w-[1px] bg-white/5"></div>
-
-            {logs.map((log) => (
-                <div key={log.id} className="relative flex items-center gap-4 p-3 bg-[#1c262c] rounded-2xl border border-white/5 animate-fade-in-up">
-                   <div className={`relative z-10 w-10 h-10 rounded-full bg-[#101c22] border border-white/5 flex items-center justify-center ${log.color}`}>
-                      <span className="material-symbols-outlined text-lg">{log.icon}</span>
-                   </div>
-                   <div className="flex-1">
-                     <div className="flex justify-between items-start">
-                       <h4 className="text-sm font-bold text-white">{log.title}</h4>
-                       <span className="text-[10px] font-mono text-gray-500">{log.time}</span>
-                     </div>
-                     <p className="text-xs text-gray-400 mt-0.5">{log.desc}</p>
-                   </div>
                 </div>
-            ))}
+            </Card>
+
+            {/* Manual Operations */}
+            <div className="flex flex-col">
+                <div className="grid grid-cols-2 gap-4 flex-1">
+                    <button 
+                        onClick={() => setActiveOperation('encomienda')}
+                        className={`p-6 rounded-3xl border-2 flex flex-col items-center justify-center gap-4 transition-all ${activeOperation === 'encomienda' ? 'bg-ediflow-light-accent/10 border-ediflow-light-accent text-ediflow-light-accent dark:bg-ediflow-dark-accent/20 dark:border-ediflow-dark-accent dark:text-ediflow-dark-accent' : 'bg-white dark:bg-[#121212] border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-600'}`}
+                    >
+                        <span className="material-symbols-outlined text-5xl">package_2</span>
+                        <span className="text-xl font-bold">Paquete</span>
+                    </button>
+                    <button 
+                        onClick={() => setActiveOperation('visita')}
+                        className={`p-6 rounded-3xl border-2 flex flex-col items-center justify-center gap-4 transition-all ${activeOperation === 'visita' ? 'bg-ediflow-light-accent/10 border-ediflow-light-accent text-ediflow-light-accent dark:bg-ediflow-dark-accent/20 dark:border-ediflow-dark-accent dark:text-ediflow-dark-accent' : 'bg-white dark:bg-[#121212] border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-600'}`}
+                    >
+                        <span className="material-symbols-outlined text-5xl">person_add</span>
+                        <span className="text-xl font-bold">Visita</span>
+                    </button>
+                    <button 
+                        onClick={() => navigate('RegisterPayment')}
+                        className={`p-6 rounded-3xl border-2 flex flex-col items-center justify-center gap-4 transition-all bg-white dark:bg-[#121212] border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-600`}
+                    >
+                        <span className="material-symbols-outlined text-5xl">payments</span>
+                        <span className="text-xl font-bold">Pago GC</span>
+                    </button>
+                    <button 
+                        onClick={() => setActiveOperation('novedad')}
+                        className={`p-6 rounded-3xl border-2 flex flex-col items-center justify-center gap-4 transition-all ${activeOperation === 'novedad' ? 'bg-ediflow-light-accent/10 border-ediflow-light-accent text-ediflow-light-accent dark:bg-ediflow-dark-accent/20 dark:border-ediflow-dark-accent dark:text-ediflow-dark-accent' : 'bg-white dark:bg-[#121212] border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-600'}`}
+                    >
+                        <span className="material-symbols-outlined text-5xl">warning</span>
+                        <span className="text-xl font-bold">Novedad</span>
+                    </button>
+                </div>
+            </div>
           </div>
-        </section>
+
+          {/* Inline Form for Manual Entry */}
+          {activeOperation && (
+              <div className="bg-white dark:bg-[#121212] p-8 rounded-3xl border-2 border-gray-200 dark:border-gray-800 shadow-sm">
+                  <div className="flex justify-between items-center mb-8">
+                      <h3 className="text-gray-900 dark:text-white font-black text-2xl">
+                          {activeOperation === 'encomienda' && 'Registrar Encomienda'}
+                          {activeOperation === 'visita' && 'Registrar Visita'}
+                          {activeOperation === 'novedad' && 'Reportar Novedad'}
+                      </h3>
+                      <button type="button" onClick={() => setActiveOperation(null)} className="text-gray-500 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-[#1A1A1A] p-3 rounded-full transition-colors">
+                          <span className="material-symbols-outlined text-xl">close</span>
+                      </button>
+                  </div>
+                  
+                  <form onSubmit={handleManualSubmit} className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {activeOperation !== 'novedad' && (
+                              <Input 
+                                  label="Nº Departamento"
+                                  placeholder="Ej. 402" 
+                                  value={deptoInput}
+                                  onChange={(e) => setDeptoInput(e.target.value)}
+                                  required
+                              />
+                          )}
+                          <Input 
+                              label={
+                                  activeOperation === 'encomienda' ? 'Empresa' : 
+                                  activeOperation === 'visita' ? 'Nombre del Visitante' : 
+                                  'Descripción'
+                              }
+                              placeholder={
+                                  activeOperation === 'encomienda' ? 'Ej. MercadoLibre' : 
+                                  activeOperation === 'visita' ? 'Ej. Juan Pérez' : 
+                                  'Detalle la novedad...'
+                              }
+                              value={manualInput}
+                              onChange={(e) => setManualInput(e.target.value)}
+                              required
+                              className={activeOperation === 'novedad' ? 'md:col-span-2' : ''}
+                          />
+                      </div>
+                      <div className="mt-8 flex justify-end">
+                        <Button type="submit" size="lg" className="w-full md:w-auto">
+                            Guardar Registro
+                        </Button>
+                      </div>
+                  </form>
+              </div>
+          )}
+
+          {/* Feed Section */}
+          <section className="pt-8">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Últimos Movimientos</h2>
+              <button onClick={() => navigate('HistoryScreen')} className="text-lg font-bold text-ediflow-light-accent dark:text-ediflow-dark-accent hover:opacity-80 transition-opacity flex items-center gap-2">
+                Ver bitácora completa <span className="material-symbols-outlined">arrow_forward</span>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {logs.map((log) => (
+                  <div key={log.id} className="flex items-center gap-6 p-6 bg-white dark:bg-[#121212] rounded-3xl border-2 border-gray-200 dark:border-gray-800 shadow-sm">
+                     <div className={`w-16 h-16 rounded-2xl bg-gray-100 dark:bg-[#1A1A1A] flex items-center justify-center ${log.color}`}>
+                        <span className="material-symbols-outlined text-3xl">{log.icon}</span>
+                     </div>
+                     <div className="flex-1">
+                       <div className="flex justify-between items-start">
+                         <h4 className="text-xl font-bold text-gray-900 dark:text-white">{log.title}</h4>
+                         <span className="text-base font-mono text-gray-500 bg-gray-100 dark:bg-[#1A1A1A] px-3 py-1 rounded-lg">{log.time}</span>
+                       </div>
+                       <p className="text-lg text-gray-600 dark:text-gray-400 mt-1">{log.desc}</p>
+                     </div>
+                  </div>
+              ))}
+            </div>
+          </section>
+        </div>
       </main>
 
-      {/* Bottom Nav */}
-      <nav className="fixed bottom-0 w-full max-w-[420px] bg-[#151e24] border-t border-white/5 pb-6 pt-2 px-6 flex justify-between items-center z-30">
+      {/* Mobile Bottom Nav */}
+      <nav className="md:hidden fixed bottom-0 w-full bg-white dark:bg-[#121212] border-t-2 border-gray-200 dark:border-gray-800 pb-6 pt-4 px-6 flex justify-between items-center z-30">
         <NavButton icon="dashboard" label="Panel" active />
+        <NavButton icon="contacts" label="Directorio" onClick={() => navigate('ResidentDirectory')} />
         <NavButton icon="history" label="Bitácora" onClick={() => navigate('HistoryScreen')} />
         <NavButton icon="chat" label="Mensajes" onClick={() => navigate('MessagesScreen')} />
         <NavButton icon="settings" label="Ajustes" onClick={() => navigate('NotificationSettings')} />
       </nav>
+
+      <NotificationDrawer 
+        isOpen={isNotificationDrawerOpen} 
+        onClose={() => setIsNotificationDrawerOpen(false)} 
+      />
     </div>
   );
 };
 
+const SidebarButton = ({ icon, label, active = false, onClick }: { icon: string, label: string, active?: boolean, onClick?: () => void }) => (
+  <button 
+    onClick={onClick}
+    className={`flex items-center gap-4 p-4 w-full rounded-2xl transition-all ${active ? 'bg-ediflow-light-accent dark:bg-ediflow-dark-accent text-white dark:text-black font-bold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#1A1A1A] hover:text-gray-900 dark:hover:text-white font-bold'}`}
+  >
+    <span className={`material-symbols-outlined text-3xl ${active ? 'fill-current' : ''}`}>{icon}</span>
+    <span className="text-lg tracking-wide">{label}</span>
+  </button>
+);
+
 const NavButton = ({ icon, label, active = false, onClick }: { icon: string, label: string, active?: boolean, onClick?: () => void }) => (
   <button 
     onClick={onClick}
-    className={`flex flex-col items-center gap-1 p-2 transition-all active:scale-90 ${active ? 'text-ediflow-primary' : 'text-gray-500 hover:text-white'}`}
+    className={`flex flex-col items-center gap-1 p-2 transition-all active:scale-90 ${active ? 'text-ediflow-light-accent dark:text-ediflow-dark-accent' : 'text-gray-500 hover:text-ediflow-light-title dark:hover:text-ediflow-dark-title'}`}
   >
     <span className={`material-symbols-outlined text-2xl ${active ? 'fill-current' : ''}`}>{icon}</span>
     <span className="text-[10px] font-medium tracking-wide">{label}</span>

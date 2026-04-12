@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 import { ScreenName } from '../App';
 import { UserRole } from './LoginScreen';
+import { Button } from '../src/components/ui/Button';
+import { Card } from '../src/components/ui/Card';
+import { Input } from '../src/components/ui/Input';
+import { useAppContext } from '../src/context/AppContext';
+import { PassType, VisitorPass } from '../src/types';
 
 interface Props {
   navigate: (screen: ScreenName) => void;
@@ -8,21 +13,13 @@ interface Props {
 }
 
 type ViewState = 'list' | 'create' | 'show_qr';
-type PassType = 'visita' | 'delivery' | 'servicio';
-
-interface VisitorPass {
-  id: string;
-  name: string;
-  type: PassType;
-  date: string;
-  status: 'active' | 'used' | 'expired';
-}
 
 const QRCodeScreen: React.FC<Props> = ({ navigate, role }) => {
+  const { currentTenant, currentUser } = useAppContext();
   const [view, setView] = useState<ViewState>('list');
   const [passes, setPasses] = useState<VisitorPass[]>([
-    { id: '1', name: 'Carlos Mendoza', type: 'visita', date: 'Hoy, 19:00', status: 'active' },
-    { id: '2', name: 'Reparación Internet', type: 'servicio', date: 'Ayer', status: 'used' },
+    { id: '1', name: 'Carlos Mendoza', type: 'visita', date: 'Hoy, 19:00', status: 'active', tenantId: 'tenant-1', userId: 'user-1' },
+    { id: '2', name: 'Reparación Internet', type: 'servicio', date: 'Ayer', status: 'used', tenantId: 'tenant-1', userId: 'user-1' },
   ]);
 
   // Form State
@@ -51,7 +48,9 @@ const QRCodeScreen: React.FC<Props> = ({ navigate, role }) => {
       name: visitorName,
       type: passType,
       date: 'Hoy, Válido por 24h',
-      status: 'active'
+      status: 'active',
+      tenantId: currentTenant?.id || '',
+      userId: currentUser?.id || ''
     };
 
     setPasses([newPass, ...passes]);
@@ -68,12 +67,12 @@ const QRCodeScreen: React.FC<Props> = ({ navigate, role }) => {
   };
 
   return (
-    <div className="flex flex-col min-h-full bg-[#101c22] relative">
+    <div className="flex flex-col min-h-full bg-[#0A0A0A] relative">
       {/* Header */}
-      <header className="sticky top-0 z-20 bg-[#101c22]/95 backdrop-blur-md border-b border-white/5 p-4 flex items-center gap-3">
+      <header className="sticky top-0 z-20 bg-[#0A0A0A]/95 backdrop-blur-md border-b border-white/5 p-4 flex items-center gap-3">
         <button 
             onClick={handleBack}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-[#1c262c] hover:bg-[#25323a] active:scale-90 transition-all text-white border border-white/5"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-[#141414] hover:bg-[#1F1F1F] active:scale-90 transition-all text-white border border-white/5"
         >
             <span className="material-symbols-outlined">arrow_back</span>
         </button>
@@ -91,13 +90,15 @@ const QRCodeScreen: React.FC<Props> = ({ navigate, role }) => {
         {view === 'list' && (
           <div className="space-y-6 animate-fade-in">
             {/* Main Action */}
-            <button 
+            <Button 
               onClick={() => setView('create')}
-              className="w-full bg-ediflow-primary text-black font-bold py-4 rounded-2xl flex flex-col items-center justify-center gap-2 hover:bg-yellow-400 active:scale-[0.98] transition-all shadow-lg shadow-yellow-500/20"
+              fullWidth
+              size="lg"
+              className="flex-col gap-2 h-auto py-6"
             >
               <span className="material-symbols-outlined text-3xl">qr_code_scanner</span>
               <span className="text-lg">Generar Nuevo Pase</span>
-            </button>
+            </Button>
 
             {/* Active Passes */}
             <section>
@@ -110,7 +111,7 @@ const QRCodeScreen: React.FC<Props> = ({ navigate, role }) => {
                   <div 
                     key={pass.id} 
                     onClick={() => { setCurrentPass(pass); setView('show_qr'); }}
-                    className="bg-gradient-to-r from-[#1c262c] to-[#151e24] p-4 rounded-2xl border border-ediflow-primary/30 flex items-center justify-between active:scale-95 transition-transform cursor-pointer"
+                    className="bg-gradient-to-r from-[#141414] to-[#0F0F0F] p-4 rounded-2xl border border-ediflow-primary/30 flex items-center justify-between active:scale-95 transition-transform cursor-pointer"
                   >
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 bg-ediflow-primary/10 text-ediflow-primary rounded-full flex items-center justify-center">
@@ -132,7 +133,7 @@ const QRCodeScreen: React.FC<Props> = ({ navigate, role }) => {
               <h2 className="text-xs font-bold text-gray-500 uppercase mb-3 ml-1">Historial</h2>
               <div className="space-y-3 opacity-70">
                 {passes.filter(p => p.status !== 'active').map(pass => (
-                  <div key={pass.id} className="bg-[#1c262c] p-4 rounded-2xl border border-white/5 flex items-center justify-between">
+                  <div key={pass.id} className="bg-[#141414] p-4 rounded-2xl border border-white/5 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 bg-white/5 text-gray-400 rounded-full flex items-center justify-center">
                         <span className="material-symbols-outlined">{getIconForType(pass.type)}</span>
@@ -152,22 +153,18 @@ const QRCodeScreen: React.FC<Props> = ({ navigate, role }) => {
         {/* CREATE VIEW */}
         {view === 'create' && (
           <form onSubmit={handleGeneratePass} className="space-y-6 animate-fade-in-up">
-            <div className="bg-[#1c262c] p-6 rounded-3xl border border-white/5">
+            <Card>
               <h2 className="text-white font-bold mb-4">¿Quién te visita?</h2>
               
               <div className="space-y-4">
-                <div>
-                  <label className="text-xs text-gray-400 font-bold uppercase ml-1 mb-1 block">Nombre del visitante / Empresa</label>
-                  <input 
-                    type="text" 
-                    value={visitorName}
-                    onChange={(e) => setVisitorName(e.target.value)}
-                    placeholder="Ej. Juan Pérez o PedidosYa"
-                    className="w-full bg-[#101c22] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-ediflow-primary outline-none transition-colors"
-                    autoFocus
-                    required
-                  />
-                </div>
+                <Input 
+                  label="Nombre del visitante / Empresa"
+                  value={visitorName}
+                  onChange={(e) => setVisitorName(e.target.value)}
+                  placeholder="Ej. Juan Pérez o PedidosYa"
+                  autoFocus
+                  required
+                />
 
                 <div>
                   <label className="text-xs text-gray-400 font-bold uppercase ml-1 mb-2 block">Tipo de Visita</label>
@@ -180,7 +177,7 @@ const QRCodeScreen: React.FC<Props> = ({ navigate, role }) => {
                         className={`py-3 rounded-xl flex flex-col items-center gap-1 border transition-all ${
                           passType === type 
                             ? 'bg-ediflow-primary/10 border-ediflow-primary text-ediflow-primary' 
-                            : 'bg-[#101c22] border-white/5 text-gray-400 hover:bg-white/5'
+                            : 'bg-[#0A0A0A] border-white/5 text-gray-400 hover:bg-white/5'
                         }`}
                       >
                         <span className="material-symbols-outlined">{getIconForType(type)}</span>
@@ -190,15 +187,15 @@ const QRCodeScreen: React.FC<Props> = ({ navigate, role }) => {
                   </div>
                 </div>
               </div>
-            </div>
+            </Card>
 
-            <button 
+            <Button 
               type="submit"
               disabled={!visitorName.trim()}
-              className="w-full bg-ediflow-primary text-black font-bold py-4 rounded-xl active:scale-[0.98] transition-all disabled:opacity-50 disabled:active:scale-100"
+              fullWidth
             >
               Generar Código QR
-            </button>
+            </Button>
           </form>
         )}
 
@@ -218,8 +215,8 @@ const QRCodeScreen: React.FC<Props> = ({ navigate, role }) => {
               </div>
               
               <div className="w-full border-t-2 border-dashed border-gray-200 my-2 relative">
-                <div className="absolute -left-10 -top-3 w-6 h-6 bg-[#101c22] rounded-full"></div>
-                <div className="absolute -right-10 -top-3 w-6 h-6 bg-[#101c22] rounded-full"></div>
+                <div className="absolute -left-10 -top-3 w-6 h-6 bg-[#0A0A0A] rounded-full"></div>
+                <div className="absolute -right-10 -top-3 w-6 h-6 bg-[#0A0A0A] rounded-full"></div>
               </div>
 
               <div className="w-full flex justify-between items-center mt-4">
@@ -239,12 +236,13 @@ const QRCodeScreen: React.FC<Props> = ({ navigate, role }) => {
                 <span className="material-symbols-outlined">share</span>
                 Compartir por WhatsApp
               </button>
-              <button 
+              <Button 
                 onClick={() => setView('list')}
-                className="w-full bg-transparent text-white font-bold py-4 rounded-xl border border-white/10 hover:bg-white/5 active:scale-[0.98] transition-all"
+                variant="outline"
+                fullWidth
               >
                 Volver a mis pases
-              </button>
+              </Button>
             </div>
           </div>
         )}

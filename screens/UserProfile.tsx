@@ -128,9 +128,9 @@ const UserProfile: React.FC<Props> = ({ navigate, onLogout, role }) => {
   };
 
   return (
-    <div className="flex flex-col min-h-full dark:bg-[#101c22] bg-gray-50 transition-colors duration-300">
+    <div className="flex flex-col min-h-full dark:bg-[#0A0A0A] bg-gray-50 transition-colors duration-300">
       {/* Header */}
-      <div className="flex items-center gap-4 px-5 pt-6 pb-4 dark:bg-[#101c22] bg-white sticky top-0 z-30 border-b dark:border-white/5 border-gray-200 transition-colors duration-300">
+      <div className="flex items-center gap-4 px-5 pt-6 pb-4 dark:bg-[#0A0A0A] bg-white sticky top-0 z-30 border-b dark:border-white/5 border-gray-200 transition-colors duration-300">
         <button 
             onClick={() => {
                 if (!isSaving) {
@@ -184,7 +184,7 @@ const UserProfile: React.FC<Props> = ({ navigate, onLogout, role }) => {
         
         {/* Cover Photo Section */}
         <div 
-            className={`relative w-full h-48 dark:bg-[#1c262c] bg-gray-200 overflow-hidden ${isEditing && !isSaving ? 'cursor-pointer group' : ''}`}
+            className={`relative w-full h-48 dark:bg-[#141414] bg-gray-200 overflow-hidden ${isEditing && !isSaving ? 'cursor-pointer group' : ''}`}
             onClick={() => isEditing && !isSaving && coverInputRef.current?.click()}
         >
             <img 
@@ -224,7 +224,7 @@ const UserProfile: React.FC<Props> = ({ navigate, onLogout, role }) => {
             {/* Profile Image Section */}
             <div className="flex flex-col items-center mb-8 -mt-16 relative z-10">
                 <div className={`relative group ${isEditing && !isSaving ? 'cursor-pointer' : ''}`} onClick={() => isEditing && !isSaving && fileInputRef.current?.click()}>
-                    <div className={`w-32 h-32 rounded-full border-[5px] dark:border-[#101c22] border-white p-0.5 relative overflow-hidden dark:bg-[#1c262c] bg-white ${isEditing && !isSaving ? 'dark:hover:border-[#25323a] hover:border-gray-200' : ''} transition-colors shadow-xl`}>
+                    <div className={`w-32 h-32 rounded-full border-[5px] dark:border-[#0A0A0A] border-white p-0.5 relative overflow-hidden dark:bg-[#141414] bg-white ${isEditing && !isSaving ? 'dark:hover:border-[#1F1F1F] hover:border-gray-200' : ''} transition-colors shadow-xl`}>
                         <img 
                             src={avatar || defaultAvatar} 
                             className={`w-full h-full rounded-full object-cover ${isSaving ? 'opacity-50' : ''}`}
@@ -249,14 +249,14 @@ const UserProfile: React.FC<Props> = ({ navigate, onLogout, role }) => {
                     {/* Edit Actions */}
                     {isEditing && !isSaving && (
                         <>
-                            <button className="absolute bottom-1 right-1 w-8 h-8 bg-ediflow-primary rounded-full flex items-center justify-center border-4 dark:border-[#101c22] border-white text-black z-20 hover:scale-110 transition-transform shadow-sm">
+                            <button className="absolute bottom-1 right-1 w-8 h-8 bg-ediflow-primary rounded-full flex items-center justify-center border-4 dark:border-[#0A0A0A] border-white text-black z-20 hover:scale-110 transition-transform shadow-sm">
                                 <span className="material-symbols-outlined text-sm font-bold">edit</span>
                             </button>
                             
                             {avatar && (
                                 <button 
                                     onClick={handleDeleteImage}
-                                    className="absolute top-1 right-1 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center border-4 dark:border-[#101c22] border-white text-white z-20 hover:scale-110 transition-transform shadow-sm"
+                                    className="absolute top-1 right-1 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center border-4 dark:border-[#0A0A0A] border-white text-white z-20 hover:scale-110 transition-transform shadow-sm"
                                     title="Eliminar foto"
                                 >
                                     <span className="material-symbols-outlined text-sm font-bold">close</span>
@@ -283,7 +283,7 @@ const UserProfile: React.FC<Props> = ({ navigate, onLogout, role }) => {
                     <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Información Personal</h3>
                     
                     <div className="space-y-4">
-                        <div className={`dark:bg-[#1c262c] bg-white rounded-xl border dark:border-white/5 border-gray-200 px-4 py-2 relative transition-colors ${isEditing && !isSaving ? 'focus-within:border-ediflow-primary/50 ring-1 ring-transparent focus-within:ring-ediflow-primary/50' : ''} shadow-sm`}>
+                        <div className={`dark:bg-[#141414] bg-white rounded-xl border dark:border-white/5 border-gray-200 px-4 py-2 relative transition-colors ${isEditing && !isSaving ? 'focus-within:border-ediflow-primary/50 ring-1 ring-transparent focus-within:ring-ediflow-primary/50' : ''} shadow-sm`}>
                             <label className="text-[10px] text-gray-400 font-bold uppercase">Nombre Completo</label>
                             <input 
                                 type="text" 
@@ -294,7 +294,7 @@ const UserProfile: React.FC<Props> = ({ navigate, onLogout, role }) => {
                             />
                         </div>
 
-                        <div className={`dark:bg-[#1c262c] bg-white rounded-xl border dark:border-white/5 border-gray-200 px-4 py-2 relative transition-colors ${isEditing && !isSaving ? 'focus-within:border-ediflow-primary/50 ring-1 ring-transparent focus-within:ring-ediflow-primary/50' : ''} shadow-sm`}>
+                        <div className={`dark:bg-[#141414] bg-white rounded-xl border dark:border-white/5 border-gray-200 px-4 py-2 relative transition-colors ${isEditing && !isSaving ? 'focus-within:border-ediflow-primary/50 ring-1 ring-transparent focus-within:ring-ediflow-primary/50' : ''} shadow-sm`}>
                             <label className="text-[10px] text-gray-400 font-bold uppercase">RUT / Identificación</label>
                             <input 
                                 type="text" 
@@ -311,7 +311,7 @@ const UserProfile: React.FC<Props> = ({ navigate, onLogout, role }) => {
                     <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Contacto</h3>
                     
                     <div className="space-y-4">
-                        <div className={`dark:bg-[#1c262c] bg-white rounded-xl border dark:border-white/5 border-gray-200 px-4 py-2 relative transition-colors ${isEditing && !isSaving ? 'focus-within:border-ediflow-primary/50 ring-1 ring-transparent focus-within:ring-ediflow-primary/50' : ''} shadow-sm`}>
+                        <div className={`dark:bg-[#141414] bg-white rounded-xl border dark:border-white/5 border-gray-200 px-4 py-2 relative transition-colors ${isEditing && !isSaving ? 'focus-within:border-ediflow-primary/50 ring-1 ring-transparent focus-within:ring-ediflow-primary/50' : ''} shadow-sm`}>
                             <label className="text-[10px] text-gray-400 font-bold uppercase">Correo Electrónico</label>
                             <input 
                                 type="email" 
@@ -322,7 +322,7 @@ const UserProfile: React.FC<Props> = ({ navigate, onLogout, role }) => {
                             />
                         </div>
 
-                        <div className={`dark:bg-[#1c262c] bg-white rounded-xl border dark:border-white/5 border-gray-200 px-4 py-2 relative transition-colors ${isEditing && !isSaving ? 'focus-within:border-ediflow-primary/50 ring-1 ring-transparent focus-within:ring-ediflow-primary/50' : ''} shadow-sm`}>
+                        <div className={`dark:bg-[#141414] bg-white rounded-xl border dark:border-white/5 border-gray-200 px-4 py-2 relative transition-colors ${isEditing && !isSaving ? 'focus-within:border-ediflow-primary/50 ring-1 ring-transparent focus-within:ring-ediflow-primary/50' : ''} shadow-sm`}>
                             <label className="text-[10px] text-gray-400 font-bold uppercase">Teléfono</label>
                             <input 
                                 type="tel" 
@@ -340,7 +340,7 @@ const UserProfile: React.FC<Props> = ({ navigate, onLogout, role }) => {
             <div className={`mt-8 space-y-3 transition-opacity duration-300 ${isEditing ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
                 
                 {/* Dark Mode Toggle */}
-                <div className="w-full flex items-center justify-between p-4 dark:bg-[#1c262c] bg-white hover:bg-gray-50 dark:hover:bg-[#25323a] transition-all rounded-xl border dark:border-white/5 border-gray-200 shadow-sm">
+                <div className="w-full flex items-center justify-between p-4 dark:bg-[#141414] bg-white hover:bg-gray-50 dark:hover:bg-[#1F1F1F] transition-all rounded-xl border dark:border-white/5 border-gray-200 shadow-sm">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg dark:bg-white/10 bg-gray-100 dark:text-white text-gray-600 flex items-center justify-center">
                             <span className="material-symbols-outlined">{isDark ? 'dark_mode' : 'light_mode'}</span>
@@ -358,7 +358,7 @@ const UserProfile: React.FC<Props> = ({ navigate, onLogout, role }) => {
 
                 <button 
                     onClick={() => navigate('NotificationSettings')}
-                    className="w-full flex items-center justify-between p-4 dark:bg-[#1c262c] bg-white hover:bg-gray-50 dark:hover:bg-[#25323a] active:scale-[0.99] transition-all rounded-xl border dark:border-white/5 border-gray-200 shadow-sm"
+                    className="w-full flex items-center justify-between p-4 dark:bg-[#141414] bg-white hover:bg-gray-50 dark:hover:bg-[#1F1F1F] active:scale-[0.99] transition-all rounded-xl border dark:border-white/5 border-gray-200 shadow-sm"
                 >
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-500 flex items-center justify-center">
@@ -369,7 +369,7 @@ const UserProfile: React.FC<Props> = ({ navigate, onLogout, role }) => {
                     <span className="material-symbols-outlined text-gray-500">chevron_right</span>
                 </button>
 
-                <button className="w-full flex items-center justify-between p-4 dark:bg-[#1c262c] bg-white hover:bg-gray-50 dark:hover:bg-[#25323a] active:scale-[0.99] transition-all rounded-xl border dark:border-white/5 border-gray-200 shadow-sm">
+                <button className="w-full flex items-center justify-between p-4 dark:bg-[#141414] bg-white hover:bg-gray-50 dark:hover:bg-[#1F1F1F] active:scale-[0.99] transition-all rounded-xl border dark:border-white/5 border-gray-200 shadow-sm">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center">
                             <span className="material-symbols-outlined">lock</span>
@@ -381,7 +381,7 @@ const UserProfile: React.FC<Props> = ({ navigate, onLogout, role }) => {
 
                 <button 
                     onClick={handleDownloadData}
-                    className="w-full flex items-center justify-between p-4 dark:bg-[#1c262c] bg-white hover:bg-gray-50 dark:hover:bg-[#25323a] active:scale-[0.99] transition-all rounded-xl border dark:border-white/5 border-gray-200 shadow-sm"
+                    className="w-full flex items-center justify-between p-4 dark:bg-[#141414] bg-white hover:bg-gray-50 dark:hover:bg-[#1F1F1F] active:scale-[0.99] transition-all rounded-xl border dark:border-white/5 border-gray-200 shadow-sm"
                 >
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
@@ -410,7 +410,7 @@ const UserProfile: React.FC<Props> = ({ navigate, onLogout, role }) => {
                     <h3 className="text-sm font-bold dark:text-white text-gray-900 uppercase tracking-wider">Sobre Ediflow</h3>
                 </div>
                 
-                <div className="dark:bg-[#1c262c] bg-white rounded-xl border dark:border-white/5 border-gray-200 p-4 space-y-4 shadow-sm">
+                <div className="dark:bg-[#141414] bg-white rounded-xl border dark:border-white/5 border-gray-200 p-4 space-y-4 shadow-sm">
                     <p className="text-sm dark:text-gray-400 text-gray-500 leading-relaxed">
                         Ediflow es la plataforma integral líder para la gestión inteligente de comunidades y edificios. Conectamos a conserjes, administradores y residentes en un solo lugar.
                     </p>

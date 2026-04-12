@@ -79,7 +79,7 @@ const ManageExpenses: React.FC<Props> = ({ navigate }) => {
   };
 
   return (
-    <div className="flex flex-col min-h-full bg-[#101c22] relative">
+    <div className="flex flex-col min-h-full bg-[#0A0A0A] relative">
       {/* Toast Notification */}
       {toastMessage && (
           <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 bg-green-500 text-white px-6 py-3 rounded-full shadow-2xl font-bold text-sm flex items-center gap-2 animate-fade-in-up whitespace-nowrap">
@@ -100,7 +100,7 @@ const ManageExpenses: React.FC<Props> = ({ navigate }) => {
 
               {!scannedInvoice ? (
                   <div className="w-full max-w-sm flex flex-col items-center">
-                      <div className="w-full aspect-[3/4] border-2 border-ediflow-primary/50 rounded-2xl relative overflow-hidden mb-6 flex items-center justify-center bg-[#1c262c]">
+                      <div className="w-full aspect-[3/4] border-2 border-ediflow-primary/50 rounded-2xl relative overflow-hidden mb-6 flex items-center justify-center bg-[#141414]">
                           <span className="material-symbols-outlined text-6xl text-gray-600">receipt</span>
                           
                           {/* Scanning Laser */}
@@ -117,28 +117,28 @@ const ManageExpenses: React.FC<Props> = ({ navigate }) => {
                       </div>
                   </div>
               ) : (
-                  <div className="w-full max-w-sm bg-[#1c262c] rounded-2xl p-6 border border-white/10 animate-fade-in-up">
+                  <div className="w-full max-w-sm bg-[#141414] rounded-2xl p-6 border border-white/10 animate-fade-in-up">
                       <div className="w-16 h-16 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center mx-auto mb-4">
                           <span className="material-symbols-outlined text-3xl">check</span>
                       </div>
                       <h3 className="text-white font-bold text-xl text-center mb-6">Datos Extraídos</h3>
                       
                       <div className="space-y-4 mb-8">
-                          <div className="bg-[#101c22] p-3 rounded-xl border border-white/5">
+                          <div className="bg-[#0A0A0A] p-3 rounded-xl border border-white/5">
                               <p className="text-[10px] text-gray-500 uppercase font-bold mb-1">Proveedor</p>
                               <p className="text-white font-bold">{scannedInvoice.provider}</p>
                           </div>
                           <div className="grid grid-cols-2 gap-3">
-                              <div className="bg-[#101c22] p-3 rounded-xl border border-white/5">
+                              <div className="bg-[#0A0A0A] p-3 rounded-xl border border-white/5">
                                   <p className="text-[10px] text-gray-500 uppercase font-bold mb-1">Monto Total</p>
                                   <p className="text-ediflow-primary font-bold text-lg">${scannedInvoice.amount.toLocaleString('es-CL')}</p>
                               </div>
-                              <div className="bg-[#101c22] p-3 rounded-xl border border-white/5">
+                              <div className="bg-[#0A0A0A] p-3 rounded-xl border border-white/5">
                                   <p className="text-[10px] text-gray-500 uppercase font-bold mb-1">Fecha</p>
                                   <p className="text-white font-bold">{scannedInvoice.date}</p>
                               </div>
                           </div>
-                          <div className="bg-[#101c22] p-3 rounded-xl border border-white/5">
+                          <div className="bg-[#0A0A0A] p-3 rounded-xl border border-white/5">
                               <p className="text-[10px] text-gray-500 uppercase font-bold mb-1">Categoría Sugerida</p>
                               <p className="text-white font-bold">{scannedInvoice.category}</p>
                           </div>
@@ -166,7 +166,7 @@ const ManageExpenses: React.FC<Props> = ({ navigate }) => {
       {/* Prorrateo Modal */}
       {showProrrateoModal && (
           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col justify-end">
-              <div className="bg-[#1c262c] rounded-t-3xl p-6 border-t border-white/10 animate-fade-in-up">
+              <div className="bg-[#141414] rounded-t-3xl p-6 border-t border-white/10 animate-fade-in-up">
                   <div className="flex justify-between items-center mb-6">
                       <div>
                           <h2 className="text-xl font-bold text-white">Cerrar Mes y Prorratear</h2>
@@ -178,11 +178,11 @@ const ManageExpenses: React.FC<Props> = ({ navigate }) => {
                   </div>
                   
                   <div className="space-y-4 mb-8">
-                      <div className="flex justify-between items-center bg-[#101c22] p-4 rounded-xl border border-white/5">
+                      <div className="flex justify-between items-center bg-[#0A0A0A] p-4 rounded-xl border border-white/5">
                           <span className="text-sm text-gray-400">Total Egresos Ordinarios</span>
                           <span className="text-white font-bold">${totalExpenses.toLocaleString('es-CL')}</span>
                       </div>
-                      <div className="flex justify-between items-center bg-[#101c22] p-4 rounded-xl border border-white/5">
+                      <div className="flex justify-between items-center bg-[#0A0A0A] p-4 rounded-xl border border-white/5">
                           <span className="text-sm text-gray-400">Fondo de Reserva (5% min)</span>
                           <span className="text-white font-bold">${reserveFund.toLocaleString('es-CL')}</span>
                       </div>
@@ -204,11 +204,11 @@ const ManageExpenses: React.FC<Props> = ({ navigate }) => {
       )}
 
       {/* Header */}
-      <header className="sticky top-0 z-20 bg-[#101c22]/95 backdrop-blur-md border-b border-white/5 p-4 flex items-center justify-between">
+      <header className="sticky top-0 z-20 bg-[#0A0A0A]/95 backdrop-blur-md border-b border-white/5 p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button 
             onClick={() => navigate('AdminDashboard')}
-            className="w-10 h-10 rounded-full bg-[#1c262c] flex items-center justify-center text-white hover:bg-[#2a363e] active:scale-90 transition-all"
+            className="w-10 h-10 rounded-full bg-[#141414] flex items-center justify-center text-white hover:bg-[#242424] active:scale-90 transition-all"
           >
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
@@ -221,7 +221,7 @@ const ManageExpenses: React.FC<Props> = ({ navigate }) => {
 
       <main className="flex-1 p-4 pb-24 space-y-8">
          {/* Pareto KPI */}
-         <div className="bg-gradient-to-br from-[#1c262c] to-[#101c22] p-5 rounded-3xl border border-white/5 shadow-xl relative overflow-hidden">
+         <div className="bg-gradient-to-br from-[#141414] to-[#0A0A0A] p-5 rounded-3xl border border-white/5 shadow-xl relative overflow-hidden">
             <div className="relative z-10 flex justify-between items-end">
                <div>
                   <p className="text-xs text-gray-400 font-bold uppercase mb-1">Fondo Común (Marzo)</p>
@@ -244,7 +244,7 @@ const ManageExpenses: React.FC<Props> = ({ navigate }) => {
             <h2 className="text-xs font-bold text-gray-500 uppercase mb-3 ml-1">Flujo de Trabajo (Regla 80/20)</h2>
             <div className="grid grid-cols-1 gap-3">
                {/* Action 1: OCR */}
-               <button onClick={startOCRScan} className="bg-[#1c262c] hover:bg-[#25323a] active:scale-[0.98] transition-all p-4 rounded-2xl border border-white/5 flex items-center gap-4 group">
+               <button onClick={startOCRScan} className="bg-[#141414] hover:bg-[#1F1F1F] active:scale-[0.98] transition-all p-4 rounded-2xl border border-white/5 flex items-center gap-4 group">
                   <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center group-hover:bg-blue-500 group-hover:text-white transition-colors">
                      <span className="material-symbols-outlined text-2xl">document_scanner</span>
                   </div>
@@ -256,7 +256,7 @@ const ManageExpenses: React.FC<Props> = ({ navigate }) => {
                </button>
 
                {/* Action 2: Prorrateo */}
-               <button onClick={() => setShowProrrateoModal(true)} className="bg-[#1c262c] hover:bg-[#25323a] active:scale-[0.98] transition-all p-4 rounded-2xl border border-white/5 flex items-center gap-4 group">
+               <button onClick={() => setShowProrrateoModal(true)} className="bg-[#141414] hover:bg-[#1F1F1F] active:scale-[0.98] transition-all p-4 rounded-2xl border border-white/5 flex items-center gap-4 group">
                   <div className="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center group-hover:bg-purple-500 group-hover:text-white transition-colors">
                      <span className="material-symbols-outlined text-2xl">calculate</span>
                   </div>
@@ -268,7 +268,7 @@ const ManageExpenses: React.FC<Props> = ({ navigate }) => {
                </button>
 
                {/* Action 3: Cobranza */}
-               <button onClick={handleNotify} className="bg-[#1c262c] hover:bg-[#25323a] active:scale-[0.98] transition-all p-4 rounded-2xl border border-white/5 flex items-center gap-4 group">
+               <button onClick={handleNotify} className="bg-[#141414] hover:bg-[#1F1F1F] active:scale-[0.98] transition-all p-4 rounded-2xl border border-white/5 flex items-center gap-4 group">
                   <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center group-hover:bg-amber-500 group-hover:text-white transition-colors">
                      <span className="material-symbols-outlined text-2xl">notifications_active</span>
                   </div>
@@ -287,7 +287,7 @@ const ManageExpenses: React.FC<Props> = ({ navigate }) => {
                <h2 className="text-xs font-bold text-gray-500 uppercase">Atención Requerida</h2>
                <button className="text-ediflow-primary text-xs font-bold active:opacity-70 transition-opacity">Ver todo</button>
             </div>
-            <div className="bg-[#1c262c] rounded-2xl border border-white/5 divide-y divide-white/5">
+            <div className="bg-[#141414] rounded-2xl border border-white/5 divide-y divide-white/5">
                <AttentionItem icon="warning" color="text-red-400" bg="bg-red-500/10" title="Depto 103 atrasado" desc="2 meses pendientes ($170.000)" />
                <AttentionItem icon="receipt" color="text-blue-400" bg="bg-blue-500/10" title="Factura Enel ingresada" desc="Por $450.000 (Pendiente de pago)" />
                <AttentionItem icon="warning" color="text-amber-400" bg="bg-amber-500/10" title="Depto 102 pendiente" desc="Vence en 2 días ($92.500)" />

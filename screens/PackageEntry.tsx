@@ -103,7 +103,7 @@ const PackageEntry: React.FC<Props> = ({ navigate }) => {
 
   if (showSuccess) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-full bg-[#181811] p-6 text-center">
+      <div className="flex flex-col items-center justify-center min-h-full bg-[#0A0A0A] p-6 text-center">
         <div className="w-24 h-24 bg-ediflow-primary/20 rounded-full flex items-center justify-center mb-6 animate-bounce">
           <span className="material-symbols-outlined text-6xl text-ediflow-primary">mark_email_read</span>
         </div>
@@ -115,9 +115,9 @@ const PackageEntry: React.FC<Props> = ({ navigate }) => {
   }
 
   return (
-    <div className="flex flex-col min-h-full bg-[#181811]">
+    <div className="flex flex-col min-h-full bg-[#0A0A0A]">
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-[#181811]/95 backdrop-blur-sm px-4 py-4 flex items-center border-b border-white/5">
+      <div className="sticky top-0 z-20 bg-[#0A0A0A]/95 backdrop-blur-sm px-4 py-4 flex items-center border-b border-white/5">
         <button 
           onClick={() => navigate('ConciergeDashboard')}
           className="w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center transition-all active:scale-90"
@@ -131,7 +131,7 @@ const PackageEntry: React.FC<Props> = ({ navigate }) => {
         {/* Tracking Code */}
         <div className="flex flex-col gap-2">
           <label className="text-sm font-medium text-white">Código de Seguimiento *</label>
-          <div className="flex w-full items-center bg-[#24241A] rounded-xl overflow-hidden border border-white/5 focus-within:border-ediflow-primary/50 transition-colors">
+          <div className="flex w-full items-center bg-[#141414] rounded-xl overflow-hidden border border-white/5 focus-within:border-ediflow-primary/50 transition-colors">
             <input 
               type="text" 
               value={trackingCode}
@@ -160,7 +160,7 @@ const PackageEntry: React.FC<Props> = ({ navigate }) => {
                 <select 
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
-                  className="w-full bg-[#24241A] text-white border border-white/5 rounded-xl h-14 px-4 appearance-none focus:ring-1 focus:ring-ediflow-primary cursor-pointer transition-colors"
+                  className="w-full bg-[#141414] text-white border border-white/5 rounded-xl h-14 px-4 appearance-none focus:ring-1 focus:ring-ediflow-primary cursor-pointer transition-colors"
                 >
                     <option value="">Seleccionar unidad...</option>
                     <option value="101">101 - Torre A</option>
@@ -192,7 +192,7 @@ const PackageEntry: React.FC<Props> = ({ navigate }) => {
                         className={`flex items-center gap-2 px-4 h-12 rounded-lg border-2 transition-all whitespace-nowrap active:scale-95 ${
                             selectedCarrier === carrier.id 
                             ? 'bg-ediflow-primary/10 border-ediflow-primary text-ediflow-primary' 
-                            : 'bg-[#24241A] border-transparent text-white/60 hover:bg-[#2A2A20]'
+                            : 'bg-[#141414] border-transparent text-white/60 hover:bg-[#1F1F1F]'
                         }`}
                     >
                         <span className="material-symbols-outlined text-[18px]">{carrier.icon}</span>
@@ -208,7 +208,7 @@ const PackageEntry: React.FC<Props> = ({ navigate }) => {
              <div className="flex gap-4 items-center">
                  <div 
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-32 h-32 rounded-xl bg-[#24241A] border-2 border-dashed border-[#444430] hover:border-ediflow-primary hover:bg-[#2A2A20] transition-all flex flex-col items-center justify-center gap-2 cursor-pointer group active:scale-95 overflow-hidden relative"
+                    className="w-32 h-32 rounded-xl bg-[#141414] border-2 border-dashed border-[#333333] hover:border-ediflow-primary hover:bg-[#1F1F1F] transition-all flex flex-col items-center justify-center gap-2 cursor-pointer group active:scale-95 overflow-hidden relative"
                  >
                      {photo ? (
                        <>
@@ -219,7 +219,7 @@ const PackageEntry: React.FC<Props> = ({ navigate }) => {
                        </>
                      ) : (
                        <>
-                         <div className="w-10 h-10 rounded-full bg-[#333328] group-hover:bg-ediflow-primary group-hover:text-black flex items-center justify-center text-white/50 transition-colors">
+                         <div className="w-10 h-10 rounded-full bg-[#292929] group-hover:bg-ediflow-primary group-hover:text-black flex items-center justify-center text-white/50 transition-colors">
                             <span className="material-symbols-outlined">photo_camera</span>
                          </div>
                          <span className="text-xs font-medium text-white/50 group-hover:text-white">Tomar Foto</span>
@@ -250,7 +250,7 @@ const PackageEntry: React.FC<Props> = ({ navigate }) => {
                 className={`flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full transition-all active:scale-95 ${
                   isRecording 
                     ? 'bg-red-500/20 text-red-500 shadow-[0_0_10px_rgba(239,68,68,0.3)] animate-pulse' 
-                    : 'bg-[#2A2A20] text-gray-400 hover:text-white hover:bg-[#333328]'
+                    : 'bg-[#1F1F1F] text-gray-400 hover:text-white hover:bg-[#292929]'
                 }`}
               >
                 <span className="material-symbols-outlined text-[16px]">{isRecording ? 'mic' : 'mic_none'}</span>
@@ -263,7 +263,7 @@ const PackageEntry: React.FC<Props> = ({ navigate }) => {
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Ej. Paquete con abolladuras, entregado a vecino..."
                 rows={3}
-                className={`w-full bg-[#24241A] border rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none transition-colors resize-none ${
+                className={`w-full bg-[#141414] border rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none transition-colors resize-none ${
                   isRecording ? 'border-red-500/50 focus:border-red-500' : 'border-white/5 focus:border-ediflow-primary'
                 }`}
               />
@@ -280,7 +280,7 @@ const PackageEntry: React.FC<Props> = ({ navigate }) => {
       </div>
 
       {/* Sticky Bottom Button */}
-      <div className="fixed bottom-0 w-full max-w-[420px] p-4 bg-[#181811]/95 backdrop-blur-md border-t border-white/5 z-30">
+      <div className="fixed bottom-0 w-full max-w-[420px] p-4 bg-[#0A0A0A]/95 backdrop-blur-md border-t border-white/5 z-30">
         <button 
           onClick={handleSubmit}
           disabled={!trackingCode || !department || isSubmitting}

@@ -12,10 +12,14 @@ import PaymentsScreen from './screens/PaymentsScreen';
 import HistoryScreen from './screens/HistoryScreen';
 import UserProfile from './screens/UserProfile';
 import RegisterNovelty from './screens/RegisterNovelty';
-import LoginScreen, { User, UserRole } from './screens/LoginScreen';
+import LoginScreen from './screens/LoginScreen';
 import ManageExpenses from './screens/ManageExpenses';
 import ManualVisitorRegistration from './screens/ManualVisitorRegistration';
 import StaffManagement from './screens/StaffManagement';
+import RegisterPayment from './screens/RegisterPayment';
+import ResidentDirectory from './screens/ResidentDirectory';
+import { useAppContext } from './src/context/AppContext';
+import { User, UserRole } from './src/types';
 
 // Navigation types
 export type ScreenName = 
@@ -34,10 +38,12 @@ export type ScreenName =
   | 'RegisterNovelty'
   | 'ManageExpenses'
   | 'ManualVisitorRegistration'
-  | 'StaffManagement';
+  | 'StaffManagement'
+  | 'RegisterPayment'
+  | 'ResidentDirectory';
 
 const App: React.FC = () => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const { currentUser, setCurrentUser } = useAppContext();
   const [currentScreen, setCurrentScreen] = useState<ScreenName>('ConciergeDashboard');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -70,8 +76,8 @@ const App: React.FC = () => {
     }
 
     const roleAccess: Record<UserRole, ScreenName[]> = {
-      admin: ['AdminDashboard', 'ManageExpenses', 'CommunityWall', 'MessagesScreen', 'PaymentsScreen', 'HistoryScreen', 'UserProfile', 'NotificationSettings', 'StaffManagement'],
-      concierge: ['ConciergeDashboard', 'PackageEntry', 'AccessControl', 'RegisterNovelty', 'MessagesScreen', 'HistoryScreen', 'UserProfile', 'NotificationSettings', 'ManualVisitorRegistration'],
+      admin: ['AdminDashboard', 'ManageExpenses', 'CommunityWall', 'MessagesScreen', 'PaymentsScreen', 'HistoryScreen', 'UserProfile', 'NotificationSettings', 'StaffManagement', 'ResidentDirectory'],
+      concierge: ['ConciergeDashboard', 'PackageEntry', 'AccessControl', 'RegisterNovelty', 'MessagesScreen', 'HistoryScreen', 'UserProfile', 'NotificationSettings', 'ManualVisitorRegistration', 'RegisterPayment', 'ResidentDirectory'],
       resident: ['ResidentServices', 'CommunityWall', 'MessagesScreen', 'PaymentsScreen', 'UserProfile', 'NotificationSettings', 'QRCodeScreen']
     };
 
@@ -99,6 +105,8 @@ const App: React.FC = () => {
       case 'ManageExpenses': return <ManageExpenses navigate={setCurrentScreen} />;
       case 'ManualVisitorRegistration': return <ManualVisitorRegistration navigate={setCurrentScreen} />;
       case 'StaffManagement': return <StaffManagement navigate={setCurrentScreen} />;
+      case 'RegisterPayment': return <RegisterPayment navigate={setCurrentScreen} />;
+      case 'ResidentDirectory': return <ResidentDirectory navigate={setCurrentScreen} role={currentUser.role} />;
       default: 
         return currentUser.role === 'admin' ? <AdminDashboard navigate={setCurrentScreen} /> :
                currentUser.role === 'concierge' ? <ConciergeDashboard navigate={setCurrentScreen} onLogout={handleLogout} /> :
@@ -114,6 +122,7 @@ const App: React.FC = () => {
       { id: 'AdminDashboard', label: 'Panel Admin', roles: ['admin'] },
       { id: 'ConciergeDashboard', label: 'Panel Conserje', roles: ['concierge'] },
       { id: 'ResidentServices', label: 'Servicios Residente', roles: ['resident'] },
+      { id: 'ResidentDirectory', label: 'Directorio', roles: ['admin', 'concierge'] },
       { id: 'CommunityWall', label: 'Muro Comunidad', roles: ['admin', 'resident'] },
       { id: 'PackageEntry', label: 'Ingresar Encomienda', roles: ['concierge'] },
       { id: 'AccessControl', label: 'Control Visitas', roles: ['concierge'] },
@@ -130,12 +139,10 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen dark:bg-black bg-gray-200 flex justify-center items-center font-sans transition-colors duration-300">
-      
-      {/* Mobile Frame Container */}
-      <div className="relative w-full max-w-[420px] h-[100dvh] max-h-[900px] dark:bg-ediflow-dark bg-gray-50 overflow-hidden shadow-2xl sm:rounded-[30px] sm:border-[8px] dark:border-[#333] border-gray-300 transition-colors duration-300">
+    <div className="min-h-screen bg-gray-100 dark:bg-[#000000] text-gray-900 dark:text-gray-100 font-sans transition-colors duration-500">
+      <div className="flex h-screen overflow-hidden">
         {/* Screen Content */}
-        <div className="h-full w-full overflow-y-auto no-scrollbar dark:bg-ediflow-dark bg-gray-50 dark:text-ediflow-text text-gray-900 relative transition-colors duration-300">
+        <div className="flex-1 overflow-y-auto no-scrollbar relative">
           {renderScreen()}
         </div>
 

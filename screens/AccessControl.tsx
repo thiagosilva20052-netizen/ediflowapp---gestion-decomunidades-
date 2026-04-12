@@ -64,7 +64,7 @@ const AccessControl: React.FC<Props> = ({ navigate }) => {
   }, [isScanning]);
 
   return (
-    <div className="flex flex-col min-h-full bg-[#101c22]">
+    <div className="flex flex-col min-h-full bg-[#0A0A0A]">
       
       {/* SCANNER OVERLAY */}
       {isScanning && (
@@ -125,7 +125,7 @@ const AccessControl: React.FC<Props> = ({ navigate }) => {
            </div>
 
            {/* Bottom Instructions */}
-           <div className="h-24 bg-[#101c22] p-4 flex flex-col items-center justify-center border-t border-white/10">
+           <div className="h-24 bg-[#0A0A0A] p-4 flex flex-col items-center justify-center border-t border-white/10">
               <p className="text-gray-400 text-sm">Escaneando código de visita...</p>
            </div>
         </div>
@@ -133,7 +133,7 @@ const AccessControl: React.FC<Props> = ({ navigate }) => {
 
 
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-[#101c22]/95 backdrop-blur-md border-b border-gray-800 p-4">
+      <header className="sticky top-0 z-10 bg-[#0A0A0A]/95 backdrop-blur-md border-b border-gray-800 p-4">
         <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
                 <button onClick={() => navigate('UserProfile')} className="w-10 h-10 rounded-full border border-ediflow-primary p-0.5 active:scale-90 transition-all">
@@ -156,14 +156,14 @@ const AccessControl: React.FC<Props> = ({ navigate }) => {
                 <input 
                     type="text" 
                     placeholder="Buscar depto (ej. 402, Torre A)..." 
-                    className="w-full bg-[#1c262c] border-none rounded-xl py-3.5 pl-12 text-white placeholder-gray-500 focus:ring-2 focus:ring-ediflow-primary"
+                    className="w-full bg-[#141414] border-none rounded-xl py-3.5 pl-12 text-white placeholder-gray-500 focus:ring-2 focus:ring-ediflow-primary"
                 />
             </div>
             
             <div className="grid grid-cols-[1fr_auto] gap-3">
                 <button 
                     onClick={() => navigate('ManualVisitorRegistration')}
-                    className="bg-[#1c262c] text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 border border-white/5 hover:bg-[#25323a] active:scale-[0.98] transition-all"
+                    className="bg-[#141414] text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 border border-white/5 hover:bg-[#1F1F1F] active:scale-[0.98] transition-all"
                 >
                     <span className="material-symbols-outlined text-gray-400">edit_square</span>
                     Registro Manual
@@ -207,7 +207,7 @@ const AccessControl: React.FC<Props> = ({ navigate }) => {
                 <h3 className="font-bold text-white text-lg">Historial de Hoy</h3>
                 <button className="text-gray-500 active:scale-90 transition-all"><span className="material-symbols-outlined">filter_list</span></button>
             </div>
-            <div className="bg-[#1c262c] rounded-xl border border-gray-800 divide-y divide-gray-800">
+            <div className="bg-[#141414] rounded-xl border border-gray-800 divide-y divide-gray-800">
                 <HistoryItem 
                     name="Pedro Soto (Delivery)" 
                     detail="Depto 201 • Rut Verificado" 
@@ -239,7 +239,7 @@ const AccessControl: React.FC<Props> = ({ navigate }) => {
          </section>
       </main>
 
-      <nav className="fixed bottom-0 w-full max-w-[420px] bg-[#1c262c]/95 backdrop-blur border-t border-gray-800 px-2 pt-2 pb-6 z-50">
+      <nav className="fixed bottom-0 w-full max-w-[420px] bg-[#141414]/95 backdrop-blur border-t border-gray-800 px-2 pt-2 pb-6 z-50">
         <div className="flex justify-around">
             <NavButton icon="shield_person" label="Control" active />
             <NavButton icon="inventory_2" label="Encomiendas" onClick={() => navigate('PackageEntry')} />
@@ -273,7 +273,7 @@ const AccessControl: React.FC<Props> = ({ navigate }) => {
 };
 
 const VisitorCard = ({ name, rut, depto, time, img, initials }: any) => (
-    <div className="bg-[#1c262c] p-4 rounded-xl border border-gray-800">
+    <div className="bg-[#141414] p-4 rounded-xl border border-gray-800">
         <div className="flex justify-between items-start mb-4">
             <div className="flex gap-3 items-center">
                 {img ? (

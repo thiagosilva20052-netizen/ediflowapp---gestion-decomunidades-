@@ -34,7 +34,7 @@ const ManualVisitorRegistration: React.FC<Props> = ({ navigate }) => {
 
   if (showSuccess) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-full bg-[#101c22] p-6 text-center">
+      <div className="flex flex-col items-center justify-center min-h-full bg-[#0A0A0A] p-6 text-center">
         <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mb-6">
           <span className="material-symbols-outlined text-5xl text-green-500">check_circle</span>
         </div>
@@ -45,12 +45,12 @@ const ManualVisitorRegistration: React.FC<Props> = ({ navigate }) => {
   }
 
   return (
-    <div className="flex flex-col min-h-full bg-[#101c22]">
+    <div className="flex flex-col min-h-full bg-[#0A0A0A]">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-[#101c22]/95 backdrop-blur-md border-b border-white/5 p-4 flex items-center gap-4">
+      <header className="sticky top-0 z-10 bg-[#0A0A0A]/95 backdrop-blur-md border-b border-white/5 p-4 flex items-center gap-4">
         <button 
           onClick={() => navigate('AccessControl')}
-          className="w-10 h-10 rounded-full bg-[#1c262c] flex items-center justify-center text-white hover:bg-[#25323a] active:scale-90 transition-all"
+          className="w-10 h-10 rounded-full bg-[#141414] flex items-center justify-center text-white hover:bg-[#1F1F1F] active:scale-90 transition-all"
         >
           <span className="material-symbols-outlined">arrow_back</span>
         </button>
@@ -70,7 +70,7 @@ const ManualVisitorRegistration: React.FC<Props> = ({ navigate }) => {
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
                 placeholder="Ej. Juan Pérez"
-                className="w-full bg-[#1c262c] border border-white/5 rounded-xl px-4 py-3.5 text-white placeholder-gray-600 focus:outline-none focus:border-ediflow-primary transition-colors"
+                className="w-full bg-[#141414] border border-white/5 rounded-xl px-4 py-3.5 text-white placeholder-gray-600 focus:outline-none focus:border-ediflow-primary transition-colors"
                 required
               />
             </div>
@@ -82,7 +82,7 @@ const ManualVisitorRegistration: React.FC<Props> = ({ navigate }) => {
                 value={formData.rut}
                 onChange={(e) => setFormData({...formData, rut: e.target.value})}
                 placeholder="Ej. 12.345.678-9"
-                className="w-full bg-[#1c262c] border border-white/5 rounded-xl px-4 py-3.5 text-white placeholder-gray-600 focus:outline-none focus:border-ediflow-primary transition-colors"
+                className="w-full bg-[#141414] border border-white/5 rounded-xl px-4 py-3.5 text-white placeholder-gray-600 focus:outline-none focus:border-ediflow-primary transition-colors"
                 required
               />
             </div>
@@ -98,7 +98,7 @@ const ManualVisitorRegistration: React.FC<Props> = ({ navigate }) => {
                 value={formData.depto}
                 onChange={(e) => setFormData({...formData, depto: e.target.value})}
                 placeholder="Ej. 402"
-                className="w-full bg-[#1c262c] border border-white/5 rounded-xl px-4 py-3.5 text-white placeholder-gray-600 focus:outline-none focus:border-ediflow-primary transition-colors"
+                className="w-full bg-[#141414] border border-white/5 rounded-xl px-4 py-3.5 text-white placeholder-gray-600 focus:outline-none focus:border-ediflow-primary transition-colors"
                 required
               />
             </div>
@@ -114,7 +114,7 @@ const ManualVisitorRegistration: React.FC<Props> = ({ navigate }) => {
                     className={`py-3 px-4 rounded-xl text-sm font-medium transition-all border ${
                       formData.reason === reason 
                         ? 'bg-ediflow-primary/10 border-ediflow-primary text-ediflow-primary' 
-                        : 'bg-[#1c262c] border-white/5 text-gray-400 hover:bg-[#25323a]'
+                        : 'bg-[#141414] border-white/5 text-gray-400 hover:bg-[#1F1F1F]'
                     }`}
                   >
                     {reason}
@@ -134,7 +134,7 @@ const ManualVisitorRegistration: React.FC<Props> = ({ navigate }) => {
                 value={formData.vehiclePlate}
                 onChange={(e) => setFormData({...formData, vehiclePlate: e.target.value})}
                 placeholder="Ej. AB CD 12"
-                className="w-full bg-[#1c262c] border border-white/5 rounded-xl px-4 py-3.5 text-white placeholder-gray-600 focus:outline-none focus:border-ediflow-primary transition-colors uppercase"
+                className="w-full bg-[#141414] border border-white/5 rounded-xl px-4 py-3.5 text-white placeholder-gray-600 focus:outline-none focus:border-ediflow-primary transition-colors uppercase"
               />
             </div>
 
@@ -145,7 +145,7 @@ const ManualVisitorRegistration: React.FC<Props> = ({ navigate }) => {
                 onChange={(e) => setFormData({...formData, notes: e.target.value})}
                 placeholder="Algún detalle importante..."
                 rows={3}
-                className="w-full bg-[#1c262c] border border-white/5 rounded-xl px-4 py-3.5 text-white placeholder-gray-600 focus:outline-none focus:border-ediflow-primary transition-colors resize-none"
+                className="w-full bg-[#141414] border border-white/5 rounded-xl px-4 py-3.5 text-white placeholder-gray-600 focus:outline-none focus:border-ediflow-primary transition-colors resize-none"
               />
             </div>
           </div>

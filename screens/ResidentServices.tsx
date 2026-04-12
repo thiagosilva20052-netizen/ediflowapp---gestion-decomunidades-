@@ -10,13 +10,13 @@ const ResidentServices: React.FC<Props> = ({ navigate }) => {
   const [isConciergeOnline, setIsConciergeOnline] = useState(true);
 
   return (
-    <div className="flex flex-col min-h-full bg-[#101c22]">
+    <div className="flex flex-col min-h-full bg-[#0A0A0A]">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-6 pb-4 bg-[#101c22] sticky top-0 z-30">
+      <div className="flex items-center justify-between px-5 pt-6 pb-4 bg-[#0A0A0A] sticky top-0 z-30">
         <Logo variant="horizontal" className="scale-90 origin-left" />
         <button 
             onClick={() => navigate('NotificationSettings')} 
-            className="w-10 h-10 rounded-full bg-[#1c262c] text-white flex items-center justify-center hover:bg-gray-700 active:scale-90 transition-all border border-white/5"
+            className="w-10 h-10 rounded-full bg-[#141414] text-white flex items-center justify-center hover:bg-gray-700 active:scale-90 transition-all border border-white/5"
             title="Configuración de Notificaciones"
         >
             <span className="material-symbols-outlined">notifications</span>
@@ -41,7 +41,7 @@ const ResidentServices: React.FC<Props> = ({ navigate }) => {
         {/* Concierge Card */}
         <div>
             <h2 className="text-lg font-bold text-white mb-3">Conserje de Turno</h2>
-            <div className="flex justify-between gap-4 rounded-2xl bg-[#1c262c] p-4 border border-white/5 relative overflow-hidden">
+            <div className="flex justify-between gap-4 rounded-2xl bg-[#141414] p-4 border border-white/5 relative overflow-hidden">
                 <div className="flex flex-col justify-between gap-3 relative z-10">
                     <div>
                         {/* Status Indicator */}
@@ -136,7 +136,7 @@ const ResidentServices: React.FC<Props> = ({ navigate }) => {
 
       </div>
 
-       <nav className="fixed bottom-0 w-full max-w-[420px] bg-[#151e24] border-t border-white/5 pb-6 pt-2 px-6 flex justify-between items-center z-30">
+       <nav className="fixed bottom-0 w-full max-w-[420px] bg-[#0F0F0F] border-t border-white/5 pb-6 pt-2 px-6 flex justify-between items-center z-30">
         <NavButton icon="home" label="Inicio" onClick={() => navigate('CommunityWall')} />
         <NavButton icon="grid_view" label="Servicios" active />
         <NavButton icon="payments" label="Pagos" onClick={() => navigate('PaymentsScreen')} />
@@ -147,7 +147,7 @@ const ResidentServices: React.FC<Props> = ({ navigate }) => {
 };
 
 const ServiceCard = ({ icon, title, subtitle, color, bgColor, onClick }: any) => (
-    <button onClick={onClick} className="bg-[#1c262c] hover:bg-[#25323a] active:scale-[0.98] transition-all p-4 rounded-2xl border border-white/5 flex flex-col justify-between items-start h-36 relative overflow-hidden group">
+    <button onClick={onClick} className="bg-[#141414] hover:bg-[#1F1F1F] active:scale-[0.98] transition-all p-4 rounded-2xl border border-white/5 flex flex-col justify-between items-start h-36 relative overflow-hidden group">
         <div className={`absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity`}>
              <span className={`material-symbols-outlined text-[100px] ${color}`}>{icon}</span>
         </div>

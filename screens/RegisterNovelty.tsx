@@ -83,7 +83,7 @@ const RegisterNovelty: React.FC<Props> = ({ navigate }) => {
 
   if (showSuccess) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-full bg-[#181811] p-6 text-center">
+      <div className="flex flex-col items-center justify-center min-h-full bg-[#0A0A0A] p-6 text-center">
         <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mb-6">
           <span className="material-symbols-outlined text-5xl text-green-500">check_circle</span>
         </div>
@@ -94,12 +94,12 @@ const RegisterNovelty: React.FC<Props> = ({ navigate }) => {
   }
 
   return (
-    <div className="flex flex-col min-h-full bg-[#181811]">
+    <div className="flex flex-col min-h-full bg-[#0A0A0A]">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-[#181811]/95 backdrop-blur-md border-b border-white/5 p-4 flex items-center gap-4">
+      <header className="sticky top-0 z-10 bg-[#0A0A0A]/95 backdrop-blur-md border-b border-white/5 p-4 flex items-center gap-4">
         <button 
           onClick={() => navigate('ConciergeDashboard')}
-          className="w-10 h-10 rounded-full bg-[#2A2A20] flex items-center justify-center text-white hover:bg-[#333328] active:scale-90 transition-all"
+          className="w-10 h-10 rounded-full bg-[#1F1F1F] flex items-center justify-center text-white hover:bg-[#292929] active:scale-90 transition-all"
         >
           <span className="material-symbols-outlined">arrow_back</span>
         </button>
@@ -120,7 +120,7 @@ const RegisterNovelty: React.FC<Props> = ({ navigate }) => {
                   className={`py-3 px-4 rounded-xl text-sm font-medium transition-all border ${
                     type === t 
                       ? 'bg-ediflow-primary/10 border-ediflow-primary text-ediflow-primary' 
-                      : 'bg-[#24241A] border-white/5 text-gray-400 hover:bg-[#2A2A20]'
+                      : 'bg-[#141414] border-white/5 text-gray-400 hover:bg-[#1F1F1F]'
                   }`}
                 >
                   {t}
@@ -137,7 +137,7 @@ const RegisterNovelty: React.FC<Props> = ({ navigate }) => {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Ej. Ascensor 2 no funciona"
-              className="w-full bg-[#24241A] border border-white/5 rounded-xl px-4 py-3.5 text-white placeholder-gray-600 focus:outline-none focus:border-ediflow-primary transition-colors"
+              className="w-full bg-[#141414] border border-white/5 rounded-xl px-4 py-3.5 text-white placeholder-gray-600 focus:outline-none focus:border-ediflow-primary transition-colors"
               required
             />
           </div>
@@ -152,7 +152,7 @@ const RegisterNovelty: React.FC<Props> = ({ navigate }) => {
                 className={`flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full transition-all active:scale-95 ${
                   isRecording 
                     ? 'bg-red-500/20 text-red-500 shadow-[0_0_10px_rgba(239,68,68,0.3)] animate-pulse' 
-                    : 'bg-[#2A2A20] text-gray-400 hover:text-white hover:bg-[#333328]'
+                    : 'bg-[#1F1F1F] text-gray-400 hover:text-white hover:bg-[#292929]'
                 }`}
               >
                 <span className="material-symbols-outlined text-[16px]">{isRecording ? 'mic' : 'mic_none'}</span>
@@ -165,7 +165,7 @@ const RegisterNovelty: React.FC<Props> = ({ navigate }) => {
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe el problema o situación..."
                 rows={4}
-                className={`w-full bg-[#24241A] border rounded-xl px-4 py-3.5 text-white placeholder-gray-600 focus:outline-none transition-colors resize-none ${
+                className={`w-full bg-[#141414] border rounded-xl px-4 py-3.5 text-white placeholder-gray-600 focus:outline-none transition-colors resize-none ${
                   isRecording ? 'border-red-500/50 focus:border-red-500' : 'border-white/5 focus:border-ediflow-primary'
                 }`}
                 required
@@ -183,7 +183,7 @@ const RegisterNovelty: React.FC<Props> = ({ navigate }) => {
           {/* Adjuntar Foto */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-400">Evidencia (Opcional)</label>
-            <button type="button" className="w-full border-2 border-dashed border-white/10 rounded-xl p-6 flex flex-col items-center justify-center gap-2 text-gray-500 hover:bg-[#24241A] hover:border-white/20 transition-all">
+            <button type="button" className="w-full border-2 border-dashed border-white/10 rounded-xl p-6 flex flex-col items-center justify-center gap-2 text-gray-500 hover:bg-[#141414] hover:border-white/20 transition-all">
               <span className="material-symbols-outlined text-3xl">add_a_photo</span>
               <span className="text-sm font-medium">Tomar o subir foto</span>
             </button>
@@ -205,7 +205,7 @@ const RegisterNovelty: React.FC<Props> = ({ navigate }) => {
                   className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all border ${
                     urgency === u.level 
                       ? `${u.bg} ${u.border} ${u.color}` 
-                      : 'bg-[#24241A] border-white/5 text-gray-500 hover:bg-[#2A2A20]'
+                      : 'bg-[#141414] border-white/5 text-gray-500 hover:bg-[#1F1F1F]'
                   }`}
                 >
                   {u.level}

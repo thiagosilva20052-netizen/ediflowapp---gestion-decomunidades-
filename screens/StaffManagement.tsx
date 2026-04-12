@@ -22,7 +22,7 @@ const StaffManagement: React.FC<Props> = ({ navigate }) => {
   };
 
   return (
-    <div className="flex flex-col min-h-full bg-[#101c22] relative">
+    <div className="flex flex-col min-h-full bg-[#0A0A0A] relative">
       {/* Toast Notification */}
       {toastMessage && (
           <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 bg-green-500 text-white px-6 py-3 rounded-full shadow-2xl font-bold text-sm flex items-center gap-2 animate-fade-in-up whitespace-nowrap">
@@ -32,11 +32,11 @@ const StaffManagement: React.FC<Props> = ({ navigate }) => {
       )}
 
       {/* Header */}
-      <header className="sticky top-0 z-20 bg-[#101c22]/95 backdrop-blur-md border-b border-white/5 p-4 flex items-center justify-between">
+      <header className="sticky top-0 z-20 bg-[#0A0A0A]/95 backdrop-blur-md border-b border-white/5 p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button 
             onClick={() => navigate('AdminDashboard')}
-            className="w-10 h-10 rounded-full bg-[#1c262c] flex items-center justify-center text-white hover:bg-[#2a363e] active:scale-90 transition-all"
+            className="w-10 h-10 rounded-full bg-[#141414] flex items-center justify-center text-white hover:bg-[#242424] active:scale-90 transition-all"
           >
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
@@ -49,14 +49,14 @@ const StaffManagement: React.FC<Props> = ({ navigate }) => {
 
       <main className="flex-1 p-4 pb-24 space-y-8">
          {/* Pareto KPI: Who is working right now */}
-         <div className="bg-gradient-to-br from-[#1c262c] to-[#101c22] p-5 rounded-3xl border border-white/5 shadow-xl relative overflow-hidden">
+         <div className="bg-gradient-to-br from-[#141414] to-[#0A0A0A] p-5 rounded-3xl border border-white/5 shadow-xl relative overflow-hidden">
             <div className="relative z-10 flex justify-between items-center">
                <div>
                   <p className="text-xs text-gray-400 font-bold uppercase mb-1">En Turno Ahora</p>
                   <div className="flex items-center gap-3 mt-2">
                       <div className="relative">
-                          <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=100" className="w-12 h-12 rounded-full object-cover border-2 border-[#101c22]" />
-                          <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-[#101c22]"></div>
+                          <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=100" className="w-12 h-12 rounded-full object-cover border-2 border-[#0A0A0A]" />
+                          <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-[#0A0A0A]"></div>
                       </div>
                       <div>
                           <h3 className="text-white font-bold">Carlos Mendoza</h3>
@@ -79,7 +79,7 @@ const StaffManagement: React.FC<Props> = ({ navigate }) => {
             <h2 className="text-xs font-bold text-gray-500 uppercase mb-3 ml-1">Flujo de Trabajo (Regla 80/20)</h2>
             <div className="grid grid-cols-1 gap-3">
                {/* Action 1: Anticipos */}
-               <button className="bg-[#1c262c] hover:bg-[#25323a] active:scale-[0.98] transition-all p-4 rounded-2xl border border-white/5 flex items-center gap-4 group">
+               <button className="bg-[#141414] hover:bg-[#1F1F1F] active:scale-[0.98] transition-all p-4 rounded-2xl border border-white/5 flex items-center gap-4 group">
                   <div className="w-12 h-12 rounded-xl bg-green-500/10 text-green-400 flex items-center justify-center group-hover:bg-green-500 group-hover:text-white transition-colors">
                      <span className="material-symbols-outlined text-2xl">payments</span>
                   </div>
@@ -91,7 +91,7 @@ const StaffManagement: React.FC<Props> = ({ navigate }) => {
                </button>
 
                {/* Action 2: Turnos */}
-               <button className="bg-[#1c262c] hover:bg-[#25323a] active:scale-[0.98] transition-all p-4 rounded-2xl border border-white/5 flex items-center gap-4 group">
+               <button className="bg-[#141414] hover:bg-[#1F1F1F] active:scale-[0.98] transition-all p-4 rounded-2xl border border-white/5 flex items-center gap-4 group">
                   <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center group-hover:bg-blue-500 group-hover:text-white transition-colors">
                      <span className="material-symbols-outlined text-2xl">calendar_month</span>
                   </div>
@@ -103,7 +103,7 @@ const StaffManagement: React.FC<Props> = ({ navigate }) => {
                </button>
 
                {/* Action 3: Liquidaciones */}
-               <button className="bg-[#1c262c] hover:bg-[#25323a] active:scale-[0.98] transition-all p-4 rounded-2xl border border-white/5 flex items-center gap-4 group">
+               <button className="bg-[#141414] hover:bg-[#1F1F1F] active:scale-[0.98] transition-all p-4 rounded-2xl border border-white/5 flex items-center gap-4 group">
                   <div className="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center group-hover:bg-purple-500 group-hover:text-white transition-colors">
                      <span className="material-symbols-outlined text-2xl">receipt_long</span>
                   </div>
@@ -121,7 +121,7 @@ const StaffManagement: React.FC<Props> = ({ navigate }) => {
             <div className="flex justify-between items-center mb-3 ml-1">
                <h2 className="text-xs font-bold text-gray-500 uppercase">Atención Requerida</h2>
             </div>
-            <div className="bg-[#1c262c] rounded-2xl border border-white/5 divide-y divide-white/5">
+            <div className="bg-[#141414] rounded-2xl border border-white/5 divide-y divide-white/5">
                <div className="p-4 flex items-center gap-4 hover:bg-white/5 transition-colors">
                    <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-green-500/10 text-green-400">
                        <span className="material-symbols-outlined">payments</span>

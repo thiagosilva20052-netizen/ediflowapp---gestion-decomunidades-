@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { ScreenName } from '../App';
 import { UserRole } from './LoginScreen';
+import { Button } from '../src/components/ui/Button';
+import { Card } from '../src/components/ui/Card';
+import { useAppContext } from '../src/context/AppContext';
 
 interface Props {
   navigate: (screen: ScreenName) => void;
@@ -8,6 +11,7 @@ interface Props {
 }
 
 const PaymentsScreen: React.FC<Props> = ({ navigate, role }) => {
+  const { currentTenant } = useAppContext();
   const [showKhipuModal, setShowKhipuModal] = useState(false);
   const [showCashModal, setShowCashModal] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'processing' | 'success'>('pending');
@@ -29,12 +33,12 @@ const PaymentsScreen: React.FC<Props> = ({ navigate, role }) => {
   };
 
   return (
-    <div className="flex flex-col min-h-full bg-[#101c22] relative">
+    <div className="flex flex-col min-h-full bg-[#0A0A0A] relative">
       {/* Header */}
-      <header className="sticky top-0 z-20 bg-[#101c22]/95 backdrop-blur-md border-b border-white/5 p-4 flex items-center gap-3">
+      <header className="sticky top-0 z-20 bg-[#0A0A0A]/95 backdrop-blur-md border-b border-white/5 p-4 flex items-center gap-3">
         <button 
             onClick={handleBack}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-[#1c262c] hover:bg-[#25323a] active:scale-90 transition-all text-white border border-white/5"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-[#141414] hover:bg-[#1F1F1F] active:scale-90 transition-all text-white border border-white/5"
         >
             <span className="material-symbols-outlined">arrow_back</span>
         </button>
@@ -48,7 +52,7 @@ const PaymentsScreen: React.FC<Props> = ({ navigate, role }) => {
         
         {/* Pareto 80/20: The Main Action (Pay Current Debt) */}
         <section>
-            <div className="bg-gradient-to-br from-[#1c262c] to-[#101c22] rounded-3xl p-6 border border-white/5 shadow-xl relative overflow-hidden">
+            <Card gradient className="text-center">
                 {/* Decorative background */}
                 <div className="absolute -right-10 -top-10 w-40 h-40 bg-ediflow-primary/5 rounded-full blur-3xl pointer-events-none"></div>
                 
@@ -69,22 +73,24 @@ const PaymentsScreen: React.FC<Props> = ({ navigate, role }) => {
                             <p className="text-xs text-red-400 font-medium mb-6">Vence el 05 de Mayo</p>
                             
                             {/* 80% - Digital Transfer */}
-                            <button 
+                            <Button 
                                 onClick={() => setShowKhipuModal(true)}
-                                className="w-full bg-ediflow-primary text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-yellow-400 active:scale-[0.98] transition-all shadow-lg shadow-yellow-500/20"
+                                fullWidth
+                                icon="account_balance"
                             >
-                                <span className="material-symbols-outlined">account_balance</span>
                                 Pagar con Transferencia
-                            </button>
+                            </Button>
                             
                             {/* 20% - Manual/Cash Payment Alternative */}
-                            <button 
+                            <Button 
                                 onClick={() => setShowCashModal(true)}
-                                className="w-full mt-3 bg-transparent border border-white/10 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-white/5 active:scale-[0.98] transition-all"
+                                variant="outline"
+                                fullWidth
+                                icon="payments"
+                                className="mt-3"
                             >
-                                <span className="material-symbols-outlined text-lg">payments</span>
                                 Pagar en Conserjería
-                            </button>
+                            </Button>
 
                             <p className="text-[10px] text-gray-500 mt-4 flex items-center justify-center gap-1">
                                 <span className="material-symbols-outlined text-[12px]">lock</span>
@@ -93,13 +99,13 @@ const PaymentsScreen: React.FC<Props> = ({ navigate, role }) => {
                         </>
                     )}
                 </div>
-            </div>
+            </Card>
         </section>
 
         {/* Pareto 20%: Payment History */}
         <section>
             <h2 className="text-xs font-bold text-gray-500 uppercase mb-3 ml-1">Historial de Pagos</h2>
-            <div className="bg-[#1c262c] rounded-2xl border border-white/5 divide-y divide-white/5">
+            <div className="bg-[#141414] rounded-2xl border border-white/5 divide-y divide-white/5">
                 
                 {paymentStatus === 'success' && (
                     <div className="p-4 flex items-center justify-between hover:bg-white/5 transition-colors animate-fade-in-up">
@@ -164,7 +170,7 @@ const PaymentsScreen: React.FC<Props> = ({ navigate, role }) => {
       {/* Cash Payment Instructions Modal */}
       {showCashModal && (
           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col justify-center items-center p-4 animate-fade-in">
-              <div className="bg-[#1c262c] rounded-3xl p-6 w-full max-w-sm border border-white/10 animate-fade-in-up text-center relative overflow-hidden">
+              <div className="bg-[#141414] rounded-3xl p-6 w-full max-w-sm border border-white/10 animate-fade-in-up text-center relative overflow-hidden">
                   <div className="absolute top-0 left-0 w-full h-1 bg-ediflow-primary"></div>
                   <div className="w-16 h-16 bg-blue-500/10 text-blue-400 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-500/20">
                       <span className="material-symbols-outlined text-3xl">storefront</span>
@@ -175,12 +181,13 @@ const PaymentsScreen: React.FC<Props> = ({ navigate, role }) => {
                       <br/><br/>
                       Puedes pagar con <strong className="text-white">Efectivo</strong> o <strong className="text-white">Cheque</strong>. El conserje registrará tu pago inmediatamente en el sistema y recibirás tu comprobante.
                   </p>
-                  <button 
+                  <Button 
                       onClick={() => setShowCashModal(false)}
-                      className="w-full bg-white/10 text-white font-bold py-3 rounded-xl hover:bg-white/20 active:scale-95 transition-all"
+                      variant="secondary"
+                      fullWidth
                   >
                       Entendido
-                  </button>
+                  </Button>
               </div>
           </div>
       )}
@@ -203,7 +210,7 @@ const PaymentsScreen: React.FC<Props> = ({ navigate, role }) => {
                   <div className="p-6 flex-1 flex flex-col">
                       <div className="text-center mb-8">
                           <p className="text-gray-500 text-sm mb-1">Estás pagando a</p>
-                          <h2 className="text-xl font-bold text-black mb-4">Comunidad Edificio Central</h2>
+                          <h2 className="text-xl font-bold text-black mb-4">{currentTenant?.name || 'Comunidad Edificio Central'}</h2>
                           <div className="text-4xl font-bold text-black">$125.400</div>
                       </div>
 
