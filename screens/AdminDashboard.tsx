@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { ScreenName } from '../App';
 import { Logo } from '../components/Logo';
+import { Card } from '../src/components/ui/Card';
+import { Button } from '../src/components/ui/Button';
 
 interface Props {
   navigate: (screen: ScreenName) => void;
@@ -8,228 +10,350 @@ interface Props {
 
 const AdminDashboard: React.FC<Props> = ({ navigate }) => {
   return (
-    <div className="flex flex-col min-h-full bg-[#0A0A0A]">
-      <div className="sticky top-0 z-20 bg-[#0A0A0A]/95 backdrop-blur-sm px-5 py-4 flex items-center justify-between border-b border-white/5">
-         <div>
-            <Logo variant="horizontal" className="scale-90 origin-left mb-1" />
-            <div className="flex items-center gap-2 mt-1">
-                <span className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]"></span>
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Vista Administrador</span>
+    <div className="flex flex-col md:flex-row min-h-screen bg-[#000000] text-white">
+      
+      {/* Sidebar - Desktop Only */}
+      <aside className="hidden md:flex flex-col w-72 bg-[#121212] border-r-2 border-gray-800 p-8 sticky top-0 h-screen">
+        <Logo variant="horizontal" className="mb-12" />
+        
+        <nav className="flex-1 space-y-4">
+          <SidebarButton icon="dashboard" label="Resumen" active />
+          <SidebarButton icon="account_balance_wallet" label="Finanzas" onClick={() => navigate('ManageExpenses')} />
+          <SidebarButton icon="contacts" label="Directorio" onClick={() => navigate('ResidentDirectory')} />
+          <SidebarButton icon="badge" label="Personal" onClick={() => navigate('StaffManagement')} />
+          <SidebarButton icon="chat" label="Mensajería" onClick={() => navigate('MessagesScreen')} />
+          <SidebarButton icon="campaign" label="Comunidad" onClick={() => navigate('CommunityWall')} />
+        </nav>
+
+        <div className="mt-auto pt-8 border-t-2 border-gray-800">
+          <div className="flex items-center gap-4 p-4 bg-gray-900/50 rounded-2xl border-2 border-gray-800">
+            <div className="w-12 h-12 rounded-full bg-[#00AEEF] flex items-center justify-center font-black text-white">
+              AD
             </div>
-         </div>
-         <button onClick={() => navigate('ConciergeDashboard')} className="w-10 h-10 rounded-full bg-[#141414] flex items-center justify-center text-white hover:bg-[#242424] active:scale-90 transition-all">
-            <span className="material-symbols-outlined">settings_account_box</span>
-         </button>
-      </div>
-
-      <div className="p-5 pb-24 space-y-6">
-        {/* Metrics */}
-        <div>
-            <h2 className="text-xs font-bold text-gray-500 uppercase mb-3 ml-1">Métricas en Tiempo Real</h2>
-            <div className="flex gap-3 overflow-x-auto no-scrollbar">
-                <MetricCard icon="deck" color="text-[#13a4ec]" value="85%" label="Ocupación Quinchos" progress={85} progressColor="bg-[#13a4ec]" />
-                <MetricCard icon="inventory_2" color="text-amber-500" value="12" label="Sin retirar (+48h)" progress={40} progressColor="bg-amber-500" warning />
-                <MetricCard icon="assignment_late" color="text-purple-400" value="3" label="Reclamos Abiertos" progress={25} progressColor="bg-purple-400" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold truncate">Administrador</p>
+              <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Premium Plan</p>
             </div>
+          </div>
         </div>
+      </aside>
 
-        {/* Community Analytics Chart */}
-        <div>
-             <h2 className="text-xs font-bold text-gray-500 uppercase mb-3 ml-1">Estadísticas de la Comunidad</h2>
-             <StatsChart />
-        </div>
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col min-h-full pb-24 md:pb-10">
+        
+        {/* Header */}
+        <header className="px-6 md:px-10 pt-10 pb-6 flex flex-col md:flex-row md:items-center justify-between gap-6 sticky top-0 z-20 bg-[#000000]/80 backdrop-blur-md border-b-2 border-gray-800 md:border-none">
+          <div className="md:hidden flex justify-between items-center w-full">
+            <Logo variant="horizontal" className="scale-90 origin-left" />
+            <button onClick={() => navigate('UserProfile')} className="w-12 h-12 rounded-full bg-[#121212] flex items-center justify-center border-2 border-gray-800">
+              <span className="material-symbols-outlined">notifications</span>
+            </button>
+          </div>
+          
+          <div className="hidden md:block">
+            <h1 className="text-4xl font-black tracking-tight">Panel de Control</h1>
+            <p className="text-gray-500 font-medium mt-1">Bienvenido de nuevo, Administrador.</p>
+          </div>
 
-        {/* Administration */}
-        <div>
-             <h2 className="text-xs font-bold text-gray-500 uppercase mb-3 ml-1">Administración</h2>
-             <div className="grid grid-cols-2 gap-3">
-                <button 
-                  onClick={() => navigate('ManageExpenses')}
-                  className="bg-white text-[#0A0A0A] p-4 rounded-xl shadow-lg active:scale-[0.98] transition-all flex flex-col items-start gap-3 h-32 relative overflow-hidden"
-                >
-                    <div className="bg-[#0A0A0A]/10 w-10 h-10 rounded-lg flex items-center justify-center">
-                        <span className="material-symbols-outlined text-2xl">account_balance_wallet</span>
-                    </div>
-                    <span className="text-sm font-bold leading-tight text-left">Gastos<br/>Comunes</span>
-                    <span className="material-symbols-outlined absolute -right-2 -bottom-2 text-[80px] text-black/5">payments</span>
-                </button>
-                <button 
+          <div className="flex items-center gap-4">
+            <div className="hidden md:flex items-center gap-3 bg-[#121212] border-2 border-gray-800 rounded-full px-6 py-3">
+              <span className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></span>
+              <span className="text-sm font-bold uppercase tracking-widest">Sistema Online</span>
+            </div>
+            <Button 
+              onClick={() => navigate('ManageExpenses')}
+              className="bg-[#00AEEF] hover:bg-[#0090C5] text-white border-none px-8"
+              icon="add"
+            >
+              Nuevo Gasto
+            </Button>
+          </div>
+        </header>
+
+        {/* Dashboard Grid */}
+        <div className="px-6 md:px-10 py-6 space-y-8 max-w-7xl mx-auto w-full">
+          
+          {/* Key Metrics Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <MetricCard 
+              label="Balance Mensual" 
+              value="$4.250.000" 
+              trend="+12.5%" 
+              trendUp={true}
+              icon="account_balance"
+              color="text-green-500"
+            />
+            <MetricCard 
+              label="Gastos Pendientes" 
+              value="$850.200" 
+              trend="5 Deptos" 
+              trendUp={false}
+              icon="pending_actions"
+              color="text-amber-500"
+            />
+            <MetricCard 
+              label="Ocupación" 
+              value="94%" 
+              trend="152/160" 
+              trendUp={true}
+              icon="home"
+              color="text-[#00AEEF]"
+            />
+            <MetricCard 
+              label="Personal Activo" 
+              value="8" 
+              trend="En turno" 
+              trendUp={true}
+              icon="badge"
+              color="text-purple-500"
+            />
+          </div>
+
+          {/* Main Bento Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* Financial Health - Large Card */}
+            <Card className="lg:col-span-2 p-8 flex flex-col h-full bg-[#121212] border-gray-800">
+              <div className="flex justify-between items-center mb-8">
+                <div>
+                  <h2 className="text-2xl font-black">Salud Financiera</h2>
+                  <p className="text-gray-500">Ingresos vs Gastos (Últimos 6 meses)</p>
+                </div>
+                <div className="flex gap-2">
+                  <div className="flex items-center gap-2 px-3 py-1 bg-green-500/10 rounded-lg">
+                    <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                    <span className="text-[10px] font-bold text-green-500 uppercase">Ingresos</span>
+                  </div>
+                  <div className="flex items-center gap-2 px-3 py-1 bg-red-500/10 rounded-lg">
+                    <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                    <span className="text-[10px] font-bold text-red-500 uppercase">Gastos</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex-1 min-h-[300px]">
+                <FinancialChart />
+              </div>
+            </Card>
+
+            {/* Quick Actions & Modules */}
+            <div className="space-y-6">
+              <Card className="p-8 bg-[#00AEEF] border-none text-white overflow-hidden relative group cursor-pointer" onClick={() => navigate('ResidentDirectory')}>
+                <div className="relative z-10">
+                  <h3 className="text-2xl font-black mb-2">Directorio Inteligente</h3>
+                  <p className="text-white/80 font-medium mb-6">Gestiona residentes, vehículos y mascotas con un solo clic.</p>
+                  <span className="inline-flex items-center gap-2 bg-white text-[#00AEEF] px-6 py-3 rounded-full font-black text-sm group-hover:scale-105 transition-transform">
+                    Abrir Directorio
+                    <span className="material-symbols-outlined">arrow_forward</span>
+                  </span>
+                </div>
+                <span className="material-symbols-outlined absolute -right-8 -bottom-8 text-[180px] text-white/10 rotate-12 group-hover:rotate-0 transition-transform duration-500">
+                  contacts
+                </span>
+              </Card>
+
+              <div className="grid grid-cols-2 gap-4">
+                <QuickModuleButton 
+                  icon="badge" 
+                  label="Personal" 
                   onClick={() => navigate('StaffManagement')}
-                  className="bg-[#13a4ec] text-white p-4 rounded-xl shadow-lg active:scale-[0.98] transition-all flex flex-col items-start gap-3 h-32 relative overflow-hidden"
-                >
-                     <div className="bg-white/20 w-10 h-10 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                        <span className="material-symbols-outlined text-2xl">badge</span>
-                    </div>
-                    <span className="text-sm font-bold leading-tight text-left">Gestión de<br/>Personal</span>
-                </button>
-             </div>
+                  color="bg-purple-500/10 text-purple-500 border-purple-500/20"
+                />
+                <QuickModuleButton 
+                  icon="campaign" 
+                  label="Anuncios" 
+                  onClick={() => navigate('CommunityWall')}
+                  color="bg-amber-500/10 text-amber-500 border-amber-500/20"
+                />
+                <QuickModuleButton 
+                  icon="chat" 
+                  label="Mensajes" 
+                  onClick={() => navigate('MessagesScreen')}
+                  color="bg-blue-500/10 text-blue-500 border-blue-500/20"
+                />
+                <QuickModuleButton 
+                  icon="person" 
+                  label="Perfil" 
+                  onClick={() => navigate('UserProfile')}
+                  color="bg-gray-500/10 text-gray-500 border-gray-500/20"
+                />
+              </div>
+            </div>
+
+          </div>
+
+          {/* Bottom Row: Recent Activity & Alerts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="p-8 bg-[#121212] border-gray-800">
+              <h3 className="text-xl font-black mb-6 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#00AEEF]">history</span>
+                Actividad Reciente
+              </h3>
+              <div className="space-y-6">
+                <ActivityItem 
+                  icon="payments" 
+                  title="Gasto Común Registrado" 
+                  desc="Depto 402 - $125.000" 
+                  time="Hace 10 min" 
+                  color="bg-green-500/10 text-green-500"
+                />
+                <ActivityItem 
+                  icon="person_add" 
+                  title="Nuevo Residente" 
+                  desc="Depto 1105 - Carlos Rodríguez" 
+                  time="Hace 2 horas" 
+                  color="bg-[#00AEEF]/10 text-[#00AEEF]"
+                />
+                <ActivityItem 
+                  icon="warning" 
+                  title="Alerta de Mantenimiento" 
+                  desc="Ascensor Torre B - Reportado por Conserje" 
+                  time="Hace 4 horas" 
+                  color="bg-red-500/10 text-red-500"
+                />
+              </div>
+            </Card>
+
+            <Card className="p-8 bg-[#121212] border-gray-800">
+              <h3 className="text-xl font-black mb-6 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-amber-500">assignment_late</span>
+                  Tareas Pendientes
+                </div>
+                <span className="text-xs font-black bg-amber-500 text-black px-3 py-1 rounded-full">3 URGENTES</span>
+              </h3>
+              <div className="space-y-4">
+                <TaskItem label="Revisar conciliación bancaria Marzo" urgent />
+                <TaskItem label="Aprobar presupuesto pintura fachada" />
+                <TaskItem label="Entrevista nuevo conserje nocturno" />
+                <TaskItem label="Responder reclamo Depto 804" urgent />
+              </div>
+            </Card>
+          </div>
+
         </div>
 
-        {/* Modules Control */}
-        <div>
-             <div className="flex items-center justify-between mb-3 ml-1">
-                 <h2 className="text-xs font-bold text-gray-500 uppercase">Control de Módulos</h2>
-                 <button className="text-[#13a4ec] text-xs font-bold flex items-center gap-1 active:text-white transition-colors">
-                    <span className="material-symbols-outlined text-sm">tune</span> Personalizar
-                 </button>
-             </div>
-             <div className="space-y-3">
-                <ModuleItem icon="local_shipping" title="Encomiendas" desc="25 recibidas hoy" badge="8 pendientes" badgeColor="text-red-500 bg-red-500/10" color="text-blue-500 bg-blue-500/10" />
-                <ModuleItem icon="deck" title="Espacios Comunes" desc="Quinchos y Sala" badge="4 Reservas" badgeColor="text-emerald-500 bg-emerald-500/10" color="text-emerald-500 bg-emerald-500/10" />
-                <ModuleItem icon="menu_book" title="Libro Novedades" desc="Bitácora Digital" color="text-gray-400 bg-gray-500/10" />
-             </div>
-        </div>
+        {/* Mobile Nav */}
+        <nav className="md:hidden fixed bottom-0 w-full bg-[#121212] border-t-2 border-gray-800 pb-8 pt-4 px-6 flex justify-between items-center z-30">
+          <NavButton icon="dashboard" label="Resumen" active />
+          <NavButton icon="account_balance_wallet" label="Finanzas" onClick={() => navigate('ManageExpenses')} />
+          <NavButton icon="contacts" label="Directorio" onClick={() => navigate('ResidentDirectory')} />
+          <NavButton icon="chat" label="Mensajes" onClick={() => navigate('MessagesScreen')} />
+          <NavButton icon="person" label="Perfil" onClick={() => navigate('UserProfile')} />
+        </nav>
 
-      </div>
-
-      <nav className="fixed bottom-0 w-full max-w-[420px] bg-[#0F0F0F] border-t border-white/5 pb-6 pt-2 px-6 flex justify-between items-center z-30">
-        <NavButton icon="dashboard" label="Resumen" active />
-        <NavButton icon="account_balance_wallet" label="Finanzas" onClick={() => navigate('ManageExpenses')} />
-        <NavButton icon="chat" label="Mensajes" onClick={() => navigate('MessagesScreen')} />
-        <NavButton icon="campaign" label="Comunidad" onClick={() => navigate('CommunityWall')} />
-      </nav>
-
+      </main>
     </div>
   );
 };
 
-const StatsChart = () => {
-    const [activeTab, setActiveTab] = useState<'packages' | 'visitors' | 'requests'>('packages');
-
-    const data = {
-        packages: [12, 19, 15, 25, 22, 30, 18],
-        visitors: [8, 12, 10, 15, 20, 25, 15],
-        requests: [2, 5, 3, 4, 1, 2, 6]
-    };
-    
-    const days = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
-    
-    const currentData = data[activeTab];
-    const maxVal = Math.max(...currentData) * 1.2; // Scaling
-    
-    const getBarColor = () => {
-        if(activeTab === 'packages') return 'bg-blue-500';
-        if(activeTab === 'visitors') return 'bg-purple-500';
-        return 'bg-amber-500';
-    }
-
-    const getTitle = () => {
-        if(activeTab === 'packages') return 'Encomiendas Entregadas';
-        if(activeTab === 'visitors') return 'Visitas Totales';
-        return 'Solicitudes de Servicio';
-    }
-
-    return (
-        <div className="bg-[#141414] p-5 rounded-2xl border border-white/5 shadow-lg">
-             <div className="flex justify-between items-center mb-6">
-                <div>
-                     <h2 className="text-sm font-bold text-white">{getTitle()}</h2>
-                     <p className="text-[10px] text-gray-500">Últimos 7 días</p>
-                </div>
-                <div className="flex bg-[#0A0A0A] rounded-lg p-0.5 border border-white/5">
-                    <button 
-                        onClick={() => setActiveTab('packages')}
-                        className={`p-1.5 rounded-md transition-all active:scale-95 ${activeTab === 'packages' ? 'bg-[#141414] text-blue-400 shadow-sm ring-1 ring-white/10' : 'text-gray-500 hover:text-white'}`}
-                        title="Encomiendas"
-                    >
-                        <span className="material-symbols-outlined text-[18px]">package_2</span>
-                    </button>
-                    <button 
-                        onClick={() => setActiveTab('visitors')}
-                        className={`p-1.5 rounded-md transition-all active:scale-95 ${activeTab === 'visitors' ? 'bg-[#141414] text-purple-400 shadow-sm ring-1 ring-white/10' : 'text-gray-500 hover:text-white'}`}
-                        title="Visitas"
-                    >
-                        <span className="material-symbols-outlined text-[18px]">group</span>
-                    </button>
-                    <button 
-                        onClick={() => setActiveTab('requests')}
-                        className={`p-1.5 rounded-md transition-all active:scale-95 ${activeTab === 'requests' ? 'bg-[#141414] text-amber-400 shadow-sm ring-1 ring-white/10' : 'text-gray-500 hover:text-white'}`}
-                        title="Solicitudes"
-                    >
-                        <span className="material-symbols-outlined text-[18px]">assignment</span>
-                    </button>
-                </div>
-            </div>
-
-            {/* Chart Area */}
-            <div className="flex items-end justify-between h-32 gap-3 px-1">
-                {currentData.map((value, index) => (
-                    <div key={index} className="flex-1 flex flex-col items-center gap-2 group cursor-pointer relative">
-                        <div className="w-full flex items-end justify-center h-full relative">
-                             {/* Background rail */}
-                             <div className="absolute bottom-0 w-[6px] h-full bg-white/5 rounded-full"></div>
-                            
-                            {/* Value Bar */}
-                            <div 
-                                className={`w-full max-w-[6px] rounded-full opacity-80 group-hover:opacity-100 transition-all duration-500 ease-out ${getBarColor()} shadow-[0_0_10px_rgba(0,0,0,0.5)]`}
-                                style={{ height: `${Math.max((value / maxVal) * 100, 10)}%` }}
-                            ></div>
-                            
-                            {/* Tooltip on hover */}
-                            <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-white text-[#0A0A0A] text-[10px] font-bold px-2 py-1 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100 z-10 pointer-events-none whitespace-nowrap">
-                                {value}
-                                <div className="absolute bottom-[-4px] left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-white"></div>
-                            </div>
-                        </div>
-                        <span className="text-[10px] font-bold text-gray-500 group-hover:text-white transition-colors">{days[index]}</span>
-                    </div>
-                ))}
-            </div>
-            
-            <div className="mt-5 pt-4 border-t border-white/5 flex justify-between items-center text-xs text-gray-500 font-medium">
-                 <div className="flex items-center gap-2">
-                     <span className={`w-2 h-2 rounded-full ${activeTab === 'packages' ? 'bg-blue-500' : activeTab === 'visitors' ? 'bg-purple-500' : 'bg-amber-500'}`}></span>
-                     <span>Promedio: <span className="text-white font-bold">{Math.round(currentData.reduce((a, b) => a + b, 0) / 7)}</span> / día</span>
-                 </div>
-                 <button className="flex items-center gap-1 hover:text-white transition-colors active:scale-95">
-                    Detalles <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
-                 </button>
-            </div>
-        </div>
-    );
-};
-
-const MetricCard = ({ icon, color, value, label, progress, progressColor, warning }: any) => (
-    <div className="min-w-[140px] bg-[#141414] p-4 rounded-xl border border-white/5 flex flex-col justify-between h-32 relative overflow-hidden">
-        <div className="flex justify-between items-start z-10">
-            <span className={`material-symbols-outlined ${color}`}>{icon}</span>
-            {warning && <span className="text-[10px] font-bold bg-amber-500/20 text-amber-500 px-1.5 rounded">!</span>}
-        </div>
-        <div className="z-10">
-            <div className="text-2xl font-bold text-white mb-0.5">{value}</div>
-            <div className="text-[10px] text-gray-400 font-medium truncate">{label}</div>
-            <div className="h-1.5 w-full bg-gray-700 rounded-full mt-2 overflow-hidden">
-                <div className={`h-full rounded-full ${progressColor}`} style={{ width: `${progress}%` }}></div>
-            </div>
-        </div>
-        <span className={`material-symbols-outlined absolute -right-2 -top-2 text-[60px] opacity-5 ${color}`}>{icon}</span>
+const MetricCard = ({ label, value, trend, trendUp, icon, color }: any) => (
+  <Card className="p-6 bg-[#121212] border-gray-800 flex flex-col justify-between h-40 relative overflow-hidden group hover:border-[#00AEEF] transition-colors">
+    <div className="flex justify-between items-start relative z-10">
+      <div className={`w-12 h-12 rounded-2xl bg-gray-900 flex items-center justify-center ${color} border-2 border-gray-800`}>
+        <span className="material-symbols-outlined text-3xl">{icon}</span>
+      </div>
+      <div className={`flex items-center gap-1 text-xs font-black ${trendUp ? 'text-green-500' : 'text-amber-500'}`}>
+        <span className="material-symbols-outlined text-sm">{trendUp ? 'trending_up' : 'info'}</span>
+        {trend}
+      </div>
     </div>
+    <div className="relative z-10">
+      <p className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-1">{label}</p>
+      <h3 className="text-3xl font-black">{value}</h3>
+    </div>
+    <span className={`material-symbols-outlined absolute -right-4 -bottom-4 text-[100px] opacity-5 ${color} group-hover:scale-110 transition-transform duration-500`}>
+      {icon}
+    </span>
+  </Card>
 );
 
-const ModuleItem = ({ icon, title, desc, badge, badgeColor, color }: any) => (
-    <div className="flex items-center justify-between p-3 bg-[#141414] rounded-xl border border-white/5">
-        <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${color}`}>
-                <span className="material-symbols-outlined">{icon}</span>
+const FinancialChart = () => {
+  const data = [
+    { month: 'Oct', in: 85, out: 65 },
+    { month: 'Nov', in: 92, out: 70 },
+    { month: 'Dic', in: 78, out: 85 },
+    { month: 'Ene', in: 95, out: 60 },
+    { month: 'Feb', in: 88, out: 75 },
+    { month: 'Mar', in: 100, out: 68 },
+  ];
+
+  return (
+    <div className="flex items-end justify-between h-full gap-4 pt-10">
+      {data.map((d, i) => (
+        <div key={i} className="flex-1 flex flex-col items-center gap-4 h-full group">
+          <div className="flex-1 w-full flex items-end justify-center gap-1.5 relative">
+            <div 
+              className="w-3 bg-green-500 rounded-t-full transition-all duration-1000 ease-out group-hover:brightness-125"
+              style={{ height: `${d.in}%` }}
+            ></div>
+            <div 
+              className="w-3 bg-red-500 rounded-t-full transition-all duration-1000 ease-out group-hover:brightness-125"
+              style={{ height: `${d.out}%` }}
+            ></div>
+            
+            {/* Tooltip */}
+            <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-white text-black text-[10px] font-black px-3 py-1.5 rounded-lg shadow-2xl opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100 z-10 pointer-events-none whitespace-nowrap">
+              <span className="text-green-600">+{d.in}%</span> / <span className="text-red-600">-{d.out}%</span>
+              <div className="absolute bottom-[-4px] left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-white"></div>
             </div>
-            <div>
-                <h3 className="text-sm font-bold text-white">{title}</h3>
-                <p className="text-xs text-gray-500">{desc}</p>
-            </div>
+          </div>
+          <span className="text-xs font-black text-gray-500 group-hover:text-white transition-colors uppercase tracking-widest">{d.month}</span>
         </div>
-        <div className="flex items-center gap-2">
-            {badge && <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${badgeColor}`}>{badge}</span>}
-            <button className="text-gray-500 hover:text-white active:scale-90 active:text-white transition-all"><span className="material-symbols-outlined">edit_square</span></button>
-        </div>
+      ))}
     </div>
+  );
+};
+
+const QuickModuleButton = ({ icon, label, onClick, color }: any) => (
+  <button 
+    onClick={onClick}
+    className={`flex flex-col items-center justify-center gap-3 p-6 rounded-3xl border-2 transition-all active:scale-95 hover:brightness-125 ${color}`}
+  >
+    <span className="material-symbols-outlined text-3xl">{icon}</span>
+    <span className="text-sm font-black uppercase tracking-widest">{label}</span>
+  </button>
+);
+
+const ActivityItem = ({ icon, title, desc, time, color }: any) => (
+  <div className="flex items-center gap-4 group cursor-pointer">
+    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border-2 border-transparent group-hover:border-current transition-colors ${color}`}>
+      <span className="material-symbols-outlined">{icon}</span>
+    </div>
+    <div className="flex-1 min-w-0">
+      <h4 className="text-sm font-bold truncate">{title}</h4>
+      <p className="text-xs text-gray-500 truncate">{desc}</p>
+    </div>
+    <span className="text-[10px] font-black text-gray-600 uppercase whitespace-nowrap">{time}</span>
+  </div>
+);
+
+const TaskItem = ({ label, urgent }: any) => (
+  <div className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-colors cursor-pointer group ${urgent ? 'bg-red-500/5 border-red-500/20 hover:border-red-500' : 'bg-gray-900/50 border-gray-800 hover:border-gray-600'}`}>
+    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${urgent ? 'border-red-500 group-hover:bg-red-500' : 'border-gray-600 group-hover:border-[#00AEEF]'}`}>
+      <span className="material-symbols-outlined text-[14px] opacity-0 group-hover:opacity-100 text-white">check</span>
+    </div>
+    <span className={`text-sm font-bold flex-1 ${urgent ? 'text-red-200' : 'text-gray-300'}`}>{label}</span>
+    {urgent && <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>}
+  </div>
+);
+
+const SidebarButton = ({ icon, label, active = false, onClick }: any) => (
+  <button 
+    onClick={onClick}
+    className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all group ${active ? 'bg-[#00AEEF] text-white shadow-lg shadow-[#00AEEF]/20' : 'text-gray-500 hover:bg-gray-800 hover:text-white'}`}
+  >
+    <span className={`material-symbols-outlined text-2xl ${active ? 'fill-current' : ''}`}>{icon}</span>
+    <span className="text-lg font-bold">{label}</span>
+  </button>
 );
 
 const NavButton = ({ icon, label, active = false, onClick }: { icon: string, label: string, active?: boolean, onClick?: () => void }) => (
   <button 
     onClick={onClick}
-    className={`flex flex-col items-center gap-1 p-2 active:scale-90 transition-all ${active ? 'text-[#13a4ec]' : 'text-slate-400 hover:text-white'}`}>
+    className={`flex flex-col items-center gap-1 p-2 active:scale-90 transition-all ${active ? 'text-[#00AEEF]' : 'text-gray-500 hover:text-white'}`}>
     <span className={`material-symbols-outlined text-2xl ${active ? 'fill-current' : ''}`}>{icon}</span>
-    <span className="text-[10px] font-medium">{label}</span>
+    <span className="text-[10px] font-black uppercase tracking-tighter">{label}</span>
   </button>
 );
 

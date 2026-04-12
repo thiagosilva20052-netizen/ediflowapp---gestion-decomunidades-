@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ScreenName } from '../App';
-import { UserRole } from './LoginScreen';
+import { UserRole } from '../src/types';
 import { Button } from '../src/components/ui/Button';
 import { Card } from '../src/components/ui/Card';
 import { useAppContext } from '../src/context/AppContext';

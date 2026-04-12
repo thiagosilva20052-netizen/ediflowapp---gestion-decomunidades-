@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ScreenName } from '../App';
-import { UserRole } from './LoginScreen';
+import { UserRole } from '../src/types';
 
 interface Props {
   navigate: (screen: ScreenName) => void;

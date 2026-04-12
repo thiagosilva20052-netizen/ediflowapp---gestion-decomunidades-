@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ScreenName } from '../App';
-import { UserRole } from './LoginScreen';
+import { UserRole } from '../src/types';
 
 interface Props {
   navigate: (screen: ScreenName) => void;
@@ -357,14 +357,13 @@ const UserProfile: React.FC<Props> = ({ navigate, onLogout, role }) => {
                 </div>
 
                 <button 
-                    onClick={() => navigate('NotificationSettings')}
                     className="w-full flex items-center justify-between p-4 dark:bg-[#141414] bg-white hover:bg-gray-50 dark:hover:bg-[#1F1F1F] active:scale-[0.99] transition-all rounded-xl border dark:border-white/5 border-gray-200 shadow-sm"
                 >
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-500 flex items-center justify-center">
                             <span className="material-symbols-outlined">notifications</span>
                         </div>
-                        <span className="text-sm font-bold dark:text-white text-gray-900">Configurar Notificaciones</span>
+                        <span className="text-sm font-bold dark:text-white text-gray-900">Preferencias de Notificación</span>
                     </div>
                     <span className="material-symbols-outlined text-gray-500">chevron_right</span>
                 </button>
