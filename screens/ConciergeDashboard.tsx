@@ -21,11 +21,6 @@ const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
   const [toast, setToast] = useState<string | null>(null);
   const [isNotificationDrawerOpen, setIsNotificationDrawerOpen] = useState(false);
   
-  // Unified Manual Entry State
-  const [activeOperation, setActiveOperation] = useState<OperationType>(null);
-  const [manualInput, setManualInput] = useState('');
-  const [deptoInput, setDeptoInput] = useState('');
-
   // Dynamic Logs State
   const [logs, setLogs] = useState<LogEntry[]>([
     { id: '1', icon: 'package_2', color: 'text-blue-400', title: 'Encomienda entregada', time: '10:45', desc: 'Recibido por Depto 402', tenantId: 'tenant-1' },
@@ -87,32 +82,6 @@ const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
     }
   };
 
-  const handleManualSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!manualInput) return;
-    
-    if (activeOperation === 'encomienda') {
-        addLog('package_2', 'text-blue-400', 'Encomienda Manual', `Depto ${deptoInput} - ${manualInput}`);
-        showToast(`📦 Encomienda registrada para Depto ${deptoInput}`);
-    }
-    if (activeOperation === 'visita') {
-        addLog('person_check', 'text-purple-400', 'Visita Manual', `${manualInput} al Depto ${deptoInput}`);
-        showToast(`👤 Visita registrada para Depto ${deptoInput}`);
-    }
-    if (activeOperation === 'pago') {
-        addLog('payments', 'text-green-400', 'Pago GC Manual', `Depto ${deptoInput} - ${manualInput}`);
-        showToast(`💵 Pago registrado para Depto ${deptoInput}`);
-    }
-    if (activeOperation === 'novedad') {
-        addLog('warning', 'text-orange-400', 'Novedad Manual', manualInput);
-        showToast(`⚠️ Novedad registrada en bitácora`);
-    }
-    
-    setActiveOperation(null);
-    setManualInput('');
-    setDeptoInput('');
-  };
-
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-[#000000] text-white">
       
@@ -131,7 +100,7 @@ const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
         <nav className="flex-1 space-y-4">
           <SidebarButton icon="dashboard" label="Resumen" active />
           <SidebarButton icon="contacts" label="Directorio" onClick={() => navigate('ResidentDirectory')} />
-          <SidebarButton icon="history" label="Bitácora" onClick={() => navigate('HistoryScreen')} />
+          <SidebarButton icon="history" label="Bitácora" onClick={() => navigate('BitacoraScreen')} />
           <SidebarButton icon="chat" label="Mensajería" onClick={() => navigate('MessagesScreen')} />
         </nav>
 
@@ -205,10 +174,10 @@ const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
           
           {/* Status Monitor Row */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <StatusMonitorCard label="Paquetes" value="12" icon="package_2" color="text-blue-500" />
-            <StatusMonitorCard label="Visitas Hoy" value="24" icon="group" color="text-purple-500" />
-            <StatusMonitorCard label="Novedades" value="3" icon="warning" color="text-amber-500" />
-            <StatusMonitorCard label="Mensajes" value="5" icon="chat" color="text-[#00AEEF]" />
+            <StatusMonitorCard label="Paquetes" value="12" icon="package_2" color="text-blue-500" onClick={() => navigate('PackageEntry')} />
+            <StatusMonitorCard label="Visitas Hoy" value="24" icon="group" color="text-purple-500" onClick={() => navigate('AccessControl')} />
+            <StatusMonitorCard label="Novedades" value="3" icon="warning" color="text-amber-500" onClick={() => navigate('BitacoraScreen')} />
+            <StatusMonitorCard label="Mensajes" value="5" icon="chat" color="text-[#00AEEF]" onClick={() => navigate('MessagesScreen')} />
           </div>
 
           {/* Core Action Hub */}
@@ -235,7 +204,7 @@ const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
                   icon="warning" 
                   title="Registrar Novedad" 
                   desc="Reporta fallas, ruidos o eventos en bitácora."
-                  onClick={() => setActiveOperation('novedad')}
+                  onClick={() => navigate('NovedadEntry')}
                   color="bg-amber-500/10 text-amber-500 border-amber-500/20"
                 />
                 <ActionCard 
@@ -247,60 +216,6 @@ const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
                 />
               </div>
 
-              {/* Inline Form for Manual Entry */}
-              {activeOperation && (
-                  <Card className="p-8 bg-[#121212] border-[#00AEEF] border-2 animate-fade-in">
-                      <div className="flex justify-between items-center mb-8">
-                          <h3 className="text-white font-black text-2xl flex items-center gap-3">
-                              <span className="material-symbols-outlined text-[#00AEEF]">
-                                {activeOperation === 'encomienda' ? 'package_2' : activeOperation === 'visita' ? 'person_add' : 'warning'}
-                              </span>
-                              {activeOperation === 'encomienda' && 'Registrar Encomienda'}
-                              {activeOperation === 'visita' && 'Registrar Visita'}
-                              {activeOperation === 'novedad' && 'Reportar Novedad'}
-                          </h3>
-                          <button type="button" onClick={() => setActiveOperation(null)} className="text-gray-500 hover:text-white bg-gray-900 p-3 rounded-full transition-colors">
-                              <span className="material-symbols-outlined text-xl">close</span>
-                          </button>
-                      </div>
-                      
-                      <form onSubmit={handleManualSubmit} className="space-y-6">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                              {activeOperation !== 'novedad' && (
-                                  <Input 
-                                      label="Nº Departamento"
-                                      placeholder="Ej. 402" 
-                                      value={deptoInput}
-                                      onChange={(e) => setDeptoInput(e.target.value)}
-                                      required
-                                      className="bg-black border-gray-800"
-                                  />
-                              )}
-                              <Input 
-                                  label={
-                                      activeOperation === 'encomienda' ? 'Empresa / Detalle' : 
-                                      activeOperation === 'visita' ? 'Nombre del Visitante' : 
-                                      'Descripción de la Novedad'
-                                  }
-                                  placeholder={
-                                      activeOperation === 'encomienda' ? 'Ej. MercadoLibre' : 
-                                      activeOperation === 'visita' ? 'Ej. Juan Pérez' : 
-                                      'Detalle lo ocurrido...'
-                                  }
-                                  value={manualInput}
-                                  onChange={(e) => setManualInput(e.target.value)}
-                                  required
-                                  className={`bg-black border-gray-800 ${activeOperation === 'novedad' ? 'md:col-span-2' : ''}`}
-                              />
-                          </div>
-                          <div className="mt-8 flex justify-end">
-                            <Button type="submit" className="bg-[#00AEEF] hover:bg-[#0090C5] text-white border-none px-12 h-14 text-lg">
-                                Guardar Registro
-                            </Button>
-                          </div>
-                      </form>
-                  </Card>
-              )}
             </div>
 
             {/* Voice Assistant Widget */}
@@ -347,17 +262,22 @@ const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
               </Card>
 
               {/* Emergency Quick Contact */}
-              <Card className="p-6 bg-red-500/10 border-red-500/30 flex items-center justify-between group cursor-pointer hover:bg-red-500/20 transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-red-500 flex items-center justify-center text-white">
-                    <span className="material-symbols-outlined">emergency</span>
+              <Card 
+                onClick={() => navigate('Emergency')}
+                className="p-8 bg-[#0A0A0A] border-2 border-white/5 flex items-center justify-between group cursor-pointer hover:border-red-500/50 transition-all duration-500 rounded-[32px] overflow-hidden"
+              >
+                <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 rounded-[22px] bg-red-500 flex items-center justify-center text-white shadow-[0_0_30px_rgba(239,68,68,0.3)] group-hover:scale-110 transition-transform duration-500">
+                    <span className="material-symbols-outlined text-4xl font-bold">emergency</span>
                   </div>
                   <div>
-                    <h4 className="font-black text-red-500 uppercase tracking-widest text-xs">Emergencia</h4>
-                    <p className="font-bold text-white">Llamar a Seguridad</p>
+                    <h4 className="font-black text-red-500 uppercase tracking-[0.2em] text-[10px] mb-1">Emergencia</h4>
+                    <h3 className="text-2xl font-black text-white leading-tight">Llamar a<br />Seguridad</h3>
                   </div>
                 </div>
-                <span className="material-symbols-outlined text-red-500 group-hover:translate-x-2 transition-transform">arrow_forward</span>
+                <div className="w-12 h-20 rounded-full border border-white/10 flex items-center justify-center group-hover:bg-red-500 group-hover:border-red-500 transition-all duration-500">
+                  <span className="material-symbols-outlined text-red-500 group-hover:text-white transition-colors text-3xl">arrow_forward</span>
+                </div>
               </Card>
             </div>
 
@@ -368,10 +288,10 @@ const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-2xl font-black flex items-center gap-3">
                 <span className="material-symbols-outlined text-[#00AEEF]">history</span>
-                Últimos Movimientos
+                Bitácora Digital
               </h2>
-              <button onClick={() => navigate('HistoryScreen')} className="text-sm font-black text-[#00AEEF] uppercase tracking-widest hover:underline flex items-center gap-2">
-                Ver Bitácora <span className="material-symbols-outlined text-sm">arrow_forward</span>
+              <button onClick={() => navigate('BitacoraScreen')} className="text-sm font-black text-[#00AEEF] uppercase tracking-widest hover:underline flex items-center gap-2">
+                Ver Todo <span className="material-symbols-outlined text-sm">arrow_forward</span>
               </button>
             </div>
 
@@ -384,6 +304,11 @@ const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
                   desc={log.desc}
                   time={log.time}
                   color={log.color.replace('text-', 'bg-').replace('400', '500/10') + ' ' + log.color}
+                  onClick={() => {
+                    if (log.icon === 'package_2') navigate('PackageEntry');
+                    else if (log.icon === 'person_check') navigate('AccessControl');
+                    else navigate('BitacoraScreen');
+                  }}
                 />
               ))}
             </div>
@@ -395,7 +320,7 @@ const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
         <nav className="md:hidden fixed bottom-0 w-full bg-[#121212] border-t-2 border-gray-800 pb-8 pt-4 px-6 flex justify-between items-center z-30">
           <NavButton icon="dashboard" label="Panel" active />
           <NavButton icon="contacts" label="Directorio" onClick={() => navigate('ResidentDirectory')} />
-          <NavButton icon="history" label="Bitácora" onClick={() => navigate('HistoryScreen')} />
+          <NavButton icon="history" label="Bitácora" onClick={() => navigate('BitacoraScreen')} />
           <NavButton icon="chat" label="Mensajes" onClick={() => navigate('MessagesScreen')} />
         </nav>
 
@@ -409,8 +334,11 @@ const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
   );
 };
 
-const StatusMonitorCard = ({ label, value, icon, color }: any) => (
-  <Card className="p-6 bg-[#121212] border-gray-800 flex flex-col justify-between h-32 relative overflow-hidden group hover:border-[#00AEEF] transition-colors">
+const StatusMonitorCard = ({ label, value, icon, color, onClick }: any) => (
+  <Card 
+    onClick={onClick}
+    className="p-6 bg-[#121212] border-gray-800 flex flex-col justify-between h-32 relative overflow-hidden group hover:border-[#00AEEF] transition-colors cursor-pointer"
+  >
     <div className="flex justify-between items-start relative z-10">
       <span className={`material-symbols-outlined text-2xl ${color}`}>{icon}</span>
       <span className="text-2xl font-black">{value}</span>
@@ -439,8 +367,11 @@ const ActionCard = ({ icon, title, desc, onClick, color }: any) => (
   </Card>
 );
 
-const ActivityItem = ({ icon, title, desc, time, color }: any) => (
-  <div className="flex items-center gap-4 p-4 bg-[#121212] rounded-2xl border-2 border-gray-800 group cursor-pointer hover:border-gray-600 transition-colors">
+const ActivityItem = ({ icon, title, desc, time, color, onClick }: any) => (
+  <div 
+    onClick={onClick}
+    className="flex items-center gap-4 p-4 bg-[#121212] rounded-2xl border-2 border-gray-800 group cursor-pointer hover:border-gray-600 transition-colors"
+  >
     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border-2 border-transparent group-hover:border-current transition-colors ${color}`}>
       <span className="material-symbols-outlined">{icon}</span>
     </div>

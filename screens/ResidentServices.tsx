@@ -136,7 +136,7 @@ const ResidentServices: React.FC<Props> = ({ navigate }) => {
               value="2" 
               desc="Por retirar"
               color="text-blue-500"
-              onClick={() => navigate('Emergency')} // Using Emergency as a temporary "Module in development" placeholder or just leave it
+              onClick={() => {}} 
             />
             <ServiceCard 
               icon="deck" 
@@ -198,23 +198,21 @@ const ResidentServices: React.FC<Props> = ({ navigate }) => {
             </Card>
 
             {/* Emergency & SOS */}
-            <Card className="p-8 bg-red-500/5 border-red-500/20 flex flex-col justify-between">
-              <div>
-                <h3 className="text-xl font-black text-red-500 mb-2 flex items-center gap-2">
-                  <span className="material-symbols-outlined">emergency</span>
-                  Seguridad y Emergencia
-                </h3>
-                <p className="text-gray-400 font-medium mb-6">Acceso directo a servicios de emergencia y plan cuadrante.</p>
+            <Card 
+              onClick={() => navigate('Emergency')}
+              className="p-8 bg-[#0A0A0A] border-2 border-white/5 flex items-center justify-between group cursor-pointer hover:border-red-500/50 transition-all duration-500 rounded-[32px] overflow-hidden"
+            >
+              <div className="flex items-center gap-6">
+                <div className="w-16 h-16 rounded-[22px] bg-red-500 flex items-center justify-center text-white shadow-[0_0_30px_rgba(239,68,68,0.3)] group-hover:scale-110 transition-transform duration-500">
+                  <span className="material-symbols-outlined text-4xl font-bold">emergency</span>
+                </div>
+                <div>
+                  <h4 className="font-black text-red-500 uppercase tracking-[0.2em] text-[10px] mb-1">Emergencia</h4>
+                  <h3 className="text-2xl font-black text-white leading-tight">Llamar a<br />Seguridad</h3>
+                </div>
               </div>
-              <div className="space-y-4">
-                <button className="w-full h-14 bg-red-500 hover:bg-red-600 text-white rounded-2xl font-black flex items-center justify-center gap-3 transition-all active:scale-95">
-                  <span className="material-symbols-outlined">local_police</span>
-                  LLAMAR SEGURIDAD
-                </button>
-                <button className="w-full h-14 bg-white/5 hover:bg-white/10 text-white border-2 border-white/10 rounded-2xl font-black flex items-center justify-center gap-3 transition-all active:scale-95">
-                  <span className="material-symbols-outlined">medical_services</span>
-                  AMBULANCIA / BOMBEROS
-                </button>
+              <div className="w-12 h-20 rounded-full border border-white/10 flex items-center justify-center group-hover:bg-red-500 group-hover:border-red-500 transition-all duration-500">
+                <span className="material-symbols-outlined text-red-500 group-hover:text-white transition-colors text-3xl">arrow_forward</span>
               </div>
             </Card>
           </div>

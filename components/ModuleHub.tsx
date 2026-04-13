@@ -17,27 +17,59 @@ import {
 } from 'lucide-react';
 import { ScreenName } from '../App';
 
+import { UserRole } from '../src/types';
+
 interface ModuleHubProps {
   isOpen: boolean;
   onClose: () => void;
   onNavigate: (screen: ScreenName) => void;
   onLogout: () => void;
   currentScreen: ScreenName;
+  role: UserRole;
 }
 
-const modules = [
-  { id: 'PackageEntry', label: 'Paquetes', icon: Package, color: '#FBBF24' },
-  { id: 'AccessControl', label: 'Visitas', icon: Users, color: '#EC4899' },
-  { id: 'PaymentsScreen', label: 'Pagos GC', icon: CreditCard, color: '#10B981' },
-  { id: 'Reservations', label: 'Reservas', icon: Calendar, color: '#F97316' },
-  { id: 'Maintenance', label: 'Mantención', icon: Wrench, color: '#EF4444' },
-  { id: 'Emergency', label: 'Emergencia', icon: AlertTriangle, color: '#EAB308' },
-  { id: 'CommunityWall', label: 'Comunidad', icon: BookOpen, color: '#8B5CF6' },
-  { id: 'MessagesScreen', label: 'Mensajes', icon: MessageSquare, color: '#06B6D4' },
-  { id: 'ResidentDirectory', label: 'Directorio', icon: Contact2, color: '#3B82F6' },
-];
+export const ModuleHub: React.FC<ModuleHubProps> = ({ isOpen, onClose, onNavigate, onLogout, currentScreen, role }) => {
+  const getModuleId = (baseId: string): ScreenName => {
+    switch (baseId) {
+      case 'paquetes':
+        return role === 'concierge' ? 'PackageEntry' : 'Emergency';
+      case 'visitas':
+        return role === 'resident' ? 'QRCodeScreen' : (role === 'concierge' ? 'AccessControl' : 'ManualVisitorRegistration');
+      case 'pagos':
+        return 'PaymentsScreen';
+      case 'reservas':
+        return 'Reservations';
+      case 'mantencion':
+        return 'Maintenance';
+      case 'emergencia':
+        return 'Emergency';
+      case 'comunidad':
+        return role === 'concierge' ? 'BitacoraScreen' : 'CommunityWall';
+      case 'mensajes':
+        return 'MessagesScreen';
+      case 'directorio':
+        return role === 'resident' ? 'ResidentServices' : 'ResidentDirectory';
+      default:
+        return 'AdminDashboard' as ScreenName;
+    }
+  };
 
-export const ModuleHub: React.FC<ModuleHubProps> = ({ isOpen, onClose, onNavigate, onLogout, currentScreen }) => {
+  const modules = [
+    { id: 'paquetes', label: 'Paquetes', icon: Package, color: '#FBBF24' },
+    { id: 'visitas', label: 'Visitas', icon: Users, color: '#EC4899' },
+    { id: 'pagos', label: 'Pagos GC', icon: CreditCard, color: '#10B981' },
+    { id: 'reservas', label: 'Reservas', icon: Calendar, color: '#F97316' },
+    { id: 'mantencion', label: 'Mantención', icon: Wrench, color: '#EF4444' },
+    { id: 'emergencia', label: 'Emergencia', icon: AlertTriangle, color: '#EAB308' },
+    { id: 'comunidad', label: 'Comunidad', icon: BookOpen, color: '#8B5CF6' },
+    { id: 'mensajes', label: 'Mensajes', icon: MessageSquare, color: '#06B6D4' },
+    { id: 'directorio', label: 'Directorio', icon: Contact2, color: '#3B82F6' },
+  ].filter(m => {
+    // Filter out modules that don't make sense for the role
+    if (role === 'resident' && m.id === 'directorio') return false;
+    return true;
+  });
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -60,41 +92,43 @@ export const ModuleHub: React.FC<ModuleHubProps> = ({ isOpen, onClose, onNavigat
                 }
               }}
             >
-              {modules.map((module) => (
-                <motion.button
-                  key={module.id}
-                  variants={{
-                    hidden: { opacity: 0, scale: 0.8, y: 20 },
-                    visible: { opacity: 1, scale: 1, y: 0 }
-                  }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => {
-                    onNavigate(module.id as ScreenName);
-                    onClose();
-                  }}
-                  className={`flex flex-col items-center justify-center p-4 rounded-2xl bg-[#121212] border-2 transition-all duration-300 group ${
-                    currentScreen === module.id ? 'border-white shadow-[0_0_20px_rgba(255,255,255,0.1)]' : 'border-gray-800 hover:border-gray-600'
-                  }`}
-                  style={{ 
-                    borderColor: currentScreen === module.id ? 'white' : undefined
-                  }}
-                >
-                  <div 
-                    className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3 transition-transform duration-300 group-hover:scale-110 group-active:scale-95"
-                    style={{ 
-                      backgroundColor: `${module.color}15`, 
-                      color: module.color,
-                      boxShadow: `0 0 20px ${module.color}10`
+              {modules.map((module) => {
+                const targetScreen = getModuleId(module.id);
+                const isActive = currentScreen === targetScreen;
+
+                return (
+                  <motion.button
+                    key={module.id}
+                    variants={{
+                      hidden: { opacity: 0, scale: 0.8, y: 20 },
+                      visible: { opacity: 1, scale: 1, y: 0 }
                     }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      onNavigate(targetScreen);
+                      onClose();
+                    }}
+                    className={`flex flex-col items-center justify-center p-4 rounded-2xl bg-[#121212] border-2 transition-all duration-300 group ${
+                      isActive ? 'border-white shadow-[0_0_20px_rgba(255,255,255,0.1)]' : 'border-gray-800 hover:border-gray-600'
+                    }`}
                   >
-                    <module.icon size={32} strokeWidth={2.5} />
-                  </div>
-                  <span className="text-[11px] font-black uppercase tracking-tighter text-center leading-tight text-gray-400 group-hover:text-white transition-colors">
-                    {module.label}
-                  </span>
-                </motion.button>
-              ))}
+                    <div 
+                      className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3 transition-transform duration-300 group-hover:scale-110 group-active:scale-95"
+                      style={{ 
+                        backgroundColor: `${module.color}15`, 
+                        color: module.color,
+                        boxShadow: `0 0 20px ${module.color}10`
+                      }}
+                    >
+                      <module.icon size={32} strokeWidth={2.5} />
+                    </div>
+                    <span className="text-[11px] font-black uppercase tracking-tighter text-center leading-tight text-gray-400 group-hover:text-white transition-colors">
+                      {module.label}
+                    </span>
+                  </motion.button>
+                );
+              })}
             </motion.div>
 
             <motion.button

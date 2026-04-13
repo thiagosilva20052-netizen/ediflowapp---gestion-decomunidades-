@@ -8,14 +8,18 @@ import QRCodeScreen from './screens/QRCodeScreen';
 import AccessControl from './screens/AccessControl';
 import MessagesScreen from './screens/MessagesScreen';
 import PaymentsScreen from './screens/PaymentsScreen';
-import HistoryScreen from './screens/HistoryScreen';
+import BitacoraScreen from './screens/BitacoraScreen';
 import UserProfile from './screens/UserProfile';
 import LoginScreen from './screens/LoginScreen';
 import ManageExpenses from './screens/ManageExpenses';
 import ManualVisitorRegistration from './screens/ManualVisitorRegistration';
 import StaffManagement from './screens/StaffManagement';
 import RegisterPayment from './screens/RegisterPayment';
+import NovedadEntry from './screens/NovedadEntry';
 import ResidentDirectory from './screens/ResidentDirectory';
+import Emergency from './screens/Emergency';
+import Maintenance from './screens/Maintenance';
+import Reservations from './screens/Reservations';
 import { useAppContext } from './src/context/AppContext';
 import { User, UserRole } from './src/types';
 import { ModuleHub } from './components/ModuleHub';
@@ -31,12 +35,13 @@ export type ScreenName =
   | 'AccessControl'
   | 'MessagesScreen'
   | 'PaymentsScreen'
-  | 'HistoryScreen'
+  | 'BitacoraScreen'
   | 'UserProfile'
   | 'ManageExpenses'
   | 'ManualVisitorRegistration'
   | 'StaffManagement'
   | 'RegisterPayment'
+  | 'NovedadEntry'
   | 'Reservations'
   | 'Maintenance'
   | 'Emergency'
@@ -45,7 +50,13 @@ export type ScreenName =
 const App: React.FC = () => {
   const { currentUser, setCurrentUser } = useAppContext();
   const [currentScreen, setCurrentScreen] = useState<ScreenName>('ConciergeDashboard');
+  const [previousScreen, setPreviousScreen] = useState<ScreenName | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const handleNavigate = (screen: ScreenName) => {
+    setPreviousScreen(currentScreen);
+    setCurrentScreen(screen);
+  };
 
   useEffect(() => {
     // Initialize theme from localStorage
@@ -76,59 +87,44 @@ const App: React.FC = () => {
     }
 
     const roleAccess: Record<UserRole, ScreenName[]> = {
-      admin: ['AdminDashboard', 'ManageExpenses', 'CommunityWall', 'MessagesScreen', 'PaymentsScreen', 'HistoryScreen', 'UserProfile', 'StaffManagement', 'ResidentDirectory', 'Reservations', 'Maintenance', 'Emergency'],
-      concierge: ['ConciergeDashboard', 'PackageEntry', 'AccessControl', 'MessagesScreen', 'HistoryScreen', 'UserProfile', 'ManualVisitorRegistration', 'RegisterPayment', 'ResidentDirectory', 'Reservations', 'Maintenance', 'Emergency'],
-      resident: ['ResidentServices', 'CommunityWall', 'MessagesScreen', 'PaymentsScreen', 'UserProfile', 'QRCodeScreen', 'Reservations', 'Emergency']
+      admin: ['AdminDashboard', 'ManageExpenses', 'CommunityWall', 'MessagesScreen', 'PaymentsScreen', 'BitacoraScreen', 'UserProfile', 'StaffManagement', 'ResidentDirectory', 'Reservations', 'Maintenance', 'Emergency', 'NovedadEntry'],
+      concierge: ['ConciergeDashboard', 'PackageEntry', 'AccessControl', 'MessagesScreen', 'BitacoraScreen', 'UserProfile', 'ManualVisitorRegistration', 'RegisterPayment', 'ResidentDirectory', 'Reservations', 'Maintenance', 'Emergency', 'NovedadEntry'],
+      resident: ['ResidentServices', 'CommunityWall', 'MessagesScreen', 'PaymentsScreen', 'UserProfile', 'QRCodeScreen', 'Reservations', 'Maintenance', 'Emergency']
     };
 
     if (!roleAccess[currentUser.role].includes(currentScreen)) {
       // Fallback to default screen for role
-      return currentUser.role === 'admin' ? <AdminDashboard navigate={setCurrentScreen} /> :
-             currentUser.role === 'concierge' ? <ConciergeDashboard navigate={setCurrentScreen} onLogout={handleLogout} /> :
-             <ResidentServices navigate={setCurrentScreen} />;
+      return currentUser.role === 'admin' ? <AdminDashboard navigate={handleNavigate} /> :
+             currentUser.role === 'concierge' ? <ConciergeDashboard navigate={handleNavigate} onLogout={handleLogout} /> :
+             <ResidentServices navigate={handleNavigate} />;
     }
 
     switch (currentScreen) {
-      case 'ConciergeDashboard': return <ConciergeDashboard navigate={setCurrentScreen} onLogout={handleLogout} />;
-      case 'PackageEntry': return <PackageEntry navigate={setCurrentScreen} />;
-      case 'CommunityWall': return <CommunityWall navigate={setCurrentScreen} role={currentUser.role} />;
-      case 'ResidentServices': return <ResidentServices navigate={setCurrentScreen} />;
-      case 'AdminDashboard': return <AdminDashboard navigate={setCurrentScreen} />;
-      case 'QRCodeScreen': return <QRCodeScreen navigate={setCurrentScreen} />;
-      case 'AccessControl': return <AccessControl navigate={setCurrentScreen} />;
-      case 'MessagesScreen': return <MessagesScreen navigate={setCurrentScreen} role={currentUser.role} />;
-      case 'PaymentsScreen': return <PaymentsScreen navigate={setCurrentScreen} role={currentUser.role} />;
-      case 'HistoryScreen': return <HistoryScreen navigate={setCurrentScreen} role={currentUser.role} />;
-      case 'UserProfile': return <UserProfile navigate={setCurrentScreen} onLogout={handleLogout} role={currentUser.role} />;
-      case 'ManageExpenses': return <ManageExpenses navigate={setCurrentScreen} />;
-      case 'ManualVisitorRegistration': return <ManualVisitorRegistration navigate={setCurrentScreen} />;
-      case 'StaffManagement': return <StaffManagement navigate={setCurrentScreen} />;
-      case 'RegisterPayment': return <RegisterPayment navigate={setCurrentScreen} />;
-      case 'ResidentDirectory': return <ResidentDirectory navigate={setCurrentScreen} role={currentUser.role} />;
-      case 'Reservations':
+      case 'ConciergeDashboard': return <ConciergeDashboard navigate={handleNavigate} onLogout={handleLogout} />;
+      case 'PackageEntry': return <PackageEntry navigate={handleNavigate} from={previousScreen} />;
+      case 'CommunityWall': return <CommunityWall navigate={handleNavigate} role={currentUser.role} />;
+      case 'ResidentServices': return <ResidentServices navigate={handleNavigate} />;
+      case 'AdminDashboard': return <AdminDashboard navigate={handleNavigate} />;
+      case 'QRCodeScreen': return <QRCodeScreen navigate={handleNavigate} />;
+      case 'AccessControl': return <AccessControl navigate={handleNavigate} />;
+      case 'MessagesScreen': return <MessagesScreen navigate={handleNavigate} role={currentUser.role} />;
+      case 'PaymentsScreen': return <PaymentsScreen navigate={handleNavigate} role={currentUser.role} />;
+      case 'BitacoraScreen': return <BitacoraScreen navigate={handleNavigate} role={currentUser.role} />;
+      case 'UserProfile': return <UserProfile navigate={handleNavigate} onLogout={handleLogout} role={currentUser.role} />;
+      case 'ManageExpenses': return <ManageExpenses navigate={handleNavigate} />;
+      case 'ManualVisitorRegistration': return <ManualVisitorRegistration navigate={handleNavigate} from={previousScreen} />;
+      case 'StaffManagement': return <StaffManagement navigate={handleNavigate} />;
+      case 'RegisterPayment': return <RegisterPayment navigate={handleNavigate} from={previousScreen} />;
+      case 'NovedadEntry': return <NovedadEntry navigate={handleNavigate} from={previousScreen} />;
+      case 'ResidentDirectory': return <ResidentDirectory navigate={handleNavigate} role={currentUser.role} />;
+      case 'Emergency': return <Emergency navigate={handleNavigate} from={previousScreen} role={currentUser.role} />;
+      case 'Reservations': return <Reservations navigate={handleNavigate} role={currentUser.role} from={previousScreen} />;
       case 'Maintenance':
-      case 'Emergency':
-        return (
-          <div className="flex flex-col items-center justify-center h-full bg-black text-white p-10 text-center">
-            <span className="material-symbols-outlined text-6xl mb-4 text-[#00AEEF]">construction</span>
-            <h2 className="text-3xl font-black mb-2">Módulo en Desarrollo</h2>
-            <p className="text-gray-500 max-w-xs">Estamos trabajando para traerte la mejor experiencia en este módulo muy pronto.</p>
-            <button 
-              onClick={() => {
-                if (currentUser.role === 'admin') setCurrentScreen('AdminDashboard');
-                else if (currentUser.role === 'concierge') setCurrentScreen('ConciergeDashboard');
-                else setCurrentScreen('ResidentServices');
-              }}
-              className="mt-8 bg-[#00AEEF] text-white px-8 py-3 rounded-xl font-bold"
-            >
-              Volver al Inicio
-            </button>
-          </div>
-        );
+        return <Maintenance navigate={handleNavigate} role={currentUser.role} from={previousScreen} />;
       default: 
-        return currentUser.role === 'admin' ? <AdminDashboard navigate={setCurrentScreen} /> :
-               currentUser.role === 'concierge' ? <ConciergeDashboard navigate={setCurrentScreen} onLogout={handleLogout} /> :
-               <ResidentServices navigate={setCurrentScreen} />;
+        return currentUser.role === 'admin' ? <AdminDashboard navigate={handleNavigate} /> :
+               currentUser.role === 'concierge' ? <ConciergeDashboard navigate={handleNavigate} onLogout={handleLogout} /> :
+               <ResidentServices navigate={handleNavigate} />;
     }
   };
 
@@ -175,13 +171,16 @@ const App: React.FC = () => {
           </div>
         )}
 
-        <ModuleHub 
-          isOpen={isMenuOpen} 
-          onClose={() => setIsMenuOpen(false)} 
-          onNavigate={setCurrentScreen}
-          onLogout={handleLogout}
-          currentScreen={currentScreen}
-        />
+        {currentUser && (
+          <ModuleHub 
+            isOpen={isMenuOpen} 
+            onClose={() => setIsMenuOpen(false)} 
+            onNavigate={handleNavigate}
+            onLogout={handleLogout}
+            currentScreen={currentScreen}
+            role={currentUser.role}
+          />
+        )}
       </div>
     </div>
   );

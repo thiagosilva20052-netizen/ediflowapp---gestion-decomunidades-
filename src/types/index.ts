@@ -53,3 +53,27 @@ export interface Payment {
   checkNumber?: string;
   notes?: string;
 }
+
+export interface CommonArea {
+  id: string;
+  name: string;
+  icon: string;
+  capacity: number;
+  price?: number;
+  description: string;
+}
+
+export interface Reservation {
+  id: string;
+  areaId: string;
+  areaName: string;
+  userId: string;
+  userName: string;
+  apartment: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  guestsCount: number;
+  status: 'pending' | 'confirmed' | 'cancelled';
+  createdAt: string;
+}

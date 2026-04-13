@@ -8,7 +8,35 @@ interface Props {
   navigate: (screen: ScreenName) => void;
 }
 
+interface Task {
+  id: string;
+  label: string;
+  urgent: boolean;
+  completed: boolean;
+}
+
 const AdminDashboard: React.FC<Props> = ({ navigate }) => {
+  const [tasks, setTasks] = useState<Task[]>([
+    { id: '1', label: 'Revisar conciliación bancaria Marzo', urgent: true, completed: false },
+    { id: '2', label: 'Aprobar presupuesto pintura fachada', urgent: false, completed: false },
+    { id: '3', label: 'Entrevista nuevo conserje nocturno', urgent: false, completed: false },
+    { id: '4', label: 'Responder reclamo Depto 804', urgent: true, completed: false },
+  ]);
+
+  const toggleTask = (id: string) => {
+    setTasks(prev => prev.map(task => 
+      task.id === id ? { ...task, completed: !task.completed } : task
+    ));
+  };
+
+  const sortedTasks = [...tasks].sort((a, b) => {
+    if (a.completed !== b.completed) return a.completed ? 1 : -1;
+    if (a.urgent !== b.urgent) return a.urgent ? -1 : 1;
+    return 0;
+  });
+
+  const urgentCount = tasks.filter(t => t.urgent && !t.completed).length;
+
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-[#000000] text-white">
       
@@ -82,6 +110,7 @@ const AdminDashboard: React.FC<Props> = ({ navigate }) => {
               trendUp={true}
               icon="account_balance"
               color="text-green-500"
+              onClick={() => navigate('ManageExpenses')}
             />
             <MetricCard 
               label="Gastos Pendientes" 
@@ -90,6 +119,7 @@ const AdminDashboard: React.FC<Props> = ({ navigate }) => {
               trendUp={false}
               icon="pending_actions"
               color="text-amber-500"
+              onClick={() => navigate('ManageExpenses')}
             />
             <MetricCard 
               label="Ocupación" 
@@ -98,6 +128,7 @@ const AdminDashboard: React.FC<Props> = ({ navigate }) => {
               trendUp={true}
               icon="home"
               color="text-[#00AEEF]"
+              onClick={() => navigate('ResidentDirectory')}
             />
             <MetricCard 
               label="Personal Activo" 
@@ -106,6 +137,7 @@ const AdminDashboard: React.FC<Props> = ({ navigate }) => {
               trendUp={true}
               icon="badge"
               color="text-purple-500"
+              onClick={() => navigate('StaffManagement')}
             />
           </div>
 
@@ -196,6 +228,7 @@ const AdminDashboard: React.FC<Props> = ({ navigate }) => {
                   desc="Depto 402 - $125.000" 
                   time="Hace 10 min" 
                   color="bg-green-500/10 text-green-500"
+                  onClick={() => navigate('ManageExpenses')}
                 />
                 <ActivityItem 
                   icon="person_add" 
@@ -203,6 +236,7 @@ const AdminDashboard: React.FC<Props> = ({ navigate }) => {
                   desc="Depto 1105 - Carlos Rodríguez" 
                   time="Hace 2 horas" 
                   color="bg-[#00AEEF]/10 text-[#00AEEF]"
+                  onClick={() => navigate('ResidentDirectory')}
                 />
                 <ActivityItem 
                   icon="warning" 
@@ -210,6 +244,7 @@ const AdminDashboard: React.FC<Props> = ({ navigate }) => {
                   desc="Ascensor Torre B - Reportado por Conserje" 
                   time="Hace 4 horas" 
                   color="bg-red-500/10 text-red-500"
+                  onClick={() => navigate('Maintenance')}
                 />
               </div>
             </Card>
@@ -220,13 +255,41 @@ const AdminDashboard: React.FC<Props> = ({ navigate }) => {
                   <span className="material-symbols-outlined text-amber-500">assignment_late</span>
                   Tareas Pendientes
                 </div>
-                <span className="text-xs font-black bg-amber-500 text-black px-3 py-1 rounded-full">3 URGENTES</span>
+                {urgentCount > 0 && (
+                  <span className="text-xs font-black bg-amber-500 text-black px-3 py-1 rounded-full">
+                    {urgentCount} {urgentCount === 1 ? 'URGENTE' : 'URGENTES'}
+                  </span>
+                )}
               </h3>
               <div className="space-y-4">
-                <TaskItem label="Revisar conciliación bancaria Marzo" urgent />
-                <TaskItem label="Aprobar presupuesto pintura fachada" />
-                <TaskItem label="Entrevista nuevo conserje nocturno" />
-                <TaskItem label="Responder reclamo Depto 804" urgent />
+                {sortedTasks.map(task => (
+                  <TaskItem 
+                    key={task.id} 
+                    label={task.label} 
+                    urgent={task.urgent} 
+                    completed={task.completed}
+                    onToggle={() => toggleTask(task.id)}
+                  />
+                ))}
+              </div>
+            </Card>
+
+            {/* Emergency Card for Admin */}
+            <Card 
+              onClick={() => navigate('Emergency')}
+              className="p-8 bg-[#0A0A0A] border-2 border-white/5 flex items-center justify-between group cursor-pointer hover:border-red-500/50 transition-all duration-500 rounded-[32px] overflow-hidden lg:col-span-2"
+            >
+              <div className="flex items-center gap-6">
+                <div className="w-16 h-16 rounded-[22px] bg-red-500 flex items-center justify-center text-white shadow-[0_0_30px_rgba(239,68,68,0.3)] group-hover:scale-110 transition-transform duration-500">
+                  <span className="material-symbols-outlined text-4xl font-bold">emergency</span>
+                </div>
+                <div>
+                  <h4 className="font-black text-red-500 uppercase tracking-[0.2em] text-[10px] mb-1">Emergencia</h4>
+                  <h3 className="text-2xl font-black text-white leading-tight">Acceso Directo a<br />Centro de Emergencias</h3>
+                </div>
+              </div>
+              <div className="w-12 h-20 rounded-full border border-white/10 flex items-center justify-center group-hover:bg-red-500 group-hover:border-red-500 transition-all duration-500">
+                <span className="material-symbols-outlined text-red-500 group-hover:text-white transition-colors text-3xl">arrow_forward</span>
               </div>
             </Card>
           </div>
@@ -247,8 +310,11 @@ const AdminDashboard: React.FC<Props> = ({ navigate }) => {
   );
 };
 
-const MetricCard = ({ label, value, trend, trendUp, icon, color }: any) => (
-  <Card className="p-6 bg-[#121212] border-gray-800 flex flex-col justify-between h-40 relative overflow-hidden group hover:border-[#00AEEF] transition-colors">
+const MetricCard = ({ label, value, trend, trendUp, icon, color, onClick }: any) => (
+  <Card 
+    onClick={onClick}
+    className={`p-6 bg-[#121212] border-gray-800 flex flex-col justify-between h-40 relative overflow-hidden group hover:border-[#00AEEF] transition-colors ${onClick ? 'cursor-pointer' : ''}`}
+  >
     <div className="flex justify-between items-start relative z-10">
       <div className={`w-12 h-12 rounded-2xl bg-gray-900 flex items-center justify-center ${color} border-2 border-gray-800`}>
         <span className="material-symbols-outlined text-3xl">{icon}</span>
@@ -315,8 +381,8 @@ const QuickModuleButton = ({ icon, label, onClick, color }: any) => (
   </button>
 );
 
-const ActivityItem = ({ icon, title, desc, time, color }: any) => (
-  <div className="flex items-center gap-4 group cursor-pointer">
+const ActivityItem = ({ icon, title, desc, time, color, onClick }: any) => (
+  <div className="flex items-center gap-4 group cursor-pointer" onClick={onClick}>
     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border-2 border-transparent group-hover:border-current transition-colors ${color}`}>
       <span className="material-symbols-outlined">{icon}</span>
     </div>
@@ -328,13 +394,25 @@ const ActivityItem = ({ icon, title, desc, time, color }: any) => (
   </div>
 );
 
-const TaskItem = ({ label, urgent }: any) => (
-  <div className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-colors cursor-pointer group ${urgent ? 'bg-red-500/5 border-red-500/20 hover:border-red-500' : 'bg-gray-900/50 border-gray-800 hover:border-gray-600'}`}>
-    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${urgent ? 'border-red-500 group-hover:bg-red-500' : 'border-gray-600 group-hover:border-[#00AEEF]'}`}>
-      <span className="material-symbols-outlined text-[14px] opacity-0 group-hover:opacity-100 text-white">check</span>
+const TaskItem = ({ label, urgent, completed, onToggle }: any) => (
+  <div 
+    onClick={onToggle}
+    className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-all cursor-pointer group 
+      ${completed ? 'bg-gray-900/20 border-gray-800/50 opacity-50' : 
+        urgent ? 'bg-red-500/5 border-red-500/20 hover:border-red-500' : 'bg-gray-900/50 border-gray-800 hover:border-gray-600'}`}
+  >
+    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all 
+      ${completed ? 'bg-green-500 border-green-500' : 
+        urgent ? 'border-red-500 group-hover:bg-red-500' : 'border-gray-600 group-hover:border-[#00AEEF]'}`}
+    >
+      <span className={`material-symbols-outlined text-[14px] text-white transition-opacity ${completed ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+        check
+      </span>
     </div>
-    <span className={`text-sm font-bold flex-1 ${urgent ? 'text-red-200' : 'text-gray-300'}`}>{label}</span>
-    {urgent && <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>}
+    <span className={`text-sm font-bold flex-1 transition-all ${completed ? 'text-gray-600 line-through' : urgent ? 'text-red-200' : 'text-gray-300'}`}>
+      {label}
+    </span>
+    {urgent && !completed && <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>}
   </div>
 );
 

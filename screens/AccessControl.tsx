@@ -148,103 +148,152 @@ const AccessControl: React.FC<Props> = ({ navigate }) => {
         </div>
       </header>
 
-      <main className="flex-1 p-4 space-y-6 pb-24">
-        {/* Search & Actions */}
-        <div className="space-y-3">
-            <div className="relative">
-                <span className="material-symbols-outlined absolute left-4 top-3.5 text-gray-500">search</span>
+      <main className="flex-1 max-w-7xl mx-auto w-full p-4 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 pb-24">
+        
+        {/* Left Column: Actions & Expected */}
+        <div className="lg:col-span-7 space-y-8">
+          {/* Search & Quick Actions */}
+          <section className="bg-[#141414] p-6 rounded-3xl border border-white/5 shadow-2xl">
+            <h3 className="text-sm font-black text-gray-500 uppercase tracking-widest mb-4">Acciones Rápidas</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="relative group">
+                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-ediflow-primary transition-colors">search</span>
                 <input 
-                    type="text" 
-                    placeholder="Buscar depto (ej. 402, Torre A)..." 
-                    className="w-full bg-[#141414] border-none rounded-xl py-3.5 pl-12 text-white placeholder-gray-500 focus:ring-2 focus:ring-ediflow-primary"
+                  type="text" 
+                  placeholder="Buscar residente o depto..." 
+                  className="w-full bg-black/40 border-2 border-white/5 rounded-2xl py-4 pl-12 pr-4 text-white placeholder-gray-600 focus:border-ediflow-primary focus:ring-0 transition-all outline-none"
                 />
+              </div>
+              
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => navigate('ManualVisitorRegistration')}
+                  className="flex-1 bg-white/5 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 border border-white/10 hover:bg-white/10 active:scale-[0.98] transition-all"
+                >
+                  <span className="material-symbols-outlined">person_add</span>
+                  REGISTRO MANUAL
+                </button>
+                <button 
+                  onClick={() => setIsScanning(true)}
+                  className="w-16 bg-ediflow-primary text-black rounded-2xl flex items-center justify-center hover:bg-yellow-400 active:scale-90 transition-all shadow-lg shadow-yellow-500/20"
+                >
+                  <span className="material-symbols-outlined text-3xl">qr_code_scanner</span>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          {/* Expected Visitors */}
+          <section>
+            <div className="flex justify-between items-end mb-6 px-2">
+              <div>
+                <h3 className="text-2xl font-black text-white">Visitas Esperadas</h3>
+                <p className="text-gray-500 font-medium">Programadas para el día de hoy</p>
+              </div>
+              <span className="bg-ediflow-primary/10 text-ediflow-primary px-4 py-1 rounded-full text-xs font-black border border-ediflow-primary/20">
+                3 PENDIENTES
+              </span>
             </div>
             
-            <div className="grid grid-cols-[1fr_auto] gap-3">
-                <button 
-                    onClick={() => navigate('ManualVisitorRegistration')}
-                    className="bg-[#141414] text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 border border-white/5 hover:bg-[#1F1F1F] active:scale-[0.98] transition-all"
-                >
-                    <span className="material-symbols-outlined text-gray-400">edit_square</span>
-                    Registro Manual
-                </button>
-                <button 
-                    onClick={() => setIsScanning(true)}
-                    className="aspect-square bg-ediflow-primary text-black rounded-xl flex items-center justify-center hover:bg-yellow-400 active:scale-[0.90] transition-all shadow-lg shadow-yellow-500/20"
-                >
-                    <span className="material-symbols-outlined text-2xl">qr_code_scanner</span>
-                </button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <VisitorCard 
+                name="María González" 
+                rut="12.345.xxx-k" 
+                depto="604" 
+                time="10:00 - 12:00" 
+                img="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=100"
+              />
+              <VisitorCard 
+                name="Juan Pablo Díaz" 
+                rut="15.822.xxx-9" 
+                depto="1402" 
+                time="11:30" 
+                initials="JP"
+              />
+              <VisitorCard 
+                name="Soporte Técnico VTR" 
+                rut="Empresa" 
+                depto="201" 
+                time="15:00" 
+                icon="router"
+              />
             </div>
+          </section>
         </div>
 
-        {/* Expected */}
-        <section>
-            <div className="flex justify-between items-center mb-3">
-                <h3 className="font-bold text-white text-lg">Visitas Esperadas <span className="text-ediflow-primary text-sm ml-1">(3)</span></h3>
-                <button className="text-ediflow-primary text-sm hover:text-white active:opacity-70 transition-all">Ver todas</button>
+        {/* Right Column: History & Stats */}
+        <div className="lg:col-span-5 space-y-8">
+          {/* Stats Summary */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-green-500/5 border border-green-500/10 p-6 rounded-3xl">
+              <p className="text-xs font-black text-green-500/60 uppercase tracking-widest mb-1">Ingresos</p>
+              <h4 className="text-3xl font-black text-white">24</h4>
             </div>
-            <div className="space-y-3">
-                <VisitorCard 
-                    name="María González" 
-                    rut="12.345.xxx-k" 
-                    depto="604" 
-                    time="10:00 - 12:00" 
-                    img="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=100"
-                />
-                <VisitorCard 
-                    name="Juan Pablo Díaz" 
-                    rut="15.822.xxx-9" 
-                    depto="1402" 
-                    time="11:30" 
-                    initials="JP"
-                />
+            <div className="bg-blue-500/5 border border-blue-500/10 p-6 rounded-3xl">
+              <p className="text-xs font-black text-blue-500/60 uppercase tracking-widest mb-1">Salidas</p>
+              <h4 className="text-3xl font-black text-white">18</h4>
             </div>
-        </section>
+          </div>
 
-        {/* History */}
-         <section>
-            <div className="flex justify-between items-center mb-3">
-                <h3 className="font-bold text-white text-lg">Historial de Hoy</h3>
-                <button className="text-gray-500 active:scale-90 transition-all"><span className="material-symbols-outlined">filter_list</span></button>
+          {/* History Feed */}
+          <section className="bg-[#141414] rounded-[32px] border border-white/5 overflow-hidden flex flex-col h-full max-h-[600px]">
+            <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+              <h3 className="font-black text-white uppercase tracking-widest text-sm">Historial Reciente</h3>
+              <button className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-400 hover:text-white transition-colors">
+                <span className="material-symbols-outlined text-xl">filter_list</span>
+              </button>
             </div>
-            <div className="bg-[#141414] rounded-xl border border-gray-800 divide-y divide-gray-800">
-                <HistoryItem 
-                    name="Pedro Soto (Delivery)" 
-                    detail="Depto 201 • Rut Verificado" 
-                    time="10:45 AM" 
-                    status="INGRESADO" 
-                    statusColor="bg-green-500/20 text-green-400 border-green-500/30"
-                    icon="local_shipping"
-                    iconColor="text-orange-400 bg-orange-500/20"
-                />
-                <HistoryItem 
-                    name="Camila Soto" 
-                    detail="Depto 1102 • Rut Verificado" 
-                    time="09:30 AM" 
-                    status="SALIDO" 
-                    statusColor="bg-gray-700 text-gray-300 border-gray-600"
-                    icon="person"
-                    iconColor="text-blue-400 bg-blue-500/20"
-                />
-                 <HistoryItem 
-                    name="Roberto Gómez" 
-                    detail="Depto 405 • QR Code" 
-                    time="08:15 AM" 
-                    status="INGRESADO" 
-                    statusColor="bg-green-500/20 text-green-400 border-green-500/30"
-                    icon="person"
-                    iconColor="text-blue-400 bg-blue-500/20"
-                />
+            <div className="divide-y divide-white/5 overflow-y-auto no-scrollbar">
+              <HistoryItem 
+                name="Pedro Soto (Delivery)" 
+                detail="Depto 201 • Rut Verificado" 
+                time="10:45" 
+                status="INGRESADO" 
+                statusColor="bg-green-500/10 text-green-500 border-green-500/20"
+                icon="local_shipping"
+                iconColor="text-orange-400 bg-orange-500/10"
+              />
+              <HistoryItem 
+                name="Camila Soto" 
+                detail="Depto 1102 • Rut Verificado" 
+                time="09:30" 
+                status="SALIDO" 
+                statusColor="bg-white/5 text-gray-400 border-white/10"
+                icon="person"
+                iconColor="text-blue-400 bg-blue-500/20"
+              />
+              <HistoryItem 
+                name="Roberto Gómez" 
+                detail="Depto 405 • QR Code" 
+                time="08:15" 
+                status="INGRESADO" 
+                statusColor="bg-green-500/10 text-green-500 border-green-500/20"
+                icon="person"
+                iconColor="text-blue-400 bg-blue-500/20"
+              />
+              <HistoryItem 
+                name="Ana María Rojas" 
+                detail="Depto 803 • Invitado" 
+                time="07:45" 
+                status="SALIDO" 
+                statusColor="bg-white/5 text-gray-400 border-white/10"
+                icon="person"
+                iconColor="text-purple-400 bg-purple-500/20"
+              />
             </div>
-         </section>
+            <button className="p-4 text-xs font-black text-gray-500 hover:text-white transition-colors border-t border-white/5 bg-white/[0.01] uppercase tracking-widest">
+              Ver bitácora completa
+            </button>
+          </section>
+        </div>
       </main>
 
-      <nav className="fixed bottom-0 w-full max-w-[420px] bg-[#141414]/95 backdrop-blur border-t border-gray-800 px-2 pt-2 pb-6 z-50">
-        <div className="flex justify-around">
-            <NavButton icon="shield_person" label="Control" active />
-            <NavButton icon="inventory_2" label="Encomiendas" onClick={() => navigate('PackageEntry')} />
-            <NavButton icon="dashboard" label="Panel" onClick={() => navigate('ConciergeDashboard')} />
-            <NavButton icon="manage_accounts" label="Perfil" onClick={() => navigate('UserProfile')} />
+      <nav className="fixed bottom-0 w-full bg-[#0A0A0A]/90 backdrop-blur-xl border-t border-white/5 px-6 pt-4 pb-8 z-50 flex justify-center">
+        <div className="max-w-lg w-full flex justify-between items-center">
+          <NavButton icon="shield_person" label="Control" active />
+          <NavButton icon="inventory_2" label="Paquetes" onClick={() => navigate('PackageEntry')} />
+          <NavButton icon="dashboard" label="Panel" onClick={() => navigate('ConciergeDashboard')} />
+          <NavButton icon="manage_accounts" label="Perfil" onClick={() => navigate('UserProfile')} />
         </div>
       </nav>
 
@@ -272,47 +321,60 @@ const AccessControl: React.FC<Props> = ({ navigate }) => {
   );
 };
 
-const VisitorCard = ({ name, rut, depto, time, img, initials }: any) => (
-    <div className="bg-[#141414] p-4 rounded-xl border border-gray-800">
-        <div className="flex justify-between items-start mb-4">
-            <div className="flex gap-3 items-center">
+const VisitorCard = ({ name, rut, depto, time, img, initials, icon }: any) => (
+    <div className="bg-[#141414] p-6 rounded-3xl border border-white/5 hover:border-white/10 transition-all group">
+        <div className="flex justify-between items-start mb-6">
+            <div className="flex gap-4 items-center">
                 {img ? (
-                    <img src={img} className="w-12 h-12 rounded-lg object-cover" />
+                    <img src={img} className="w-14 h-14 rounded-2xl object-cover border-2 border-white/5" />
+                ) : icon ? (
+                    <div className="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+                        <span className="material-symbols-outlined text-3xl">{icon}</span>
+                    </div>
                 ) : (
-                    <div className="w-12 h-12 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400 font-bold text-lg">{initials}</div>
+                    <div className="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 font-black text-xl">{initials}</div>
                 )}
                 <div>
-                    <h4 className="font-bold text-white">{name}</h4>
-                    <div className="flex items-center gap-1 text-xs text-gray-400 mt-1">
+                    <h4 className="font-black text-white text-lg leading-tight">{name}</h4>
+                    <div className="flex items-center gap-2 text-xs text-gray-500 mt-1 font-bold">
                         <span className="material-symbols-outlined text-[14px]">badge</span> {rut}
                     </div>
                 </div>
             </div>
-            <span className="bg-[#13a4ec]/10 text-[#13a4ec] px-2 py-1 rounded text-xs font-bold">Depto {depto}</span>
+            <div className="flex flex-col items-end gap-2">
+                <span className="bg-white/5 text-white px-3 py-1 rounded-xl text-[10px] font-black border border-white/10 uppercase tracking-widest">Depto {depto}</span>
+            </div>
         </div>
-        <div className="flex items-center justify-between pt-3 border-t border-gray-800">
-            <span className="text-xs text-gray-400 flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">schedule</span> Esperada: {time}</span>
-            <button className="bg-[#13a4ec] text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-blue-400 active:scale-95 transition-all flex items-center gap-1">
-                <span className="material-symbols-outlined text-[16px]">login</span> Check-in
+        <div className="flex items-center justify-between pt-5 border-t border-white/5">
+            <div className="flex flex-col">
+                <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-0.5">Llegada Estimada</span>
+                <span className="text-sm text-gray-300 font-bold flex items-center gap-2">
+                    <span className="material-symbols-outlined text-ediflow-primary text-lg">schedule</span> 
+                    {time}
+                </span>
+            </div>
+            <button className="bg-ediflow-primary text-black text-xs font-black px-6 py-3 rounded-xl hover:bg-yellow-400 active:scale-95 transition-all flex items-center gap-2 shadow-lg shadow-yellow-500/10">
+                <span className="material-symbols-outlined text-lg">login</span> 
+                CHECK-IN
             </button>
         </div>
     </div>
 );
 
 const HistoryItem = ({ name, detail, time, status, statusColor, icon, iconColor }: any) => (
-    <div className="p-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${iconColor}`}>
-                <span className="material-symbols-outlined text-lg">{icon}</span>
+    <div className="p-6 flex items-center justify-between hover:bg-white/[0.02] transition-colors group">
+        <div className="flex items-center gap-4">
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${iconColor}`}>
+                <span className="material-symbols-outlined text-2xl">{icon}</span>
             </div>
             <div>
-                <h4 className="font-bold text-white text-sm">{name}</h4>
-                <p className="text-xs text-gray-400">{detail}</p>
+                <h4 className="font-black text-white text-base leading-tight">{name}</h4>
+                <p className="text-xs text-gray-500 font-bold mt-0.5">{detail}</p>
             </div>
         </div>
-        <div className="flex flex-col items-end gap-1">
-            <span className="text-xs font-mono text-gray-500">{time}</span>
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${statusColor}`}>{status}</span>
+        <div className="flex flex-col items-end gap-2">
+            <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest">{time}</span>
+            <span className={`text-[10px] font-black px-3 py-1 rounded-lg border uppercase tracking-wider ${statusColor}`}>{status}</span>
         </div>
     </div>
 );
