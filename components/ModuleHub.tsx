@@ -109,21 +109,20 @@ export const ModuleHub: React.FC<ModuleHubProps> = ({ isOpen, onClose, onNavigat
                       onNavigate(targetScreen);
                       onClose();
                     }}
-                    className={`flex flex-col items-center justify-center p-4 rounded-2xl bg-[#121212] border-2 transition-all duration-300 group ${
-                      isActive ? 'border-white shadow-[0_0_20px_rgba(255,255,255,0.1)]' : 'border-gray-800 hover:border-gray-600'
+                    className={`flex flex-col items-center justify-center p-3 sm:p-4 rounded-[20px] bg-[#0A0A0A] border transition-all duration-300 group ${
+                      isActive ? 'border-white/40 shadow-[0_0_15px_rgba(255,255,255,0.05)]' : 'border-white/5 hover:border-white/20'
                     }`}
                   >
                     <div 
-                      className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3 transition-transform duration-300 group-hover:scale-110 group-active:scale-95"
+                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mb-2 transition-transform duration-300 group-hover:scale-110 group-active:scale-95"
                       style={{ 
-                        backgroundColor: `${module.color}15`, 
+                        backgroundColor: `${module.color}10`, 
                         color: module.color,
-                        boxShadow: `0 0 20px ${module.color}10`
                       }}
                     >
-                      <module.icon size={32} strokeWidth={2.5} />
+                      <module.icon size={24} strokeWidth={2} />
                     </div>
-                    <span className="text-[11px] font-black uppercase tracking-tighter text-center leading-tight text-gray-400 group-hover:text-white transition-colors">
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-center leading-tight text-gray-500 group-hover:text-white transition-colors">
                       {module.label}
                     </span>
                   </motion.button>
@@ -140,7 +139,7 @@ export const ModuleHub: React.FC<ModuleHubProps> = ({ isOpen, onClose, onNavigat
                 onLogout();
                 onClose();
               }}
-              className="w-full mt-8 py-4 rounded-2xl bg-red-500/10 border-2 border-red-500/20 text-red-500 font-black uppercase tracking-widest hover:bg-red-500/20 transition-all active:scale-[0.98]"
+              className="w-full mt-6 py-2.5 rounded-xl bg-red-500/5 border border-red-500/20 text-red-500 text-[11px] font-semibold uppercase tracking-widest hover:bg-red-500/10 transition-all active:scale-[0.98]"
             >
               Cerrar Sesión
             </motion.button>

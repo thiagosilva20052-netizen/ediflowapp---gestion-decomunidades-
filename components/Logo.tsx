@@ -3,15 +3,16 @@ import React from 'react';
 interface LogoProps {
   className?: string;
   variant?: 'vertical' | 'horizontal' | 'icon';
+  color?: string;
 }
 
-export const Logo: React.FC<LogoProps> = ({ className = "", variant = 'vertical' }) => {
+export const Logo: React.FC<LogoProps> = ({ className = "", variant = 'vertical', color = "#00AEEF" }) => {
   const svgIcon = (
     <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
       {/* House Outline */}
       <path 
         d="M 125 160 L 150 160 L 150 90 L 100 40 L 50 90" 
-        stroke="#00A3FF" 
+        stroke={color} 
         strokeWidth="14" 
         strokeLinecap="round" 
         strokeLinejoin="round"
@@ -19,25 +20,25 @@ export const Logo: React.FC<LogoProps> = ({ className = "", variant = 'vertical'
       {/* Outer Wifi Arc */}
       <path 
         d="M 50 110 A 50 50 0 0 1 100 160" 
-        stroke="#00A3FF" 
+        stroke={color} 
         strokeWidth="14" 
         strokeLinecap="round"
       />
       {/* Inner Wifi Arc */}
       <path 
         d="M 50 135 A 25 25 0 0 1 75 160" 
-        stroke="#00A3FF" 
+        stroke={color} 
         strokeWidth="14" 
         strokeLinecap="round"
       />
       {/* Wifi Dot */}
-      <circle cx="50" cy="160" r="7" fill="#00A3FF" />
+      <circle cx="50" cy="160" r="7" fill={color} />
       
       {/* Windows */}
-      <rect x="86" y="75" width="11" height="11" fill="#00A3FF" />
-      <rect x="103" y="75" width="11" height="11" fill="#00A3FF" />
-      <rect x="86" y="92" width="11" height="11" fill="#00A3FF" />
-      <rect x="103" y="92" width="11" height="11" fill="#00A3FF" />
+      <rect x="86" y="75" width="11" height="11" fill={color} />
+      <rect x="103" y="75" width="11" height="11" fill={color} />
+      <rect x="86" y="92" width="11" height="11" fill={color} />
+      <rect x="103" y="92" width="11" height="11" fill={color} />
     </svg>
   );
 

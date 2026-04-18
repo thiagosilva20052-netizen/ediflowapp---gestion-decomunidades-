@@ -38,13 +38,13 @@ const AdminDashboard: React.FC<Props> = ({ navigate }) => {
   const urgentCount = tasks.filter(t => t.urgent && !t.completed).length;
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-[#000000] text-white">
+    <div className="flex flex-col md:flex-row min-h-screen bg-black text-white font-sans">
       
       {/* Sidebar - Desktop Only */}
-      <aside className="hidden md:flex flex-col w-72 bg-[#121212] border-r-2 border-gray-800 p-8 sticky top-0 h-screen">
-        <Logo variant="horizontal" className="mb-12" />
+      <aside className="hidden md:flex flex-col w-64 bg-[#0A0A0A] border-r border-white/5 p-6 sticky top-0 h-screen">
+        <Logo variant="horizontal" className="mb-10 scale-90 origin-left" />
         
-        <nav className="flex-1 space-y-4">
+        <nav className="flex-1 space-y-2">
           <SidebarButton icon="dashboard" label="Resumen" active />
           <SidebarButton icon="account_balance_wallet" label="Finanzas" onClick={() => navigate('ManageExpenses')} />
           <SidebarButton icon="contacts" label="Directorio" onClick={() => navigate('ResidentDirectory')} />
@@ -53,44 +53,44 @@ const AdminDashboard: React.FC<Props> = ({ navigate }) => {
           <SidebarButton icon="campaign" label="Comunidad" onClick={() => navigate('CommunityWall')} />
         </nav>
 
-        <div className="mt-auto pt-8 border-t-2 border-gray-800">
-          <div className="flex items-center gap-4 p-4 bg-gray-900/50 rounded-2xl border-2 border-gray-800">
-            <div className="w-12 h-12 rounded-full bg-[#00AEEF] flex items-center justify-center font-black text-white">
+        <div className="mt-auto pt-6 border-t border-white/5">
+          <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
+            <div className="w-10 h-10 rounded-full bg-[#00AEEF]/20 flex items-center justify-center font-bold text-[#00AEEF]">
               AD
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold truncate">Administrador</p>
-              <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Premium Plan</p>
+              <p className="text-sm font-medium truncate">Administrador</p>
+              <p className="text-[10px] text-gray-500 font-light tracking-wide">Premium Plan</p>
             </div>
           </div>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col min-h-full pb-24 md:pb-10">
+      <main className="flex-1 flex flex-col min-h-full pb-20 md:pb-8">
         
         {/* Header */}
-        <header className="px-6 md:px-10 pt-10 pb-6 flex flex-col md:flex-row md:items-center justify-between gap-6 sticky top-0 z-20 bg-[#000000]/80 backdrop-blur-md border-b-2 border-gray-800 md:border-none">
+        <header className="px-6 md:px-10 pt-8 pb-6 flex flex-col md:flex-row md:items-center justify-between gap-6 sticky top-0 z-20 bg-black/80 backdrop-blur-xl border-b border-white/5">
           <div className="md:hidden flex justify-between items-center w-full">
-            <Logo variant="horizontal" className="scale-90 origin-left" />
-            <button onClick={() => navigate('UserProfile')} className="w-12 h-12 rounded-full bg-[#121212] flex items-center justify-center border-2 border-gray-800">
-              <span className="material-symbols-outlined">notifications</span>
+            <Logo variant="horizontal" className="scale-[0.8] origin-left" />
+            <button onClick={() => navigate('UserProfile')} className="w-10 h-10 rounded-full bg-[#0A0A0A] flex items-center justify-center border border-white/5">
+              <span className="material-symbols-outlined text-[20px]">notifications</span>
             </button>
           </div>
           
           <div className="hidden md:block">
-            <h1 className="text-4xl font-black tracking-tight">Panel de Control</h1>
-            <p className="text-gray-500 font-medium mt-1">Bienvenido de nuevo, Administrador.</p>
+            <h1 className="text-3xl font-light tracking-tight">Panel de Control</h1>
+            <p className="text-sm text-gray-500 font-light mt-1">Bienvenido de nuevo, Administrador.</p>
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-3 bg-[#121212] border-2 border-gray-800 rounded-full px-6 py-3">
-              <span className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></span>
-              <span className="text-sm font-bold uppercase tracking-widest">Sistema Online</span>
+            <div className="hidden md:flex items-center gap-2 bg-[#0A0A0A] border border-white/5 rounded-full px-4 py-2">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+              <span className="text-[11px] font-medium text-gray-400 uppercase tracking-widest">Sistema Online</span>
             </div>
             <Button 
               onClick={() => navigate('ManageExpenses')}
-              className="bg-[#00AEEF] hover:bg-[#0090C5] text-white border-none px-8"
+              className="bg-white hover:bg-gray-200 text-black px-6 py-2 h-10 text-sm font-medium border-none"
               icon="add"
             >
               Nuevo Gasto
@@ -99,10 +99,10 @@ const AdminDashboard: React.FC<Props> = ({ navigate }) => {
         </header>
 
         {/* Dashboard Grid */}
-        <div className="px-6 md:px-10 py-6 space-y-8 max-w-7xl mx-auto w-full">
+        <div className="px-6 md:px-10 py-6 space-y-6 max-w-7xl mx-auto w-full">
           
           {/* Key Metrics Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <MetricCard 
               label="Balance Mensual" 
               value="$4.250.000" 
@@ -145,41 +145,41 @@ const AdminDashboard: React.FC<Props> = ({ navigate }) => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             {/* Financial Health - Large Card */}
-            <Card className="lg:col-span-2 p-8 flex flex-col h-full bg-[#121212] border-gray-800">
-              <div className="flex justify-between items-center mb-8">
+            <Card className="lg:col-span-2 p-6 flex flex-col h-full bg-[#0A0A0A] border border-white/5 rounded-[24px]">
+              <div className="flex justify-between items-center mb-6">
                 <div>
-                  <h2 className="text-2xl font-black">Salud Financiera</h2>
-                  <p className="text-gray-500">Ingresos vs Gastos (Últimos 6 meses)</p>
+                  <h2 className="text-xl font-light">Salud Financiera</h2>
+                  <p className="text-xs text-gray-500">Ingresos vs Gastos (Últimos 6 meses)</p>
                 </div>
                 <div className="flex gap-2">
-                  <div className="flex items-center gap-2 px-3 py-1 bg-green-500/10 rounded-lg">
-                    <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                    <span className="text-[10px] font-bold text-green-500 uppercase">Ingresos</span>
+                  <div className="flex items-center gap-2 px-2.5 py-1 bg-green-500/10 rounded-full border border-green-500/20">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                    <span className="text-[10px] font-medium text-green-500 uppercase tracking-wide">Ingresos</span>
                   </div>
-                  <div className="flex items-center gap-2 px-3 py-1 bg-red-500/10 rounded-lg">
-                    <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                    <span className="text-[10px] font-bold text-red-500 uppercase">Gastos</span>
+                  <div className="flex items-center gap-2 px-2.5 py-1 bg-red-500/10 rounded-full border border-red-500/20">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                    <span className="text-[10px] font-medium text-red-500 uppercase tracking-wide">Gastos</span>
                   </div>
                 </div>
               </div>
               
-              <div className="flex-1 min-h-[300px]">
+              <div className="flex-1 min-h-[250px]">
                 <FinancialChart />
               </div>
             </Card>
 
             {/* Quick Actions & Modules */}
-            <div className="space-y-6">
-              <Card className="p-8 bg-[#00AEEF] border-none text-white overflow-hidden relative group cursor-pointer" onClick={() => navigate('ResidentDirectory')}>
+            <div className="space-y-4">
+              <Card className="p-6 bg-[#00AEEF] border-none text-white overflow-hidden relative group cursor-pointer rounded-[24px]" onClick={() => navigate('ResidentDirectory')}>
                 <div className="relative z-10">
-                  <h3 className="text-2xl font-black mb-2">Directorio Inteligente</h3>
-                  <p className="text-white/80 font-medium mb-6">Gestiona residentes, vehículos y mascotas con un solo clic.</p>
-                  <span className="inline-flex items-center gap-2 bg-white text-[#00AEEF] px-6 py-3 rounded-full font-black text-sm group-hover:scale-105 transition-transform">
+                  <h3 className="text-lg font-semibold mb-2">Directorio Inteligente</h3>
+                  <p className="text-white/80 text-sm font-light mb-6">Gestiona residentes y vehículos.</p>
+                  <span className="inline-flex items-center gap-2 bg-white text-[#00AEEF] px-4 py-2 rounded-full font-medium text-xs group-hover:bg-gray-100 transition-colors">
                     Abrir Directorio
-                    <span className="material-symbols-outlined">arrow_forward</span>
+                    <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
                   </span>
                 </div>
-                <span className="material-symbols-outlined absolute -right-8 -bottom-8 text-[180px] text-white/10 rotate-12 group-hover:rotate-0 transition-transform duration-500">
+                <span className="material-symbols-outlined absolute -right-6 -bottom-6 text-[120px] text-white/20 rotate-12 group-hover:rotate-0 transition-transform duration-500">
                   contacts
                 </span>
               </Card>
@@ -215,13 +215,13 @@ const AdminDashboard: React.FC<Props> = ({ navigate }) => {
           </div>
 
           {/* Bottom Row: Recent Activity & Alerts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="p-8 bg-[#121212] border-gray-800">
-              <h3 className="text-xl font-black mb-6 flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#00AEEF]">history</span>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Card className="p-6 bg-[#0A0A0A] border border-white/5 rounded-[24px]">
+              <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+                <span className="material-symbols-outlined text-gray-400 text-xl">history</span>
                 Actividad Reciente
               </h3>
-              <div className="space-y-6">
+              <div className="space-y-4">
                 <ActivityItem 
                   icon="payments" 
                   title="Gasto Común Registrado" 
@@ -249,19 +249,19 @@ const AdminDashboard: React.FC<Props> = ({ navigate }) => {
               </div>
             </Card>
 
-            <Card className="p-8 bg-[#121212] border-gray-800">
-              <h3 className="text-xl font-black mb-6 flex items-center justify-between">
+            <Card className="p-6 bg-[#0A0A0A] border border-white/5 rounded-[24px]">
+              <h3 className="text-lg font-medium mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-amber-500">assignment_late</span>
+                  <span className="material-symbols-outlined text-amber-500 text-xl">assignment_late</span>
                   Tareas Pendientes
                 </div>
                 {urgentCount > 0 && (
-                  <span className="text-xs font-black bg-amber-500 text-black px-3 py-1 rounded-full">
-                    {urgentCount} {urgentCount === 1 ? 'URGENTE' : 'URGENTES'}
+                  <span className="text-[10px] font-semibold bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2.5 py-1 rounded-full">
+                    {urgentCount} URGENTE
                   </span>
                 )}
               </h3>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {sortedTasks.map(task => (
                   <TaskItem 
                     key={task.id} 
@@ -277,19 +277,19 @@ const AdminDashboard: React.FC<Props> = ({ navigate }) => {
             {/* Emergency Card for Admin */}
             <Card 
               onClick={() => navigate('Emergency')}
-              className="p-8 bg-[#0A0A0A] border-2 border-white/5 flex items-center justify-between group cursor-pointer hover:border-red-500/50 transition-all duration-500 rounded-[32px] overflow-hidden lg:col-span-2"
+              className="p-6 bg-[#0A0A0A] border border-red-500/10 flex items-center justify-between group cursor-pointer hover:border-red-500/30 transition-all duration-300 rounded-[24px] overflow-hidden lg:col-span-2"
             >
-              <div className="flex items-center gap-6">
-                <div className="w-16 h-16 rounded-[22px] bg-red-500 flex items-center justify-center text-white shadow-[0_0_30px_rgba(239,68,68,0.3)] group-hover:scale-110 transition-transform duration-500">
-                  <span className="material-symbols-outlined text-4xl font-bold">emergency</span>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center text-red-500 group-hover:bg-red-500 group-hover:text-white transition-all duration-300">
+                  <span className="material-symbols-outlined text-2xl font-normal">emergency</span>
                 </div>
                 <div>
-                  <h4 className="font-black text-red-500 uppercase tracking-[0.2em] text-[10px] mb-1">Emergencia</h4>
-                  <h3 className="text-2xl font-black text-white leading-tight">Acceso Directo a<br />Centro de Emergencias</h3>
+                  <h4 className="font-semibold text-red-500 uppercase tracking-widest text-[9px] mb-0.5">Emergencia</h4>
+                  <h3 className="text-lg font-light text-white leading-tight">Acceso Directo a Centro</h3>
                 </div>
               </div>
-              <div className="w-12 h-20 rounded-full border border-white/10 flex items-center justify-center group-hover:bg-red-500 group-hover:border-red-500 transition-all duration-500">
-                <span className="material-symbols-outlined text-red-500 group-hover:text-white transition-colors text-3xl">arrow_forward</span>
+              <div className="w-8 h-8 rounded-full border border-white/5 flex items-center justify-center group-hover:bg-red-500 group-hover:border-red-500 transition-all duration-300">
+                <span className="material-symbols-outlined text-gray-500 group-hover:text-white transition-colors text-lg">arrow_forward</span>
               </div>
             </Card>
           </div>
@@ -297,7 +297,7 @@ const AdminDashboard: React.FC<Props> = ({ navigate }) => {
         </div>
 
         {/* Mobile Nav */}
-        <nav className="md:hidden fixed bottom-0 w-full bg-[#121212] border-t-2 border-gray-800 pb-8 pt-4 px-6 flex justify-between items-center z-30">
+        <nav className="md:hidden fixed bottom-0 w-full bg-black border-t border-white/5 pb-6 pt-3 px-6 flex justify-between items-center z-30">
           <NavButton icon="dashboard" label="Resumen" active />
           <NavButton icon="account_balance_wallet" label="Finanzas" onClick={() => navigate('ManageExpenses')} />
           <NavButton icon="contacts" label="Directorio" onClick={() => navigate('ResidentDirectory')} />
@@ -313,24 +313,21 @@ const AdminDashboard: React.FC<Props> = ({ navigate }) => {
 const MetricCard = ({ label, value, trend, trendUp, icon, color, onClick }: any) => (
   <Card 
     onClick={onClick}
-    className={`p-6 bg-[#121212] border-gray-800 flex flex-col justify-between h-40 relative overflow-hidden group hover:border-[#00AEEF] transition-colors ${onClick ? 'cursor-pointer' : ''}`}
+    className={`p-5 bg-[#0A0A0A] border border-white/5 flex flex-col justify-between h-32 relative overflow-hidden group hover:border-[#00AEEF]/50 transition-colors rounded-[20px] ${onClick ? 'cursor-pointer' : ''}`}
   >
     <div className="flex justify-between items-start relative z-10">
-      <div className={`w-12 h-12 rounded-2xl bg-gray-900 flex items-center justify-center ${color} border-2 border-gray-800`}>
-        <span className="material-symbols-outlined text-3xl">{icon}</span>
+      <div className={`w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center ${color} border border-white/5`}>
+        <span className="material-symbols-outlined text-[18px]">{icon}</span>
       </div>
-      <div className={`flex items-center gap-1 text-xs font-black ${trendUp ? 'text-green-500' : 'text-amber-500'}`}>
-        <span className="material-symbols-outlined text-sm">{trendUp ? 'trending_up' : 'info'}</span>
+      <div className={`flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full border ${trendUp ? 'text-green-500 border-green-500/20 bg-green-500/10' : 'text-amber-500 border-amber-500/20 bg-amber-500/10'}`}>
+        <span className="material-symbols-outlined text-[12px]">{trendUp ? 'trending_up' : 'info'}</span>
         {trend}
       </div>
     </div>
     <div className="relative z-10">
-      <p className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-1">{label}</p>
-      <h3 className="text-3xl font-black">{value}</h3>
+      <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-0.5">{label}</p>
+      <h3 className="text-2xl font-light">{value}</h3>
     </div>
-    <span className={`material-symbols-outlined absolute -right-4 -bottom-4 text-[100px] opacity-5 ${color} group-hover:scale-110 transition-transform duration-500`}>
-      {icon}
-    </span>
   </Card>
 );
 
@@ -374,55 +371,55 @@ const FinancialChart = () => {
 const QuickModuleButton = ({ icon, label, onClick, color }: any) => (
   <button 
     onClick={onClick}
-    className={`flex flex-col items-center justify-center gap-3 p-6 rounded-3xl border-2 transition-all active:scale-95 hover:brightness-125 ${color}`}
+    className={`flex flex-col items-center justify-center gap-2 p-4 rounded-[20px] bg-[#0A0A0A] border border-white/5 transition-all active:scale-95 hover:bg-white/5 ${color.replace('border- ', '')}`}
   >
-    <span className="material-symbols-outlined text-3xl">{icon}</span>
-    <span className="text-sm font-black uppercase tracking-widest">{label}</span>
+    <span className={`material-symbols-outlined text-2xl ${color.split(' ')[1]}`}>{icon}</span>
+    <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">{label}</span>
   </button>
 );
 
 const ActivityItem = ({ icon, title, desc, time, color, onClick }: any) => (
-  <div className="flex items-center gap-4 group cursor-pointer" onClick={onClick}>
-    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border-2 border-transparent group-hover:border-current transition-colors ${color}`}>
-      <span className="material-symbols-outlined">{icon}</span>
+  <div className="flex items-center gap-3 group cursor-pointer p-2 hover:bg-white/5 rounded-xl transition-colors -mx-2" onClick={onClick}>
+    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border border-white/5 group-hover:border-white/20 transition-colors ${color}`}>
+      <span className="material-symbols-outlined text-[18px]">{icon}</span>
     </div>
     <div className="flex-1 min-w-0">
-      <h4 className="text-sm font-bold truncate">{title}</h4>
-      <p className="text-xs text-gray-500 truncate">{desc}</p>
+      <h4 className="text-xs font-medium truncate text-gray-200">{title}</h4>
+      <p className="text-[10px] text-gray-500 truncate">{desc}</p>
     </div>
-    <span className="text-[10px] font-black text-gray-600 uppercase whitespace-nowrap">{time}</span>
+    <span className="text-[9px] font-medium text-gray-600 uppercase whitespace-nowrap">{time}</span>
   </div>
 );
 
 const TaskItem = ({ label, urgent, completed, onToggle }: any) => (
   <div 
     onClick={onToggle}
-    className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-all cursor-pointer group 
-      ${completed ? 'bg-gray-900/20 border-gray-800/50 opacity-50' : 
-        urgent ? 'bg-red-500/5 border-red-500/20 hover:border-red-500' : 'bg-gray-900/50 border-gray-800 hover:border-gray-600'}`}
+    className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer group 
+      ${completed ? 'bg-black border-white/5 opacity-50' : 
+        urgent ? 'bg-red-500/5 border-red-500/20 hover:border-red-500/40' : 'bg-[#0A0A0A] border-white/5 hover:border-white/20'}`}
   >
-    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all 
-      ${completed ? 'bg-green-500 border-green-500' : 
-        urgent ? 'border-red-500 group-hover:bg-red-500' : 'border-gray-600 group-hover:border-[#00AEEF]'}`}
+    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all 
+      ${completed ? 'bg-green-500/20 border-green-500' : 
+        urgent ? 'border-red-500/50 group-hover:bg-red-500/20' : 'border-gray-700 group-hover:border-white/40'}`}
     >
-      <span className={`material-symbols-outlined text-[14px] text-white transition-opacity ${completed ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+      <span className={`material-symbols-outlined text-[12px] transition-opacity ${completed ? 'opacity-100 text-green-500' : 'opacity-0'}`}>
         check
       </span>
     </div>
-    <span className={`text-sm font-bold flex-1 transition-all ${completed ? 'text-gray-600 line-through' : urgent ? 'text-red-200' : 'text-gray-300'}`}>
+    <span className={`text-xs font-light flex-1 transition-all ${completed ? 'text-gray-600 line-through' : urgent ? 'text-red-200' : 'text-gray-300'}`}>
       {label}
     </span>
-    {urgent && !completed && <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>}
+    {urgent && !completed && <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping"></span>}
   </div>
 );
 
 const SidebarButton = ({ icon, label, active = false, onClick }: any) => (
   <button 
     onClick={onClick}
-    className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all group ${active ? 'bg-[#00AEEF] text-white shadow-lg shadow-[#00AEEF]/20' : 'text-gray-500 hover:bg-gray-800 hover:text-white'}`}
+    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all group ${active ? 'bg-white text-black' : 'text-gray-500 hover:bg-white/5 hover:text-white'}`}
   >
-    <span className={`material-symbols-outlined text-2xl ${active ? 'fill-current' : ''}`}>{icon}</span>
-    <span className="text-lg font-bold">{label}</span>
+    <span className={`material-symbols-outlined text-[20px]`}>{icon}</span>
+    <span className="text-sm font-medium">{label}</span>
   </button>
 );
 

@@ -64,7 +64,7 @@ const AccessControl: React.FC<Props> = ({ navigate }) => {
   }, [isScanning]);
 
   return (
-    <div className="flex flex-col min-h-full bg-[#0A0A0A]">
+    <div className="flex flex-col min-h-screen bg-black">
       
       {/* SCANNER OVERLAY */}
       {isScanning && (
@@ -133,51 +133,51 @@ const AccessControl: React.FC<Props> = ({ navigate }) => {
 
 
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-[#0A0A0A]/95 backdrop-blur-md border-b border-gray-800 p-4">
-        <div className="flex justify-between items-center">
+      <header className="sticky top-0 z-10 bg-black/80 backdrop-blur-xl border-b border-white/5 p-4">
+        <div className="flex justify-between items-center max-w-7xl mx-auto">
             <div className="flex items-center gap-3">
-                <button onClick={() => navigate('UserProfile')} className="w-10 h-10 rounded-full border border-ediflow-primary p-0.5 active:scale-90 transition-all">
+                <button onClick={() => navigate('UserProfile')} className="w-10 h-10 rounded-full border border-[#00AEEF]/30 p-0.5 active:scale-90 transition-all">
                     <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=100" className="w-full h-full rounded-full object-cover" />
                 </button>
                 <div>
-                    <h2 className="text-xs text-gray-400">Hola, Juan</h2>
-                    <h1 className="text-lg font-bold text-white">Control de Acceso</h1>
+                    <h2 className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Hola, Juan</h2>
+                    <h1 className="text-lg font-light text-white">Control de Acceso</h1>
                 </div>
             </div>
-            <Logo variant="icon" className="w-8 h-8" />
+            <Logo variant="icon" className="w-6 h-6" />
         </div>
       </header>
 
-      <main className="flex-1 max-w-7xl mx-auto w-full p-4 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 pb-24">
+      <main className="flex-1 max-w-7xl mx-auto w-full p-4 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6 pb-24">
         
         {/* Left Column: Actions & Expected */}
-        <div className="lg:col-span-7 space-y-8">
+        <div className="lg:col-span-7 space-y-6">
           {/* Search & Quick Actions */}
-          <section className="bg-[#141414] p-6 rounded-3xl border border-white/5 shadow-2xl">
-            <h3 className="text-sm font-black text-gray-500 uppercase tracking-widest mb-4">Acciones Rápidas</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <section className="bg-[#0A0A0A] p-5 rounded-[24px] border border-white/5">
+            <h3 className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-4">Acciones Rápidas</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="relative group">
-                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-ediflow-primary transition-colors">search</span>
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-white transition-colors text-xl">search</span>
                 <input 
                   type="text" 
                   placeholder="Buscar residente o depto..." 
-                  className="w-full bg-black/40 border-2 border-white/5 rounded-2xl py-4 pl-12 pr-4 text-white placeholder-gray-600 focus:border-ediflow-primary focus:ring-0 transition-all outline-none"
+                  className="w-full bg-black border border-white/5 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white placeholder-gray-600 focus:border-white/20 focus:ring-0 transition-all outline-none font-light"
                 />
               </div>
               
-              <div className="flex gap-3">
+              <div className="flex gap-2">
                 <button 
                   onClick={() => navigate('ManualVisitorRegistration')}
-                  className="flex-1 bg-white/5 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 border border-white/10 hover:bg-white/10 active:scale-[0.98] transition-all"
+                  className="flex-1 bg-white hover:bg-gray-200 text-black font-medium py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all text-xs"
                 >
-                  <span className="material-symbols-outlined">person_add</span>
-                  REGISTRO MANUAL
+                  <span className="material-symbols-outlined text-[16px]">person_add</span>
+                  Registro Manual
                 </button>
                 <button 
                   onClick={() => setIsScanning(true)}
-                  className="w-16 bg-ediflow-primary text-black rounded-2xl flex items-center justify-center hover:bg-yellow-400 active:scale-90 transition-all shadow-lg shadow-yellow-500/20"
+                  className="w-12 bg-black border border-white/10 text-white rounded-xl flex items-center justify-center hover:border-[#00AEEF] hover:text-[#00AEEF] active:scale-95 transition-all"
                 >
-                  <span className="material-symbols-outlined text-3xl">qr_code_scanner</span>
+                  <span className="material-symbols-outlined text-xl">qr_code_scanner</span>
                 </button>
               </div>
             </div>
@@ -185,17 +185,17 @@ const AccessControl: React.FC<Props> = ({ navigate }) => {
 
           {/* Expected Visitors */}
           <section>
-            <div className="flex justify-between items-end mb-6 px-2">
+            <div className="flex justify-between items-end mb-4 px-1">
               <div>
-                <h3 className="text-2xl font-black text-white">Visitas Esperadas</h3>
-                <p className="text-gray-500 font-medium">Programadas para el día de hoy</p>
+                <h3 className="text-xl font-light text-white">Visitas Esperadas</h3>
+                <p className="text-[11px] text-gray-500 font-medium tracking-wide">Para hoy</p>
               </div>
-              <span className="bg-ediflow-primary/10 text-ediflow-primary px-4 py-1 rounded-full text-xs font-black border border-ediflow-primary/20">
+              <span className="bg-[#00AEEF]/10 text-[#00AEEF] px-3 py-1 rounded-full text-[10px] font-semibold border border-[#00AEEF]/20 uppercase tracking-widest">
                 3 PENDIENTES
               </span>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <VisitorCard 
                 name="María González" 
                 rut="12.345.xxx-k" 
@@ -222,25 +222,25 @@ const AccessControl: React.FC<Props> = ({ navigate }) => {
         </div>
 
         {/* Right Column: History & Stats */}
-        <div className="lg:col-span-5 space-y-8">
+        <div className="lg:col-span-5 space-y-6">
           {/* Stats Summary */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-green-500/5 border border-green-500/10 p-6 rounded-3xl">
-              <p className="text-xs font-black text-green-500/60 uppercase tracking-widest mb-1">Ingresos</p>
-              <h4 className="text-3xl font-black text-white">24</h4>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-[#0A0A0A] border border-white/5 p-5 rounded-[20px]">
+              <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-1 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-green-500"></span> Ingresos</p>
+              <h4 className="text-2xl font-light text-white">24</h4>
             </div>
-            <div className="bg-blue-500/5 border border-blue-500/10 p-6 rounded-3xl">
-              <p className="text-xs font-black text-blue-500/60 uppercase tracking-widest mb-1">Salidas</p>
-              <h4 className="text-3xl font-black text-white">18</h4>
+            <div className="bg-[#0A0A0A] border border-white/5 p-5 rounded-[20px]">
+              <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-1 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Salidas</p>
+              <h4 className="text-2xl font-light text-white">18</h4>
             </div>
           </div>
 
           {/* History Feed */}
-          <section className="bg-[#141414] rounded-[32px] border border-white/5 overflow-hidden flex flex-col h-full max-h-[600px]">
-            <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
-              <h3 className="font-black text-white uppercase tracking-widest text-sm">Historial Reciente</h3>
-              <button className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-400 hover:text-white transition-colors">
-                <span className="material-symbols-outlined text-xl">filter_list</span>
+          <section className="bg-[#0A0A0A] rounded-[24px] border border-white/5 overflow-hidden flex flex-col h-full max-h-[500px]">
+            <div className="p-4 border-b border-white/5 flex justify-between items-center bg-black">
+              <h3 className="font-semibold text-gray-300 uppercase tracking-widest text-[10px]">Historial Reciente</h3>
+              <button className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-gray-400 hover:text-white transition-colors">
+                <span className="material-symbols-outlined text-[18px]">filter_list</span>
               </button>
             </div>
             <div className="divide-y divide-white/5 overflow-y-auto no-scrollbar">
@@ -276,19 +276,19 @@ const AccessControl: React.FC<Props> = ({ navigate }) => {
                 detail="Depto 803 • Invitado" 
                 time="07:45" 
                 status="SALIDO" 
-                statusColor="bg-white/5 text-gray-400 border-white/10"
+                statusColor="bg-black text-gray-400 border-white/10"
                 icon="person"
-                iconColor="text-purple-400 bg-purple-500/20"
+                iconColor="text-purple-400 bg-purple-500/10 border border-purple-500/20"
               />
             </div>
-            <button className="p-4 text-xs font-black text-gray-500 hover:text-white transition-colors border-t border-white/5 bg-white/[0.01] uppercase tracking-widest">
+            <button className="p-3 text-[10px] font-semibold text-gray-500 hover:text-white transition-colors border-t border-white/5 bg-black uppercase tracking-widest text-center">
               Ver bitácora completa
             </button>
           </section>
         </div>
       </main>
 
-      <nav className="fixed bottom-0 w-full bg-[#0A0A0A]/90 backdrop-blur-xl border-t border-white/5 px-6 pt-4 pb-8 z-50 flex justify-center">
+      <nav className="fixed bottom-0 w-full bg-black/90 backdrop-blur-xl border-t border-white/5 px-6 pt-3 pb-6 z-50 flex justify-center">
         <div className="max-w-lg w-full flex justify-between items-center">
           <NavButton icon="shield_person" label="Control" active />
           <NavButton icon="inventory_2" label="Paquetes" onClick={() => navigate('PackageEntry')} />
@@ -322,39 +322,39 @@ const AccessControl: React.FC<Props> = ({ navigate }) => {
 };
 
 const VisitorCard = ({ name, rut, depto, time, img, initials, icon }: any) => (
-    <div className="bg-[#141414] p-6 rounded-3xl border border-white/5 hover:border-white/10 transition-all group">
-        <div className="flex justify-between items-start mb-6">
-            <div className="flex gap-4 items-center">
+    <div className="bg-[#0A0A0A] p-4 rounded-[20px] border border-white/5 hover:border-white/10 transition-all group">
+        <div className="flex justify-between items-start mb-4">
+            <div className="flex gap-3 items-center">
                 {img ? (
-                    <img src={img} className="w-14 h-14 rounded-2xl object-cover border-2 border-white/5" />
+                    <img src={img} className="w-10 h-10 rounded-lg object-cover border border-white/5" />
                 ) : icon ? (
-                    <div className="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-                        <span className="material-symbols-outlined text-3xl">{icon}</span>
+                    <div className="w-10 h-10 rounded-lg bg-blue-500/5 border border-blue-500/10 flex items-center justify-center text-blue-400">
+                        <span className="material-symbols-outlined text-[20px]">{icon}</span>
                     </div>
                 ) : (
-                    <div className="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 font-black text-xl">{initials}</div>
+                    <div className="w-10 h-10 rounded-lg bg-purple-500/5 border border-purple-500/10 flex items-center justify-center text-purple-400 font-medium text-sm">{initials}</div>
                 )}
                 <div>
-                    <h4 className="font-black text-white text-lg leading-tight">{name}</h4>
-                    <div className="flex items-center gap-2 text-xs text-gray-500 mt-1 font-bold">
-                        <span className="material-symbols-outlined text-[14px]">badge</span> {rut}
+                    <h4 className="font-semibold text-white text-sm leading-tight">{name}</h4>
+                    <div className="flex items-center gap-1 text-[10px] text-gray-500 mt-1 font-medium">
+                        <span className="material-symbols-outlined text-[12px]">badge</span> {rut}
                     </div>
                 </div>
             </div>
             <div className="flex flex-col items-end gap-2">
-                <span className="bg-white/5 text-white px-3 py-1 rounded-xl text-[10px] font-black border border-white/10 uppercase tracking-widest">Depto {depto}</span>
+                <span className="bg-black text-white px-2 py-0.5 rounded-md text-[9px] font-semibold border border-white/5 uppercase tracking-widest">Depto {depto}</span>
             </div>
         </div>
-        <div className="flex items-center justify-between pt-5 border-t border-white/5">
+        <div className="flex items-center justify-between pt-3 border-t border-white/5">
             <div className="flex flex-col">
-                <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-0.5">Llegada Estimada</span>
-                <span className="text-sm text-gray-300 font-bold flex items-center gap-2">
-                    <span className="material-symbols-outlined text-ediflow-primary text-lg">schedule</span> 
+                <span className="text-[9px] font-semibold text-gray-600 uppercase tracking-widest mb-0.5">Llegada Estimada</span>
+                <span className="text-xs text-gray-300 font-medium flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-gray-500 text-[14px]">schedule</span> 
                     {time}
                 </span>
             </div>
-            <button className="bg-ediflow-primary text-black text-xs font-black px-6 py-3 rounded-xl hover:bg-yellow-400 active:scale-95 transition-all flex items-center gap-2 shadow-lg shadow-yellow-500/10">
-                <span className="material-symbols-outlined text-lg">login</span> 
+            <button className="bg-white text-black text-[10px] font-semibold px-4 py-2 rounded-lg hover:bg-gray-200 active:scale-95 transition-all flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[14px]">login</span> 
                 CHECK-IN
             </button>
         </div>
@@ -362,19 +362,19 @@ const VisitorCard = ({ name, rut, depto, time, img, initials, icon }: any) => (
 );
 
 const HistoryItem = ({ name, detail, time, status, statusColor, icon, iconColor }: any) => (
-    <div className="p-6 flex items-center justify-between hover:bg-white/[0.02] transition-colors group">
-        <div className="flex items-center gap-4">
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${iconColor}`}>
-                <span className="material-symbols-outlined text-2xl">{icon}</span>
+    <div className="p-4 flex items-center justify-between hover:bg-white/[0.02] transition-colors group">
+        <div className="flex items-center gap-3">
+            <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110 ${iconColor}`}>
+                <span className="material-symbols-outlined text-[18px]">{icon}</span>
             </div>
             <div>
-                <h4 className="font-black text-white text-base leading-tight">{name}</h4>
-                <p className="text-xs text-gray-500 font-bold mt-0.5">{detail}</p>
+                <h4 className="font-medium text-white text-xs leading-tight">{name}</h4>
+                <p className="text-[10px] text-gray-500 font-light mt-0.5">{detail}</p>
             </div>
         </div>
-        <div className="flex flex-col items-end gap-2">
-            <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest">{time}</span>
-            <span className={`text-[10px] font-black px-3 py-1 rounded-lg border uppercase tracking-wider ${statusColor}`}>{status}</span>
+        <div className="flex flex-col items-end gap-1.5">
+            <span className="text-[9px] font-semibold text-gray-600 uppercase tracking-widest">{time}</span>
+            <span className={`text-[8px] font-bold px-2 py-0.5 rounded border uppercase tracking-wider ${statusColor}`}>{status}</span>
         </div>
     </div>
 );

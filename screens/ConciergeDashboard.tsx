@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { ScreenName } from '../App';
 import { useAppContext } from '../src/context/AppContext';
-import { useVoiceAssistant } from '../src/hooks/useVoiceAssistant';
 import { Button } from '../src/components/ui/Button';
 import { Input } from '../src/components/ui/Input';
 import { Card } from '../src/components/ui/Card';
@@ -13,8 +12,6 @@ interface Props {
   navigate: (screen: ScreenName) => void;
   onLogout?: () => void;
 }
-
-type OperationType = 'encomienda' | 'visita' | 'novedad' | 'pago' | null;
 
 const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
   const { currentUser, currentTenant } = useAppContext();
@@ -31,55 +28,6 @@ const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 4000);
-  };
-
-  const addLog = (icon: string, color: string, title: string, desc: string) => {
-      const newLog: LogEntry = {
-          id: Date.now().toString(),
-          icon,
-          color,
-          title,
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          desc,
-          tenantId: currentTenant?.id || ''
-      };
-      setLogs(prev => [newLog, ...prev]);
-  };
-
-  const handleCommandMatch = (operation: OperationType, details: any) => {
-    if (operation === 'encomienda') {
-        if (details.deptos.length > 0) {
-            addLog('package_2', 'text-blue-400', `${details.deptos.length} Encomienda(s) (Voz)`, `Deptos: ${details.deptos.join(', ')}`);
-            showToast(`📦 Registradas encomiendas para: ${details.deptos.join(', ')}`);
-        } else {
-            showToast('❌ Comando de encomienda detectado, pero no escuché el número de departamento.');
-        }
-    } else if (operation === 'visita') {
-        addLog('person_check', 'text-purple-400', 'Visita (Voz)', `${details.name || 'Persona'} al Depto ${details.depto}`);
-        showToast(`👤 Visita registrada: ${details.name || 'Persona'} al ${details.depto}`);
-    } else if (operation === 'pago') {
-        addLog('payments', 'text-green-400', 'Pago GC (Voz)', `Depto ${details.depto} pagó en conserjería`);
-        showToast(`💵 Pago registrado para Depto ${details.depto}`);
-    } else if (operation === 'novedad') {
-        addLog('warning', 'text-orange-400', 'Novedad (Voz)', details.desc || 'Sin descripción');
-        showToast(`⚠️ Novedad registrada en bitácora.`);
-    } else {
-        showToast('❌ Comando no reconocido. Inicia con: "Encomienda", "Visita", "Pago" o "Novedad".');
-    }
-  };
-
-  const { isListening, transcript, startListening, stopListening, simulateCommand, error } = useVoiceAssistant(handleCommandMatch);
-
-  const handleVoiceRecord = () => {
-    if (error) {
-        showToast(`❌ ${error}`);
-        return;
-    }
-    if (isListening) {
-      stopListening();
-    } else {
-      startListening();
-    }
   };
 
   return (
@@ -181,84 +129,53 @@ const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
           </div>
 
           {/* Core Action Hub */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            {/* Voice & Main Actions */}
-            <div className="lg:col-span-2 space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <ActionCard 
-                  icon="package_2" 
-                  title="Ingresar Paquete" 
-                  desc="Registra encomiendas de MercadoLibre, Amazon, etc."
-                  onClick={() => navigate('PackageEntry')}
-                  color="bg-blue-500/10 text-blue-500 border-blue-500/20"
-                />
-                <ActionCard 
-                  icon="person_add" 
-                  title="Control de Visitas" 
-                  desc="Registra ingresos de visitas y delivery."
-                  onClick={() => navigate('ManualVisitorRegistration')}
-                  color="bg-purple-500/10 text-purple-500 border-purple-500/20"
-                />
-                <ActionCard 
-                  icon="warning" 
-                  title="Registrar Novedad" 
-                  desc="Reporta fallas, ruidos o eventos en bitácora."
-                  onClick={() => navigate('NovedadEntry')}
-                  color="bg-amber-500/10 text-amber-500 border-amber-500/20"
-                />
-                <ActionCard 
-                  icon="payments" 
-                  title="Recibir Pago" 
-                  desc="Registra pagos de gastos comunes en efectivo/POS."
-                  onClick={() => navigate('RegisterPayment')}
-                  color="bg-green-500/10 text-green-500 border-green-500/20"
-                />
-              </div>
-
+            {/* Main Actions Grid */}
+            <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <ActionCard 
+                icon="package_2" 
+                title="Ingresar Paquete" 
+                desc="Registra encomiendas de MercadoLibre, Amazon, etc."
+                onClick={() => navigate('PackageEntry')}
+                color="bg-blue-500/10 text-blue-500 border-blue-500/20"
+              />
+              <ActionCard 
+                icon="person_add" 
+                title="Control de Visitas" 
+                desc="Registra ingresos de visitas y delivery."
+                onClick={() => navigate('ManualVisitorRegistration')}
+                color="bg-purple-500/10 text-purple-500 border-purple-500/20"
+              />
+              <ActionCard 
+                icon="warning" 
+                title="Registrar Novedad" 
+                desc="Reporta fallas, ruidos o eventos en bitácora."
+                onClick={() => navigate('NovedadEntry')}
+                color="bg-amber-500/10 text-amber-500 border-amber-500/20"
+              />
+              <ActionCard 
+                icon="payments" 
+                title="Recibir Pago" 
+                desc="Registra pagos de gastos comunes en efectivo/POS."
+                onClick={() => navigate('RegisterPayment')}
+                color="bg-green-500/10 text-green-500 border-green-500/20"
+              />
             </div>
 
-            {/* Voice Assistant Widget */}
-            <div className="space-y-8">
-              <Card className="p-8 bg-gradient-to-br from-[#121212] to-[#000000] border-gray-800 text-center flex flex-col items-center justify-center min-h-[400px] relative overflow-hidden">
-                <div className="relative z-10 w-full">
-                  <h3 className="text-2xl font-black mb-2">Asistente de Voz</h3>
-                  <p className="text-gray-500 font-medium mb-8">Diga el comando y el departamento</p>
-                  
-                  <button 
-                    onClick={handleVoiceRecord}
-                    className={`w-32 h-32 rounded-full flex items-center justify-center transition-all duration-500 relative ${
-                      isListening ? 'bg-red-500 shadow-[0_0_30px_rgba(239,68,68,0.5)]' : 'bg-[#00AEEF] shadow-[0_0_30px_rgba(0,174,239,0.3)] hover:scale-105'
-                    }`}
-                  >
-                    {isListening && (
-                      <span className="absolute inset-0 rounded-full bg-red-500 animate-ping opacity-20"></span>
-                    )}
-                    <span className="material-symbols-outlined text-6xl text-white">
-                      {isListening ? 'mic_off' : 'mic'}
-                    </span>
-                  </button>
-
-                  <div className="mt-10 h-16 flex items-center justify-center">
-                    {isListening ? (
-                      <div className="flex flex-col items-center">
-                        <div className="flex gap-1 mb-2">
-                          {[1,2,3,4,5].map(i => (
-                            <div key={i} className="w-1 bg-[#00AEEF] rounded-full animate-pulse" style={{ height: `${Math.random() * 20 + 10}px`, animationDelay: `${i * 0.1}s` }}></div>
-                          ))}
-                        </div>
-                        <p className="text-lg font-bold italic text-white">"{transcript || 'Escuchando...'}"</p>
-                      </div>
-                    ) : (
-                      <p className="text-gray-500 font-bold">Toque para hablar</p>
-                    )}
-                  </div>
+            {/* Secondary Actions & Emergency */}
+            <div className="space-y-6 flex flex-col">
+              
+              {/* Reservations Quick Access */}
+              <Card 
+                onClick={() => navigate('Reservations')}
+                className="flex-1 p-8 bg-[#121212] border-gray-800 flex flex-col justify-center items-center text-center group cursor-pointer hover:border-orange-500/50 transition-all duration-500 rounded-[32px]"
+              >
+                <div className="w-16 h-16 rounded-2xl bg-orange-500/10 flex items-center justify-center text-orange-500 mb-4 group-hover:scale-110 transition-transform duration-500">
+                  <span className="material-symbols-outlined text-4xl">event_available</span>
                 </div>
-                
-                {/* Decorative background element */}
-                <span className="material-symbols-outlined absolute -right-10 -bottom-10 text-[200px] text-white/5 rotate-12">
-                  graphic_eq
-                </span>
+                <h3 className="text-xl font-black text-white mb-2">Reservas del Día</h3>
+                <p className="text-sm text-gray-500 font-medium">Verifica los espacios comunes reservados para hoy.</p>
               </Card>
 
               {/* Emergency Quick Contact */}

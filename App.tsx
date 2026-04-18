@@ -20,6 +20,12 @@ import ResidentDirectory from './screens/ResidentDirectory';
 import Emergency from './screens/Emergency';
 import Maintenance from './screens/Maintenance';
 import Reservations from './screens/Reservations';
+import LandingPage from './screens/LandingPage';
+import SolutionsPage from './screens/SolutionsPage';
+import ResourcesPage from './screens/ResourcesPage';
+import PricingPage from './screens/PricingPage';
+import BookDemoPage from './screens/BookDemoPage';
+import PrivacyPage from './screens/PrivacyPage';
 import { useAppContext } from './src/context/AppContext';
 import { User, UserRole } from './src/types';
 import { ModuleHub } from './components/ModuleHub';
@@ -45,11 +51,18 @@ export type ScreenName =
   | 'Reservations'
   | 'Maintenance'
   | 'Emergency'
-  | 'ResidentDirectory';
+  | 'ResidentDirectory'
+  | 'Landing'
+  | 'Solutions'
+  | 'Resources'
+  | 'Pricing'
+  | 'BookDemo'
+  | 'Privacy'
+  | 'Login';
 
 const App: React.FC = () => {
   const { currentUser, setCurrentUser } = useAppContext();
-  const [currentScreen, setCurrentScreen] = useState<ScreenName>('ConciergeDashboard');
+  const [currentScreen, setCurrentScreen] = useState<ScreenName>('Landing');
   const [previousScreen, setPreviousScreen] = useState<ScreenName | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -83,7 +96,25 @@ const App: React.FC = () => {
 
   const renderScreen = () => {
     if (!currentUser) {
-      return <LoginScreen onLogin={handleLogin} />;
+      if (currentScreen === 'Login') {
+        return <LoginScreen onLogin={handleLogin} onBack={() => setCurrentScreen('Landing')} />;
+      }
+      if (currentScreen === 'Solutions') {
+        return <SolutionsPage onLoginClick={() => setCurrentScreen('Login')} onNavigate={setCurrentScreen} />;
+      }
+      if (currentScreen === 'Resources') {
+        return <ResourcesPage onLoginClick={() => setCurrentScreen('Login')} onNavigate={setCurrentScreen} />;
+      }
+      if (currentScreen === 'Pricing') {
+        return <PricingPage onLoginClick={() => setCurrentScreen('Login')} onNavigate={setCurrentScreen} />;
+      }
+      if (currentScreen === 'BookDemo') {
+        return <BookDemoPage onNavigate={setCurrentScreen} />;
+      }
+      if (currentScreen === 'Privacy') {
+        return <PrivacyPage onLoginClick={() => setCurrentScreen('Login')} onNavigate={setCurrentScreen} />;
+      }
+      return <LandingPage onLoginClick={() => setCurrentScreen('Login')} onNavigate={setCurrentScreen} />;
     }
 
     const roleAccess: Record<UserRole, ScreenName[]> = {
