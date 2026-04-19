@@ -79,10 +79,11 @@ const ManageExpenses: React.FC<Props> = ({ navigate }) => {
   };
 
   return (
-    <div className="flex flex-col min-h-full bg-[#0A0A0A] relative">
+    <div className="flex flex-col min-h-screen bg-[#0A0A0A] text-white font-sans overflow-y-auto no-scrollbar pb-20 md:pb-0 relative">
+      
       {/* Toast Notification */}
       {toastMessage && (
-          <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 bg-green-500 text-white px-6 py-3 rounded-full shadow-2xl font-bold text-sm flex items-center gap-2 animate-fade-in-up whitespace-nowrap">
+          <div className="fixed top-12 left-1/2 -translate-x-1/2 z-50 bg-ediflow-primary text-black px-6 py-3 rounded-full shadow-[0_0_20px_rgba(0,174,239,0.4)] font-bold text-sm flex items-center gap-2 animate-fade-in-up whitespace-nowrap">
               <span className="material-symbols-outlined text-[20px]">check_circle</span>
               {toastMessage}
           </div>
@@ -90,72 +91,77 @@ const ManageExpenses: React.FC<Props> = ({ navigate }) => {
 
       {/* OCR Scanner Overlay */}
       {isScanning && (
-          <div className="fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-center p-5">
+          <div className="fixed inset-0 z-50 bg-[#0A0A0A]/95 flex flex-col items-center justify-center p-5 backdrop-blur-md">
               <button 
                   onClick={() => setIsScanning(false)}
-                  className="absolute top-6 right-6 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white active:scale-90 transition-all"
+                  className="absolute top-8 right-8 w-12 h-12 bg-white/5 border border-white/10 hover:border-white/20 hover:bg-white/10 rounded-full flex items-center justify-center text-white active:scale-95 transition-all"
               >
                   <span className="material-symbols-outlined">close</span>
               </button>
 
               {!scannedInvoice ? (
                   <div className="w-full max-w-sm flex flex-col items-center">
-                      <div className="w-full aspect-[3/4] border-2 border-ediflow-primary/50 rounded-2xl relative overflow-hidden mb-6 flex items-center justify-center bg-[#141414]">
-                          <span className="material-symbols-outlined text-6xl text-gray-600">receipt</span>
+                      <div className="w-full aspect-[3/4] border-2 border-ediflow-primary/30 rounded-[2rem] relative overflow-hidden mb-8 flex items-center justify-center bg-[#111] shadow-[0_0_50px_rgba(0,174,239,0.1)]">
+                          <span className="material-symbols-outlined text-6xl text-white/5">receipt_long</span>
                           
                           {/* Scanning Laser */}
                           <div 
-                              className="absolute left-0 w-full h-1 bg-ediflow-primary shadow-[0_0_15px_rgba(234,179,8,0.8)] transition-all duration-300"
+                              className="absolute left-0 w-full h-1 bg-ediflow-primary shadow-[0_0_20px_rgba(0,174,239,1)] transition-all duration-300"
                               style={{ top: `${scanProgress}%` }}
                           ></div>
                       </div>
-                      <h3 className="text-white font-bold text-lg mb-2">Escaneando Factura...</h3>
-                      <p className="text-gray-400 text-sm mb-6 text-center">Procesando con IA (OCR) para extraer datos automáticamente.</p>
+                      <h3 className="text-white font-medium text-xl tracking-tight mb-2">Procesando código QR...</h3>
+                      <p className="text-gray-500 text-sm mb-8 text-center uppercase tracking-widest font-semibold text-[10px]">Leyendo datos fiscales con IA</p>
                       
-                      <div className="w-full h-2 bg-gray-800 rounded-full overflow-hidden">
-                          <div className="h-full bg-ediflow-primary transition-all duration-300" style={{ width: `${scanProgress}%` }}></div>
+                      <div className="w-full h-1.5 bg-[#111] rounded-full overflow-hidden border border-white/5">
+                          <div className="h-full bg-ediflow-primary transition-all duration-300 relative">
+                             <div className="absolute top-0 right-0 bottom-0 left-0 bg-white/20 blur-sm"></div>
+                          </div>
                       </div>
                   </div>
               ) : (
-                  <div className="w-full max-w-sm bg-[#141414] rounded-2xl p-6 border border-white/10 animate-fade-in-up">
-                      <div className="w-16 h-16 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="w-full max-w-sm bg-[#111] rounded-[2rem] p-8 border border-white/10 shadow-2xl animate-fade-in-up">
+                      <div className="w-16 h-16 bg-ediflow-primary/10 border border-ediflow-primary/20 text-ediflow-primary rounded-full flex items-center justify-center mx-auto mb-6">
                           <span className="material-symbols-outlined text-3xl">check</span>
                       </div>
-                      <h3 className="text-white font-bold text-xl text-center mb-6">Datos Extraídos</h3>
+                      <h3 className="text-white font-medium text-2xl text-center mb-8 tracking-tight">Captura Exitosa</h3>
                       
-                      <div className="space-y-4 mb-8">
-                          <div className="bg-[#0A0A0A] p-3 rounded-xl border border-white/5">
-                              <p className="text-[10px] text-gray-500 uppercase font-bold mb-1">Proveedor</p>
-                              <p className="text-white font-bold">{scannedInvoice.provider}</p>
+                      <div className="space-y-4 mb-10">
+                          <div className="bg-[#0A0A0A] p-4 rounded-2xl border border-white/5">
+                              <p className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold mb-1">Proveedor</p>
+                              <p className="text-white font-medium">{scannedInvoice.provider}</p>
                           </div>
-                          <div className="grid grid-cols-2 gap-3">
-                              <div className="bg-[#0A0A0A] p-3 rounded-xl border border-white/5">
-                                  <p className="text-[10px] text-gray-500 uppercase font-bold mb-1">Monto Total</p>
-                                  <p className="text-ediflow-primary font-bold text-lg">${scannedInvoice.amount.toLocaleString('es-CL')}</p>
+                          <div className="grid grid-cols-2 gap-4">
+                              <div className="bg-[#0A0A0A] p-4 rounded-2xl border border-white/5">
+                                  <p className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold mb-1">Monto Total</p>
+                                  <p className="text-ediflow-primary font-medium text-xl">${scannedInvoice.amount.toLocaleString('es-CL')}</p>
                               </div>
-                              <div className="bg-[#0A0A0A] p-3 rounded-xl border border-white/5">
-                                  <p className="text-[10px] text-gray-500 uppercase font-bold mb-1">Fecha</p>
-                                  <p className="text-white font-bold">{scannedInvoice.date}</p>
+                              <div className="bg-[#0A0A0A] p-4 rounded-2xl border border-white/5">
+                                  <p className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold mb-1">Fecha</p>
+                                  <p className="text-white font-medium">{scannedInvoice.date}</p>
                               </div>
                           </div>
-                          <div className="bg-[#0A0A0A] p-3 rounded-xl border border-white/5">
-                              <p className="text-[10px] text-gray-500 uppercase font-bold mb-1">Categoría Sugerida</p>
-                              <p className="text-white font-bold">{scannedInvoice.category}</p>
+                          <div className="bg-[#0A0A0A] p-4 rounded-2xl border border-white/5">
+                              <p className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold mb-1">Clasificación IA</p>
+                              <p className="text-white font-medium flex items-center gap-2">
+                                <span className="material-symbols-outlined text-[16px] text-[#008080]">auto_awesome</span>
+                                {scannedInvoice.category}
+                              </p>
                           </div>
                       </div>
 
                       <div className="flex gap-3">
                           <button 
                               onClick={startOCRScan}
-                              className="flex-1 py-3 rounded-xl font-bold text-white bg-white/5 hover:bg-white/10 transition-all"
+                              className="flex-1 py-4 rounded-xl font-medium text-white border border-white/10 hover:bg-white/5 transition-all text-sm"
                           >
-                              Reintentar
+                              Escanear otro
                           </button>
                           <button 
                               onClick={saveInvoice}
-                              className="flex-1 py-3 rounded-xl font-bold text-black bg-ediflow-primary hover:bg-yellow-400 transition-all shadow-lg shadow-yellow-500/20"
+                              className="flex-1 py-4 rounded-xl font-semibold text-black bg-ediflow-primary hover:bg-blue-400 transition-all shadow-[0_0_15px_rgba(0,174,239,0.3)] text-sm"
                           >
-                              Guardar
+                              Confirmar
                           </button>
                       </div>
                   </div>
@@ -165,132 +171,146 @@ const ManageExpenses: React.FC<Props> = ({ navigate }) => {
 
       {/* Prorrateo Modal */}
       {showProrrateoModal && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col justify-end">
-              <div className="bg-[#141414] rounded-t-3xl p-6 border-t border-white/10 animate-fade-in-up">
-                  <div className="flex justify-between items-center mb-6">
+          <div className="fixed inset-0 z-50 bg-[#0A0A0A]/90 backdrop-blur-xl flex flex-col justify-end md:justify-center md:items-center p-4">
+              <div className="w-full max-w-md bg-[#111] rounded-[2.5rem] p-6 md:p-8 border border-white/10 shadow-2xl animate-fade-in-up">
+                  <div className="flex justify-between items-start mb-8">
                       <div>
-                          <h2 className="text-xl font-bold text-white">Cerrar Mes y Prorratear</h2>
-                          <p className="text-xs text-ediflow-primary font-bold mt-1">Según Ley 21.442 (Chile)</p>
+                          <h2 className="text-2xl font-light tracking-tight text-white mb-1">Prorrateo Mensual</h2>
+                          <p className="text-[10px] uppercase tracking-widest font-semibold text-gray-500">Cierre Oficial · Ley 21.442</p>
                       </div>
-                      <button onClick={() => setShowProrrateoModal(false)} className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors">
+                      <button onClick={() => setShowProrrateoModal(false)} className="w-10 h-10 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-colors active:scale-95">
                           <span className="material-symbols-outlined">close</span>
                       </button>
                   </div>
                   
-                  <div className="space-y-4 mb-8">
-                      <div className="flex justify-between items-center bg-[#0A0A0A] p-4 rounded-xl border border-white/5">
-                          <span className="text-sm text-gray-400">Total Egresos Ordinarios</span>
-                          <span className="text-white font-bold">${totalExpenses.toLocaleString('es-CL')}</span>
+                  <div className="space-y-3 mb-10">
+                      <div className="flex justify-between items-center bg-[#0A0A0A] p-5 rounded-2xl border border-white/5">
+                          <span className="text-sm font-medium text-gray-400">Total Egresos</span>
+                          <span className="text-white font-medium">${totalExpenses.toLocaleString('es-CL')}</span>
                       </div>
-                      <div className="flex justify-between items-center bg-[#0A0A0A] p-4 rounded-xl border border-white/5">
-                          <span className="text-sm text-gray-400">Fondo de Reserva (5% min)</span>
-                          <span className="text-white font-bold">${reserveFund.toLocaleString('es-CL')}</span>
+                      <div className="flex justify-between items-center bg-[#0A0A0A] p-5 rounded-2xl border border-white/5">
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium text-gray-400">Fondo Reserva</span>
+                            <span className="text-[10px] text-ediflow-primary uppercase tracking-widest font-bold mt-0.5">Min legal 5%</span>
+                          </div>
+                          <span className="text-white font-medium">${reserveFund.toLocaleString('es-CL')}</span>
                       </div>
-                      <div className="flex justify-between items-center bg-ediflow-primary/10 p-4 rounded-xl border border-ediflow-primary/20">
-                          <span className="text-sm font-bold text-ediflow-primary">Total a Prorratear</span>
-                          <span className="text-xl font-bold text-ediflow-primary">${totalToApportion.toLocaleString('es-CL')}</span>
+                      
+                      <div className="mt-6 pt-6 border-t border-white/10">
+                        <div className="flex justify-between items-center bg-[#008080]/10 p-6 rounded-2xl border border-[#008080]/30 shadow-[0_0_30px_rgba(0,128,128,0.1)]">
+                            <span className="text-sm font-semibold text-white uppercase tracking-widest text-[11px]">Total a Cobrar</span>
+                            <span className="text-2xl font-light text-[#008080]">${totalToApportion.toLocaleString('es-CL')}</span>
+                        </div>
                       </div>
                   </div>
 
                   <button 
                       onClick={handleEmitirCobros}
-                      className="w-full bg-ediflow-primary text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-yellow-400 active:scale-[0.98] transition-all shadow-lg shadow-yellow-500/20"
+                      className="w-full bg-[#008080] text-white font-semibold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-teal-600 active:scale-[0.98] transition-all shadow-[0_0_20px_rgba(0,128,128,0.3)] text-sm"
                   >
-                      <span className="material-symbols-outlined">send</span>
-                      Emitir Colillas de Cobro
+                      <span className="material-symbols-outlined text-[20px]">send</span>
+                      Emitir Gastos Comunes
                   </button>
+                  <p className="text-center text-gray-500 text-[10px] mt-4 uppercase">Se enviará a 142 unidades</p>
               </div>
           </div>
       )}
 
       {/* Header */}
-      <header className="sticky top-0 z-20 bg-[#0A0A0A]/95 backdrop-blur-md border-b border-white/5 p-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => navigate('AdminDashboard')}
-            className="w-10 h-10 rounded-full bg-[#141414] flex items-center justify-center text-white hover:bg-[#242424] active:scale-90 transition-all"
-          >
-            <span className="material-symbols-outlined">arrow_back</span>
-          </button>
-          <div>
-            <h1 className="text-lg font-bold text-white leading-tight">Gastos Comunes</h1>
-            <p className="text-xs text-gray-400">Marzo 2026</p>
-          </div>
+      <header className="px-6 md:px-16 pt-8 md:pt-16 pb-6 lg:pb-8 flex items-center gap-4 sticky top-0 z-20 bg-gradient-to-b from-[#0A0A0A] via-[#0A0A0A] to-transparent pointer-events-none md:bg-none">
+        <button 
+          onClick={() => navigate('AdminDashboard')}
+          className="w-12 h-12 rounded-full bg-[#111] border border-white/10 flex items-center justify-center text-white hover:bg-white/10 hover:border-white/20 active:scale-95 transition-all pointer-events-auto shadow-lg"
+        >
+          <span className="material-symbols-outlined">arrow_back</span>
+        </button>
+        <div className="pointer-events-auto">
+          <h1 className="text-2xl md:text-4xl font-light tracking-tight text-white leading-none">Finanzas y Gastos</h1>
+          <p className="text-xs md:text-sm text-gray-500 mt-1.5 uppercase font-semibold tracking-widest">Periodo: Marzo 2026</p>
         </div>
       </header>
 
-      <main className="flex-1 p-4 pb-24 space-y-8">
-         {/* Pareto KPI */}
-         <div className="bg-gradient-to-br from-[#141414] to-[#0A0A0A] p-5 rounded-3xl border border-white/5 shadow-xl relative overflow-hidden">
-            <div className="relative z-10 flex justify-between items-end">
+      <main className="flex-1 px-6 md:px-16 pb-12 max-w-7xl mx-auto w-full space-y-8">
+         
+         {/* Main KPI Widget (The Bento "Hero") */}
+         <div className="bg-[#111] p-8 md:p-10 rounded-[2.5rem] border border-white/5 shadow-2xl relative overflow-hidden group hover:border-white/10 transition-colors">
+            {/* Ambient Glow */}
+            <div className="absolute -top-32 -right-32 w-[500px] h-[500px] bg-ediflow-primary/5 blur-[120px] rounded-full pointer-events-none group-hover:opacity-100 opacity-50 transition-opacity"></div>
+            
+            <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
                <div>
-                  <p className="text-xs text-gray-400 font-bold uppercase mb-1">Fondo Común (Marzo)</p>
-                  <h2 className="text-3xl font-bold text-white">$4.500.000</h2>
-                  <p className="text-xs text-emerald-400 flex items-center gap-1 mt-1 font-bold">
-                     <span className="material-symbols-outlined text-[14px]">trending_up</span>
-                     75% Recaudado
+                  <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest mb-2 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[#008080]"></span>
+                    Fondo Común Actual
                   </p>
+                  <h2 className="text-5xl md:text-6xl font-light text-white tracking-tight">$4.500.000</h2>
+                  <div className="bg-[#008080]/10 border border-[#008080]/20 text-[#008080] px-3 py-1 bg-opacity-20 rounded-full inline-flex items-center gap-1.5 mt-4">
+                     <span className="material-symbols-outlined text-[14px]">trending_up</span>
+                     <span className="text-xs font-bold uppercase tracking-widest">75% Recaudado</span>
+                  </div>
                </div>
-               <div className="text-right">
-                  <p className="text-xs text-gray-500 font-bold uppercase mb-1">Por Recaudar</p>
-                  <h3 className="text-xl font-bold text-amber-400">$1.500.000</h3>
+               
+               <div className="w-full md:w-auto p-5 rounded-2xl bg-[#0A0A0A] border border-white/5 text-right min-w-[200px]">
+                  <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest mb-1 shadow-sm">Por Recaudar</p>
+                  <h3 className="text-2xl font-medium text-white">$1.500.000</h3>
                </div>
             </div>
-            <span className="material-symbols-outlined absolute -right-4 -bottom-4 text-[120px] text-white/5 rotate-12 pointer-events-none">account_balance_wallet</span>
+            
+            <span className="material-symbols-outlined absolute -right-10 -bottom-10 text-[180px] text-white/5 -rotate-12 pointer-events-none">account_balance_wallet</span>
          </div>
 
-         {/* Pareto Actions (The 20% that does the 80%) */}
-         <div>
-            <h2 className="text-xs font-bold text-gray-500 uppercase mb-3 ml-1">Flujo de Trabajo (Regla 80/20)</h2>
-            <div className="grid grid-cols-1 gap-3">
-               {/* Action 1: OCR */}
-               <button onClick={startOCRScan} className="bg-[#141414] hover:bg-[#1F1F1F] active:scale-[0.98] transition-all p-4 rounded-2xl border border-white/5 flex items-center gap-4 group">
-                  <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center group-hover:bg-blue-500 group-hover:text-white transition-colors">
-                     <span className="material-symbols-outlined text-2xl">document_scanner</span>
-                  </div>
-                  <div className="text-left flex-1">
-                     <h3 className="text-white font-bold text-sm">1. Ingresar Gasto (OCR)</h3>
-                     <p className="text-xs text-gray-400">Escanea la factura con IA</p>
-                  </div>
-                  <span className="material-symbols-outlined text-gray-600">chevron_right</span>
-               </button>
+         {/* Actions Grid (The "Work" area) */}
+         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Action 1: OCR */}
+            <button onClick={startOCRScan} className="bg-[#111] hover:bg-[#141414] active:scale-[0.98] transition-all p-6 rounded-[2rem] border border-white/5 hover:border-white/10 flex flex-col gap-4 text-left group">
+               <div className="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                  <span className="material-symbols-outlined text-[28px]">document_scanner</span>
+               </div>
+               <div>
+                  <h3 className="text-white font-medium text-lg tracking-tight mb-1">Ingresar Gasto</h3>
+                  <p className="text-sm text-gray-500 leading-relaxed">Escanea facturas usando IA y ahorra horas manuales.</p>
+               </div>
+               <div className="mt-auto pt-4 flex justify-end w-full">
+                  <span className="material-symbols-outlined text-gray-600 group-hover:text-blue-400 transition-colors">arrow_forward</span>
+               </div>
+            </button>
 
-               {/* Action 2: Prorrateo */}
-               <button onClick={() => setShowProrrateoModal(true)} className="bg-[#141414] hover:bg-[#1F1F1F] active:scale-[0.98] transition-all p-4 rounded-2xl border border-white/5 flex items-center gap-4 group">
-                  <div className="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center group-hover:bg-purple-500 group-hover:text-white transition-colors">
-                     <span className="material-symbols-outlined text-2xl">calculate</span>
-                  </div>
-                  <div className="text-left flex-1">
-                     <h3 className="text-white font-bold text-sm">2. Cerrar Mes y Prorratear</h3>
-                     <p className="text-xs text-gray-400">Cálculo automático Ley 21.442</p>
-                  </div>
-                  <span className="material-symbols-outlined text-gray-600">chevron_right</span>
-               </button>
+            {/* Action 2: Prorrateo */}
+            <button onClick={() => setShowProrrateoModal(true)} className="bg-[#111] hover:bg-[#141414] active:scale-[0.98] transition-all p-6 rounded-[2rem] border border-white/5 hover:border-white/10 flex flex-col gap-4 text-left group">
+               <div className="w-14 h-14 rounded-2xl bg-[#008080]/10 border border-[#008080]/20 text-[#008080] flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                  <span className="material-symbols-outlined text-[28px]">calculate</span>
+               </div>
+               <div>
+                  <h3 className="text-white font-medium text-lg tracking-tight mb-1">Cerrar Mes</h3>
+                  <p className="text-sm text-gray-500 leading-relaxed">Prorrateo automático con cálculo legal integrado.</p>
+               </div>
+               <div className="mt-auto pt-4 flex justify-end w-full">
+                  <span className="material-symbols-outlined text-gray-600 group-hover:text-[#008080] transition-colors">arrow_forward</span>
+               </div>
+            </button>
 
-               {/* Action 3: Cobranza */}
-               <button onClick={handleNotify} className="bg-[#141414] hover:bg-[#1F1F1F] active:scale-[0.98] transition-all p-4 rounded-2xl border border-white/5 flex items-center gap-4 group">
-                  <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center group-hover:bg-amber-500 group-hover:text-white transition-colors">
-                     <span className="material-symbols-outlined text-2xl">notifications_active</span>
-                  </div>
-                  <div className="text-left flex-1">
-                     <h3 className="text-white font-bold text-sm">3. Cobranza Automática</h3>
-                     <p className="text-xs text-gray-400">Notificar a 12 morosos con 1 clic</p>
-                  </div>
-                  <span className="material-symbols-outlined text-gray-600">chevron_right</span>
-               </button>
-            </div>
+            {/* Action 3: Cobranza */}
+            <button onClick={handleNotify} className="bg-[#111] hover:bg-[#141414] active:scale-[0.98] transition-all p-6 rounded-[2rem] border border-white/5 hover:border-white/10 flex flex-col gap-4 text-left group">
+               <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-500 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                  <span className="material-symbols-outlined text-[28px]">notifications_active</span>
+               </div>
+               <div>
+                  <h3 className="text-white font-medium text-lg tracking-tight mb-1">Cobranza</h3>
+                  <p className="text-sm text-gray-500 leading-relaxed">Notifica a los vecinos morosos con un solo clic.</p>
+               </div>
+               <div className="mt-auto pt-4 flex justify-end w-full">
+                  <span className="material-symbols-outlined text-gray-600 group-hover:text-amber-500 transition-colors">arrow_forward</span>
+               </div>
+            </button>
          </div>
 
-         {/* Unified Feed: What needs attention */}
-         <div>
-            <div className="flex justify-between items-center mb-3 ml-1">
-               <h2 className="text-xs font-bold text-gray-500 uppercase">Atención Requerida</h2>
-               <button className="text-ediflow-primary text-xs font-bold active:opacity-70 transition-opacity">Ver todo</button>
-            </div>
-            <div className="bg-[#141414] rounded-2xl border border-white/5 divide-y divide-white/5">
-               <AttentionItem icon="warning" color="text-red-400" bg="bg-red-500/10" title="Depto 103 atrasado" desc="2 meses pendientes ($170.000)" />
-               <AttentionItem icon="receipt" color="text-blue-400" bg="bg-blue-500/10" title="Factura Enel ingresada" desc="Por $450.000 (Pendiente de pago)" />
-               <AttentionItem icon="warning" color="text-amber-400" bg="bg-amber-500/10" title="Depto 102 pendiente" desc="Vence en 2 días ($92.500)" />
+         {/* Feed List */}
+         <div className="pt-4">
+            <h2 className="text-[11px] font-semibold text-gray-500 uppercase tracking-widest mb-4 px-2">Atención Requerida</h2>
+            <div className="bg-[#111] rounded-[2rem] border border-white/5 divide-y divide-white/5 overflow-hidden">
+               <AttentionItem icon="warning" color="text-red-400" bg="bg-red-500/10" border="border-red-500/20" title="Depto 103 crítico" desc="2 meses pendientes ($170.000)" action="Ver caso" />
+               <AttentionItem icon="receipt" color="text-blue-400" bg="bg-blue-500/10" border="border-blue-500/20" title="Factura Enel ingresada vía OCR" desc="Por $450.000 (Pendiente de pago)" action="Revisar" />
+               <AttentionItem icon="pending_actions" color="text-amber-400" bg="bg-amber-500/10" border="border-amber-500/20" title="Depto 102 por vencer" desc="Vence en 2 días ($92.500)" action="Recordar" />
             </div>
          </div>
       </main>
@@ -298,17 +318,17 @@ const ManageExpenses: React.FC<Props> = ({ navigate }) => {
   );
 };
 
-const AttentionItem = ({ icon, color, bg, title, desc }: any) => (
-    <div className="p-4 flex items-center gap-4 hover:bg-white/5 transition-colors cursor-pointer active:bg-white/10">
-        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${bg} ${color}`}>
-            <span className="material-symbols-outlined">{icon}</span>
+const AttentionItem = ({ icon, color, bg, border, title, desc, action }: any) => (
+    <div className="p-5 md:p-6 flex flex-col sm:flex-row sm:items-center gap-4 hover:bg-white/5 transition-colors cursor-pointer group">
+        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border ${bg} ${border} ${color}`}>
+            <span className="material-symbols-outlined text-[24px]">{icon}</span>
         </div>
         <div className="flex-1">
-            <h4 className="text-sm font-bold text-white">{title}</h4>
-            <p className="text-xs text-gray-400">{desc}</p>
+            <h4 className="text-base font-medium text-white tracking-tight mb-0.5">{title}</h4>
+            <p className="text-sm text-gray-500">{desc}</p>
         </div>
-        <button className="text-gray-500 hover:text-white transition-colors">
-            <span className="material-symbols-outlined">chevron_right</span>
+        <button className="mt-2 sm:mt-0 text-gray-400 font-medium text-sm flex items-center gap-1 group-hover:text-white transition-colors">
+            {action} <span className="material-symbols-outlined text-[18px]">chevron_right</span>
         </button>
     </div>
 );

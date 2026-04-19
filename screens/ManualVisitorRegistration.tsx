@@ -56,7 +56,6 @@ const ManualVisitorRegistration: React.FC<Props> = ({ navigate, from }) => {
             if (html5QrCode) {
               html5QrCode.stop().then(() => {
                 setIsScanning(false);
-                // If we have enough data, maybe show a quick preview before auto-submitting
               }).catch(console.error);
             }
           },
@@ -81,7 +80,6 @@ const ManualVisitorRegistration: React.FC<Props> = ({ navigate, from }) => {
     if (!formData.name || !formData.rut || !formData.depto) return;
     
     setIsSubmitting(true);
-    // Simulate API call
     setTimeout(() => {
       setIsSubmitting(false);
       setShowSuccess(true);
@@ -93,157 +91,175 @@ const ManualVisitorRegistration: React.FC<Props> = ({ navigate, from }) => {
 
   if (showSuccess) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-full bg-[#0A0A0A] p-6 text-center">
-        <div className="w-24 h-24 bg-purple-500/20 rounded-full flex items-center justify-center mb-6 animate-bounce">
-          <span className="material-symbols-outlined text-6xl text-purple-500">person_check</span>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#0A0A0A] p-6 text-center font-sans text-white">
+        <div className="w-32 h-32 bg-[#A855F7]/10 border border-[#A855F7]/20 rounded-full flex items-center justify-center mb-8 animate-bounce">
+          <span className="material-symbols-outlined text-[64px] text-[#A855F7]">person_check</span>
         </div>
-        <h2 className="text-3xl font-black text-white mb-2 uppercase tracking-tight">¡Ingreso Registrado!</h2>
-        <p className="text-gray-400 mb-8 text-lg">La visita de <span className="text-white font-bold">{formData.name}</span> ha sido autorizada y registrada.</p>
+        <h2 className="text-4xl font-light text-white mb-3 tracking-tight">Acceso Autorizado</h2>
+        <p className="text-gray-400 mb-8 text-lg font-light">La visita de <span className="text-white font-medium">{formData.name}</span> ha sido registrada.</p>
+        <div className="bg-[#111] border border-white/5 px-8 py-4 rounded-[2rem] shadow-2xl">
+          <p className="text-[10px] text-gray-500 uppercase font-semibold tracking-widest mb-1.5">Unidad Destino</p>
+          <p className="text-[#A855F7] font-mono font-medium text-xl tracking-wider">Depto {formData.depto}</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-full bg-[#0A0A0A]">
-      {/* QR SCANNER OVERLAY */}
+    <div className="flex flex-col min-h-screen bg-[#0A0A0A] font-sans text-white overflow-hidden">
+      {/* Premium Header */}
+      <header className="px-6 md:px-16 pt-8 md:pt-16 pb-6 lg:pb-8 flex items-center justify-between sticky top-0 z-30 bg-gradient-to-b from-[#0A0A0A] via-[#0A0A0A] to-transparent pointer-events-none md:bg-none">
+        <div className="flex items-center gap-4 pointer-events-auto">
+          <button 
+            onClick={() => navigate(from || 'AccessControl')}
+            className="w-12 h-12 rounded-full bg-[#111] border border-white/10 flex items-center justify-center text-white hover:bg-white/10 hover:border-white/20 active:scale-95 transition-all shadow-lg"
+          >
+            <span className="material-symbols-outlined">arrow_back</span>
+          </button>
+          <div>
+            <h1 className="text-2xl md:text-4xl font-light tracking-tight text-white leading-none">Registro de Visita</h1>
+            <p className="text-xs md:text-sm text-gray-500 mt-1.5 uppercase font-semibold tracking-widest">Control de Acceso</p>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-end pointer-events-auto">
+          <button 
+            onClick={() => setIsScanning(true)}
+            className="hidden md:flex items-center gap-2 bg-[#A855F7]/10 border border-[#A855F7]/20 text-[#A855F7] px-6 h-12 rounded-full font-semibold text-sm hover:bg-[#A855F7] hover:text-white active:scale-95 transition-all shadow-[0_0_20px_rgba(168,85,247,0.15)]"
+          >
+            <span className="material-symbols-outlined text-[20px]">qr_code_scanner</span>
+            Escanear Pase QR
+          </button>
+          <button 
+             onClick={() => setIsScanning(true)}
+             className="md:hidden w-12 h-12 flex items-center justify-center rounded-full bg-[#A855F7]/10 border border-[#A855F7]/20 text-[#A855F7] hover:bg-[#A855F7] hover:text-white transition-all shadow-lg"
+          >
+              <span className="material-symbols-outlined">qr_code_scanner</span>
+          </button>
+        </div>
+      </header>
+
+      {/* QR SCANNER FULLSCREEN OVERLAY */}
       {isScanning && (
-        <div className="fixed inset-0 z-50 bg-black flex flex-col">
-          <div className="absolute top-6 right-6 z-20">
+        <div className="fixed inset-0 z-50 bg-[#0A0A0A]/95 backdrop-blur-xl flex flex-col font-sans pointer-events-auto">
+          <div className="absolute top-8 right-8 z-20">
             <button 
               onClick={() => setIsScanning(false)}
-              className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-full text-white flex items-center justify-center border border-white/20 active:scale-90 transition-all"
+              className="w-12 h-12 bg-white/5 border border-white/10 hover:bg-white/10 rounded-full text-white flex items-center justify-center active:scale-95 transition-all"
             >
               <span className="material-symbols-outlined">close</span>
             </button>
           </div>
 
-          <div className="relative flex-1 flex items-center justify-center bg-black">
+          <div className="relative flex-1 flex flex-col items-center justify-center p-6">
             {cameraError ? (
-              <div className="text-white text-center p-6">
-                <span className="material-symbols-outlined text-4xl text-red-500 mb-2">videocam_off</span>
-                <p className="font-bold">{cameraError}</p>
-                <button onClick={() => setIsScanning(false)} className="mt-4 text-purple-500 font-black uppercase tracking-widest">Cerrar</button>
+              <div className="text-center bg-[#111] p-8 rounded-[2rem] border border-white/10 max-w-sm w-full">
+                <span className="material-symbols-outlined text-5xl text-red-500 mb-4">videocam_off</span>
+                <p className="font-light text-white mb-6 leading-relaxed">{cameraError}</p>
+                <button onClick={() => setIsScanning(false)} className="w-full bg-white/5 border border-white/10 py-3 rounded-xl hover:bg-white/10 transition-all font-medium text-sm">Cerrar</button>
               </div>
             ) : (
-              <div id="qr-reader-manual" className="absolute inset-0 w-full h-full" />
+              <div className="w-full max-w-md aspect-square relative bg-[#111] rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl">
+                 <div id="qr-reader-manual" className="absolute inset-0 w-full h-full object-cover" />
+                 
+                 <div className="absolute top-8 left-8 w-12 h-12 border-t-2 border-l-2 border-[#A855F7] rounded-tl-2xl z-10"></div>
+                 <div className="absolute top-8 right-8 w-12 h-12 border-t-2 border-r-2 border-[#A855F7] rounded-tr-2xl z-10"></div>
+                 <div className="absolute bottom-8 left-8 w-12 h-12 border-b-2 border-l-2 border-[#A855F7] rounded-bl-2xl z-10"></div>
+                 <div className="absolute bottom-8 right-8 w-12 h-12 border-b-2 border-r-2 border-[#A855F7] rounded-br-2xl z-10"></div>
+                 
+                 <div className="absolute left-8 right-8 h-px bg-[#A855F7] shadow-[0_0_20px_rgba(168,85,247,1)] z-10 animate-[scan_2s_ease-in-out_infinite]"></div>
+              </div>
             )}
             
-            <div className="relative z-10 w-64 h-64 border-2 border-purple-500/50 rounded-3xl overflow-hidden">
-              <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-purple-500 rounded-tl-lg"></div>
-              <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-purple-500 rounded-tr-lg"></div>
-              <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-purple-500 rounded-bl-lg"></div>
-              <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-purple-500 rounded-br-lg"></div>
-              <div className="absolute inset-x-0 h-1 bg-purple-500/80 shadow-[0_0_15px_rgba(168,85,247,0.8)] animate-[scan_2s_ease-in-out_infinite]"></div>
+            <div className="mt-12 text-center">
+              <h3 className="text-white font-medium text-xl tracking-tight mb-2">Pase Digital QR</h3>
+              <p className="text-gray-500 text-sm font-light">Enfoca el código QR enviado por el residente</p>
             </div>
-          </div>
-          
-          <div className="p-8 bg-[#0A0A0A] text-center border-t border-white/10">
-            <p className="text-white font-black uppercase tracking-widest text-sm">Escanee el código del residente</p>
-            <p className="text-gray-500 text-xs mt-1">Los datos se completarán automáticamente</p>
           </div>
         </div>
       )}
 
-      {/* Header */}
-      <header className="sticky top-0 z-30 bg-[#0A0A0A]/95 backdrop-blur-md border-b border-white/5 p-4 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={() => navigate(from || 'AccessControl')}
-            className="w-10 h-10 rounded-full bg-[#141414] flex items-center justify-center text-white hover:bg-[#1F1F1F] active:scale-90 transition-all border border-white/5"
-          >
-            <span className="material-symbols-outlined">arrow_back</span>
-          </button>
-          <div>
-            <h1 className="text-lg font-black text-white uppercase tracking-tight">Registro de Visita</h1>
-            <p className="text-[10px] font-bold text-purple-500 uppercase tracking-[0.2em]">Control de Acceso</p>
-          </div>
-        </div>
-
-        <div className="flex flex-col items-end">
-          <button 
-            onClick={() => setIsScanning(true)}
-            className="flex items-center gap-2 bg-purple-500 text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-purple-400 active:scale-95 transition-all shadow-lg shadow-purple-500/20"
-          >
-            <span className="material-symbols-outlined text-lg">qr_code_scanner</span>
-            Escanear QR
-          </button>
-          <p className="text-[8px] font-bold text-gray-600 uppercase tracking-widest mt-1 mr-1">Pase de Residente</p>
-        </div>
-      </header>
-
-      <main className="flex-1 p-6 max-w-4xl mx-auto w-full pb-32">
-        <form onSubmit={handleSubmit} className="space-y-10">
+      <main className="flex-1 overflow-y-auto no-scrollbar px-6 md:px-16 pb-32 max-w-4xl mx-auto w-full">
+        <form onSubmit={handleSubmit} className="space-y-8">
           
-          {/* Section 1: Personal Data */}
-          <section className="space-y-6">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-500 shadow-lg shadow-purple-500/10">
-                <span className="material-symbols-outlined text-2xl">person</span>
+          {/* Section 1: Personal Data Bento */}
+          <section className="bg-[#111] p-6 md:p-8 rounded-[2rem] border border-white/5 shadow-xl hover:border-white/10 transition-colors">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-gray-400">
+                <span className="material-symbols-outlined text-[18px]">badge</span>
               </div>
-              <h2 className="text-sm font-black text-white uppercase tracking-[0.2em]">Datos del Visitante</h2>
+              <h2 className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">Identificación</h2>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Nombre Completo *</label>
+              <div className="space-y-3">
+                <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest px-2 flex items-center gap-2">
+                  Nombre Completo <span className="text-[#A855F7]">*</span>
+                </label>
                 <input 
                   type="text" 
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
                   placeholder="Ej. Juan Pérez"
-                  className="w-full bg-[#111111] border-2 border-white/5 rounded-2xl px-6 h-16 text-white placeholder-gray-700 focus:outline-none focus:border-purple-500/50 transition-all text-lg font-bold"
+                  className="w-full bg-[#0A0A0A] border border-white/5 rounded-2xl px-5 h-14 text-white placeholder-gray-700 focus:outline-none focus:border-[#A855F7]/50 focus:shadow-[0_0_15px_rgba(168,85,247,0.1)] transition-all text-base font-medium"
                   required
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">RUT / Pasaporte *</label>
+              <div className="space-y-3">
+                <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest px-2 flex items-center gap-2">
+                  RUT / Pasaporte <span className="text-[#A855F7]">*</span>
+                </label>
                 <input 
                   type="text" 
                   value={formData.rut}
                   onChange={(e) => setFormData({...formData, rut: e.target.value})}
                   placeholder="Ej. 12.345.678-9"
-                  className="w-full bg-[#111111] border-2 border-white/5 rounded-2xl px-6 h-16 text-white placeholder-gray-700 focus:outline-none focus:border-purple-500/50 transition-all text-lg font-mono font-bold"
+                  className="w-full bg-[#0A0A0A] border border-white/5 rounded-2xl px-5 h-14 text-white placeholder-gray-700 focus:outline-none focus:border-[#A855F7]/50 focus:shadow-[0_0_15px_rgba(168,85,247,0.1)] transition-all text-base font-mono tracking-wide"
                   required
                 />
               </div>
             </div>
           </section>
 
-          {/* Section 2: Destination */}
-          <section className="space-y-6">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-500 shadow-lg shadow-purple-500/10">
-                <span className="material-symbols-outlined text-2xl">apartment</span>
+          {/* Section 2: Destination Bento */}
+          <section className="bg-[#111] p-6 md:p-8 rounded-[2rem] border border-white/5 shadow-xl hover:border-white/10 transition-colors">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-gray-400">
+                <span className="material-symbols-outlined text-[18px]">meeting_room</span>
               </div>
-              <h2 className="text-sm font-black text-white uppercase tracking-[0.2em]">Destino y Motivo</h2>
+              <h2 className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">Destino y Autorización</h2>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Departamento *</label>
+              <div className="space-y-3">
+                <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest px-2 flex items-center gap-2">
+                  Unidad <span className="text-[#A855F7]">*</span>
+                </label>
                 <input 
                   type="text" 
                   value={formData.depto}
                   onChange={(e) => setFormData({...formData, depto: e.target.value})}
                   placeholder="Ej. 402"
-                  className="w-full bg-[#111111] border-2 border-white/5 rounded-2xl px-6 h-20 text-white placeholder-gray-700 focus:outline-none focus:border-purple-500/50 transition-all text-2xl font-black"
+                  className="w-full bg-[#0A0A0A] border border-white/5 rounded-2xl px-5 h-16 text-white placeholder-gray-700 focus:outline-none focus:border-[#A855F7]/50 focus:shadow-[0_0_15px_rgba(168,85,247,0.1)] transition-all text-xl font-medium tracking-tight"
                   required
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Motivo de la Visita</label>
-                <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-3">
+                <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest px-2 flex items-center gap-2">
+                  Motivo de la Visita
+                </label>
+                <div className="grid grid-cols-2 gap-2">
                   {['Familiar/Amigo', 'Delivery', 'Servicio Técnico', 'Otro'].map((reason) => (
                     <button
                       key={reason}
                       type="button"
                       onClick={() => setFormData({...formData, reason})}
-                      className={`h-16 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] transition-all border-2 ${
+                      className={`h-12 rounded-xl text-[10px] font-semibold uppercase tracking-widest transition-all border ${
                         formData.reason === reason 
-                          ? 'bg-purple-500/10 border-purple-500 text-purple-500 shadow-xl shadow-purple-500/10' 
-                          : 'bg-[#111111] border-transparent text-gray-600 hover:bg-[#1A1A1A] hover:text-gray-400'
+                          ? 'bg-[#A855F7]/10 border-[#A855F7]/30 text-white shadow-sm' 
+                          : 'bg-[#0A0A0A] border-white/5 text-gray-500 hover:bg-white/5 hover:text-gray-300'
                       }`}
                     >
                       {reason}
@@ -254,59 +270,62 @@ const ManualVisitorRegistration: React.FC<Props> = ({ navigate, from }) => {
             </div>
           </section>
 
-          {/* Section 3: Extra Info */}
-          <section className="space-y-6">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-500 shadow-lg shadow-purple-500/10">
-                <span className="material-symbols-outlined text-2xl">more_horiz</span>
+          {/* Section 3: Extra Info Bento */}
+          <section className="bg-[#111] p-6 md:p-8 rounded-[2rem] border border-white/5 shadow-xl hover:border-white/10 transition-colors">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-gray-400">
+                <span className="material-symbols-outlined text-[18px]">notes</span>
               </div>
-              <h2 className="text-sm font-black text-white uppercase tracking-[0.2em]">Información Adicional</h2>
+              <h2 className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">Información Adicional (Opcional)</h2>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Patente Vehículo (Opcional)</label>
+              <div className="space-y-3">
+                <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest px-2 flex items-center gap-2">
+                  Patente Vehículo
+                </label>
                 <input 
                   type="text" 
                   value={formData.vehiclePlate}
                   onChange={(e) => setFormData({...formData, vehiclePlate: e.target.value})}
                   placeholder="Ej. AB CD 12"
-                  className="w-full bg-[#111111] border-2 border-white/5 rounded-2xl px-6 h-16 text-white placeholder-gray-700 focus:outline-none focus:border-purple-500/50 transition-all text-lg uppercase font-black tracking-widest"
+                  className="w-full bg-[#0A0A0A] border border-white/5 rounded-2xl px-5 h-14 text-white placeholder-gray-700 focus:outline-none focus:border-[#A855F7]/50 transition-all font-mono tracking-widest uppercase text-sm"
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Observaciones (Opcional)</label>
-                <textarea 
+              <div className="space-y-3">
+                <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest px-2 flex items-center gap-2">
+                  Observaciones Rápidas
+                </label>
+                <input 
+                  type="text"
                   value={formData.notes}
                   onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                  placeholder="Algún detalle importante..."
-                  rows={1}
-                  className="w-full bg-[#111111] border-2 border-white/5 rounded-2xl px-6 py-4 text-white placeholder-gray-700 focus:outline-none focus:border-purple-500/50 transition-all resize-none h-16 text-lg font-medium"
+                  placeholder="Detalles del ingreso..."
+                  className="w-full bg-[#0A0A0A] border border-white/5 rounded-2xl px-5 h-14 text-white placeholder-gray-700 focus:outline-none focus:border-[#A855F7]/50 transition-all text-sm font-light"
                 />
               </div>
             </div>
           </section>
 
-
           {/* Submit Button */}
-          <div className="pt-8">
+          <div className="pt-8 flex flex-col items-center">
             <button 
               type="submit"
               disabled={isSubmitting || !formData.name || !formData.rut || !formData.depto}
-              className="w-full h-20 bg-purple-600 hover:bg-purple-500 active:scale-[0.98] text-white rounded-3xl font-black text-xl uppercase tracking-[0.1em] flex items-center justify-center gap-4 shadow-2xl shadow-purple-900/40 transition-all disabled:opacity-50 disabled:active:scale-100"
+              className="w-full md:w-auto md:min-w-[400px] h-16 md:h-14 bg-[#A855F7] hover:bg-purple-500 active:scale-[0.98] text-white rounded-2xl font-semibold text-sm uppercase tracking-widest flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(168,85,247,0.3)] transition-all disabled:opacity-50 disabled:grayscale disabled:hover:bg-[#A855F7] disabled:active:scale-100 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
-                <span className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin"></span>
+                <span className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
               ) : (
                 <>
-                  <span className="material-symbols-outlined text-3xl">how_to_reg</span>
-                  Registrar Ingreso
+                  <span className="material-symbols-outlined text-[20px]">how_to_reg</span>
+                  Autorizar Ingreso
                 </>
               )}
             </button>
-            <p className="text-center text-[10px] font-bold text-gray-600 uppercase tracking-[0.2em] mt-6">
-              El ingreso quedará registrado en el historial de visitas del edificio.
+            <p className="text-center text-[10px] font-semibold text-gray-500 uppercase tracking-widest mt-4">
+              Registro auditado oficialmente en sistema.
             </p>
           </div>
         </form>

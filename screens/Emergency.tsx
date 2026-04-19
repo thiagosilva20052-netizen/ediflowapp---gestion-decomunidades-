@@ -25,7 +25,7 @@ const Emergency: React.FC<Props> = ({ navigate, from, role }) => {
     { name: 'Bomberos', number: '132', icon: 'fire_truck', color: 'bg-orange-500' },
     { name: 'Carabineros', number: '133', icon: 'local_police', color: 'bg-blue-600' },
     { name: 'PDI', number: '134', icon: 'shield', color: 'bg-blue-800' },
-    { name: 'Seguridad Ciudadana', number: '1401', icon: 'support_agent', color: 'bg-slate-700' },
+    { name: 'Seguridad Ciudadana', number: '1401', icon: 'support_agent', color: 'bg-[#1F1F1F]' },
   ];
 
   const protocols = [
@@ -34,136 +34,155 @@ const Emergency: React.FC<Props> = ({ navigate, from, role }) => {
       icon: 'local_fire_department',
       steps: [
         'Mantenga la calma y de aviso inmediato a conserjería.',
-        'Evacue por las escaleras de emergencia, nunca use el ascensor.',
-        'Si hay presencia de humo, desplácese agachado o gateando.',
-        'No regrese al edificio hasta que bomberos lo autorice formalmente.'
+        'Evacue por escaleras de emergencia, nunca use el ascensor.',
+        'Si hay humo, desplácese agachado o gateando.',
       ]
     },
     {
       title: 'Emergencia Médica',
       icon: 'emergency',
       steps: [
-        'Llame al 131 e informe su ubicación exacta y síntomas.',
-        'No mueva a la persona afectada a menos que sea estrictamente necesario.',
-        'Avise a conserjería para facilitar el acceso de la ambulancia al recinto.',
-        'Mantenga las vías de acceso y ascensores despejados.'
+        'Llame al 131 e informe ubicación y síntomas.',
+        'No mueva a la persona a menos que sea estrictamente necesario.',
+        'Avise a conserjería para abrir portones a la ambulancia.',
       ]
     },
     {
       title: 'Sismo / Terremoto',
       icon: 'Tsunami',
       steps: [
-        'Aléjese de ventanas, espejos y objetos que puedan caer.',
-        'Ubíquese en una zona de seguridad estructural (bajo vigas o marcos).',
-        'No intente evacuar durante el movimiento sísmico.',
-        'Corte suministros de gas y electricidad si es seguro hacerlo.'
+        'Aléjese de ventanas u objetos que puedan caer.',
+        'Ubíquese en una zona de seguridad estructural.',
+        'No intente evacuar durante el movimiento.',
       ]
     }
   ];
 
   return (
-    <div className="flex flex-col min-h-full bg-[#0A0A0A]">
-      {/* Header */}
-      <header className="sticky top-0 z-30 bg-[#0A0A0A]/95 backdrop-blur-md border-b border-red-500/20 p-4">
-        <div className="flex justify-between items-center max-w-5xl mx-auto w-full">
-          <div className="flex items-center gap-4">
+    <div className="flex flex-col min-h-full bg-[#0A0A0A] font-sans selection:bg-red-500/30">
+      
+      {/* Immersive Header */}
+      <header className="sticky top-0 z-30 bg-[#0A0A0A]/80 backdrop-blur-3xl border-b border-red-500/10 px-6 py-4 transition-all">
+        <div className="flex justify-between items-center max-w-7xl mx-auto w-full">
+          <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
             <button 
               onClick={handleBack} 
-              className="w-10 h-10 rounded-full bg-[#141414] flex items-center justify-center text-white hover:bg-[#1F1F1F] active:scale-90 transition-all border border-white/5"
+              className="w-12 h-12 rounded-2xl bg-[#111] flex items-center justify-center text-white hover:bg-[#1A1A1A] active:scale-95 transition-all border border-white/5 hover:border-red-500/30"
             >
-              <span className="material-symbols-outlined">arrow_back</span>
+              <span className="material-symbols-outlined text-[24px]">arrow_back</span>
             </button>
             <div>
-              <h1 className="text-lg font-black text-white uppercase tracking-tight">Centro de Emergencias</h1>
-              <p className="text-[10px] font-bold text-red-500 uppercase tracking-[0.2em]">Protocolos y Contactos</p>
+              <h1 className="text-2xl md:text-3xl font-light tracking-tight text-white mb-1">
+                Centro Clínico y <span className="font-semibold text-red-500">Crisis</span>.
+              </h1>
+              <p className="text-[10px] md:text-xs font-semibold text-gray-500 uppercase tracking-widest">
+                Red de contactos vitales
+              </p>
             </div>
           </div>
-          <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center border border-red-500/20">
-            <span className="material-symbols-outlined text-red-500 animate-pulse">emergency</span>
+          
+          <div className="hidden md:flex w-14 h-14 rounded-2xl bg-red-500/10 items-center justify-center border border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.2)]">
+            <span className="material-symbols-outlined text-[28px] text-red-500 animate-pulse">emergency</span>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 p-6 md:p-10 max-w-5xl mx-auto w-full space-y-12 pb-32">
+      <main className="flex-1 p-6 md:px-12 md:py-10 max-w-7xl mx-auto w-full space-y-12 pb-32">
         
-        {/* Panic Button Section */}
-        <section className="relative group">
-          <div className="absolute -inset-1 bg-gradient-to-r from-red-600 to-orange-600 rounded-[40px] blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
-          <div className="relative bg-[#141414] border-2 border-red-500/20 rounded-[40px] p-10 text-center space-y-6 overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-500 to-transparent opacity-50"></div>
+        {/* Hardware-Grade Panic Button Section */}
+        <section className="relative group max-w-3xl mx-auto w-full">
+          {/* Epic Ambient Glow */}
+          <div className="absolute -inset-4 bg-gradient-to-r from-red-600/40 to-orange-500/40 rounded-[3rem] blur-[80px] opacity-40 group-hover:opacity-70 transition duration-1000 group-hover:duration-500 pointer-events-none"></div>
+          
+          <div className="relative bg-[#111] border border-red-500/20 rounded-[2.5rem] p-10 md:p-14 text-center overflow-hidden shadow-2xl hover:border-red-500/40 transition-colors">
             
-            <div className="w-24 h-24 bg-red-600 rounded-full mx-auto flex items-center justify-center shadow-[0_0_50px_rgba(220,38,38,0.5)] active:scale-95 transition-all cursor-pointer group/btn ring-8 ring-red-600/20">
-              <span className="material-symbols-outlined text-white text-5xl group-hover/btn:scale-110 transition-transform">notifications_active</span>
-            </div>
+            {/* Glossy top highlight */}
+            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-400 to-transparent opacity-30"></div>
             
-            <div className="space-y-2">
-              <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Botón de Pánico Digital</h3>
-              <p className="text-red-400/80 text-sm font-bold uppercase tracking-widest max-w-xs mx-auto leading-tight">
-                Mantenga presionado 3 segundos para alertar a todo el personal
+            <div className="flex flex-col items-center">
+              
+              <div className="relative mb-8 text-center flex flex-col items-center">
+                 {/* Ripple effect rings */}
+                 <div className="absolute inset-0 rounded-full border border-red-500/30 animate-ping opacity-50 duration-1000 w-32 h-32 md:w-40 md:h-40 mx-auto"></div>
+                 
+                 <button className="w-32 h-32 md:w-40 md:h-40 bg-gradient-to-b from-red-500 to-red-700 rounded-full flex items-center justify-center shadow-[0_0_60px_rgba(220,38,38,0.6),inset_0_4px_10px_rgba(255,255,255,0.3)] active:scale-[0.95] active:shadow-[0_0_20px_rgba(220,38,38,0.8),inset_0_10px_20px_rgba(0,0,0,0.5)] transition-all cursor-pointer ring-8 ring-[#1A1A1A] z-10 relative">
+                   <span className="material-symbols-outlined text-white text-[48px] md:text-[64px] font-bold">notifications_active</span>
+                 </button>
+              </div>
+              
+              <h3 className="text-3xl md:text-5xl font-light text-white tracking-tight mb-3">
+                 S.O.S <span className="font-bold">Residencial</span>
+              </h3>
+              <p className="text-red-400/80 text-xs md:text-sm font-medium uppercase tracking-widest max-w-sm mx-auto leading-relaxed border border-red-500/20 bg-red-500/5 px-4 py-2 rounded-xl">
+                Mantenga presionado 3 seg. para alertar a conserjería.
               </p>
             </div>
           </div>
         </section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Quick Call Column */}
-          <section className="space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center text-red-500">
-                <span className="material-symbols-outlined text-xl">call</span>
-              </div>
-              <h2 className="text-xs font-black text-gray-500 uppercase tracking-[0.2em]">Llamada Rápida</h2>
+        {/* Action Grid (Bento) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-10">
+          
+          {/* Quick Call Column (Bento Cards) - span 7 */}
+          <section className="lg:col-span-7 flex flex-col gap-6">
+            <div className="flex items-center gap-4 pl-2">
+              <span className="material-symbols-outlined text-gray-500 text-[24px]">contact_phone</span>
+              <h2 className="text-[11px] font-semibold text-gray-400 uppercase tracking-[0.2em]">Contactos de Emergencia</h2>
             </div>
             
-            <div className="grid grid-cols-1 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {emergencyContacts.map((contact, index) => (
                 <a 
                   key={index}
                   href={`tel:${contact.number}`}
-                  className="flex items-center justify-between p-5 bg-[#141414] rounded-2xl border-2 border-white/5 hover:border-red-500/30 hover:bg-[#1A1A1A] transition-all active:scale-[0.98] group"
+                  className="flex items-center justify-between p-5 bg-[#111] rounded-[1.5rem] border border-white/5 hover:border-white/20 hover:bg-[#141414] transition-all active:scale-[0.98] group relative overflow-hidden"
                 >
-                  <div className="flex items-center gap-5">
-                    <div className={`w-14 h-14 ${contact.color} rounded-2xl flex items-center justify-center text-white shadow-xl group-hover:scale-110 transition-transform`}>
-                      <span className="material-symbols-outlined text-3xl">{contact.icon}</span>
+                  {/* Hover gradient subtle background */}
+                  <div className={`absolute right-0 top-0 w-32 h-32 blur-[50px] opacity-0 group-hover:opacity-10 transition-opacity pointer-events-none ${contact.color}`}></div>
+                  
+                  <div className="flex items-center gap-4 relative z-10">
+                    <div className={`w-12 h-12 ${contact.color} rounded-xl flex items-center justify-center text-white shadow-lg group-hover:scale-105 transition-transform`}>
+                      <span className="material-symbols-outlined text-[24px]">{contact.icon}</span>
                     </div>
-                    <div>
-                      <h4 className="font-black text-white uppercase tracking-tight text-lg">{contact.name}</h4>
-                      <p className="text-sm text-gray-500 font-mono font-bold">{contact.number}</p>
+                    <div className="flex flex-col">
+                      <h4 className="font-semibold text-white tracking-tight text-sm md:text-base leading-none mb-1.5">{contact.name}</h4>
+                      <p className="text-xs text-gray-500 font-mono font-bold tracking-widest">{contact.number}</p>
                     </div>
                   </div>
-                  <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 group-hover:bg-red-500 group-hover:text-white transition-all">
-                    <span className="material-symbols-outlined">call</span>
+                  
+                  <div className="w-10 h-10 rounded-full bg-[#0A0A0A] border border-white/5 flex items-center justify-center text-gray-500 group-hover:bg-white group-hover:text-black transition-colors relative z-10">
+                    <span className="material-symbols-outlined text-[18px]">call</span>
                   </div>
                 </a>
               ))}
             </div>
           </section>
 
-          {/* Protocols Column */}
-          <section className="space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center text-red-500">
-                <span className="material-symbols-outlined text-xl">menu_book</span>
-              </div>
-              <h2 className="text-xs font-black text-gray-500 uppercase tracking-[0.2em]">Protocolos de Actuación</h2>
+          {/* Protocols Column - span 5 */}
+          <section className="lg:col-span-5 flex flex-col gap-6">
+            <div className="flex items-center gap-4 pl-2">
+              <span className="material-symbols-outlined text-gray-500 text-[24px]">menu_book</span>
+              <h2 className="text-[11px] font-semibold text-gray-400 uppercase tracking-[0.2em]">Manual de Actuación</h2>
             </div>
             
-            <div className="space-y-4">
+            <div className="flex flex-col gap-4">
               {protocols.map((protocol, idx) => (
-                <div key={idx} className="bg-[#141414] rounded-3xl border-2 border-white/5 overflow-hidden group hover:border-white/10 transition-all">
-                  <div className="p-5 flex items-center gap-4 bg-white/[0.02] border-b border-white/5">
-                    <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center text-red-500">
-                      <span className="material-symbols-outlined">{protocol.icon}</span>
+                <div key={idx} className="bg-[#111] rounded-[1.5rem] border border-white/5 overflow-hidden group hover:border-white/10 transition-all flex flex-col hover:bg-[#141414]">
+                  
+                  <div className="px-6 py-4 flex items-center gap-4 border-b border-white/5 relative">
+                    <div className="w-10 h-10 rounded-xl bg-[#0A0A0A] border border-white/5 flex items-center justify-center text-gray-400 group-hover:text-red-400 transition-colors">
+                      <span className="material-symbols-outlined text-[20px]">{protocol.icon}</span>
                     </div>
-                    <h4 className="font-black text-white uppercase tracking-widest text-sm">{protocol.title}</h4>
+                    <h4 className="font-semibold text-white tracking-tight text-sm">{protocol.title}</h4>
                   </div>
-                  <div className="p-6 space-y-4">
+                  
+                  <div className="px-6 py-5 flex flex-col gap-4">
                     {protocol.steps.map((step, sIdx) => (
                       <div key={sIdx} className="flex gap-4 items-start">
-                        <span className="w-6 h-6 rounded-lg bg-red-500/10 text-red-500 flex-shrink-0 flex items-center justify-center text-[10px] font-black mt-0.5 border border-red-500/20">
+                        <span className="w-6 h-6 rounded-md bg-[#0A0A0A] text-gray-500 flex-shrink-0 flex items-center justify-center text-[10px] font-bold border border-white/10 mt-0.5">
                           {sIdx + 1}
                         </span>
-                        <p className="text-sm text-gray-400 font-bold leading-relaxed">{step}</p>
+                        <p className="text-xs md:text-[13px] text-gray-400 font-medium leading-relaxed">{step}</p>
                       </div>
                     ))}
                   </div>
@@ -174,17 +193,8 @@ const Emergency: React.FC<Props> = ({ navigate, from, role }) => {
         </div>
 
       </main>
-
-      {/* Footer Info */}
-      <footer className="p-10 text-center border-t border-white/5 bg-black/40">
-        <Logo variant="full" className="h-6 opacity-30 mx-auto mb-4" />
-        <p className="text-[10px] text-gray-600 font-black uppercase tracking-[0.3em]">
-          Ediflow Emergency System v2.0 • 2024
-        </p>
-      </footer>
     </div>
   );
 };
 
 export default Emergency;
-
