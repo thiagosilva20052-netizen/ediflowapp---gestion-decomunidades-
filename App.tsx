@@ -26,6 +26,7 @@ import ResourcesPage from './screens/ResourcesPage';
 import PricingPage from './screens/PricingPage';
 import BookDemoPage from './screens/BookDemoPage';
 import PrivacyPage from './screens/PrivacyPage';
+import TermsPage from './screens/TermsPage';
 import { useAppContext } from './src/context/AppContext';
 import { User, UserRole } from './src/types';
 import { ModuleHub } from './components/ModuleHub';
@@ -58,13 +59,13 @@ export type ScreenName =
   | 'Pricing'
   | 'BookDemo'
   | 'Privacy'
+  | 'Terms'
   | 'Login';
 
 const App: React.FC = () => {
-  const { currentUser, setCurrentUser } = useAppContext();
+  const { currentUser, setCurrentUser, isGlobalMenuOpen, setIsGlobalMenuOpen } = useAppContext();
   const [currentScreen, setCurrentScreen] = useState<ScreenName>('Landing');
   const [previousScreen, setPreviousScreen] = useState<ScreenName | null>(null);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleNavigate = (screen: ScreenName) => {
     setPreviousScreen(currentScreen);
@@ -113,6 +114,9 @@ const App: React.FC = () => {
       }
       if (currentScreen === 'Privacy') {
         return <PrivacyPage onLoginClick={() => setCurrentScreen('Login')} onNavigate={setCurrentScreen} />;
+      }
+      if (currentScreen === 'Terms') {
+        return <TermsPage onLoginClick={() => setCurrentScreen('Login')} onNavigate={setCurrentScreen} />;
       }
       return <LandingPage onLoginClick={() => setCurrentScreen('Login')} onNavigate={setCurrentScreen} />;
     }
@@ -190,22 +194,10 @@ const App: React.FC = () => {
           {renderScreen()}
         </div>
 
-        {/* Floating Navigation Menu Trigger */}
-        {currentUser && (
-          <div className="absolute bottom-6 right-6 z-50">
-            <button 
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="w-14 h-14 bg-[#00AEEF] text-white rounded-full flex items-center justify-center shadow-2xl hover:bg-blue-400 transition-all active:scale-90"
-            >
-              <span className="material-symbols-outlined text-3xl">{isMenuOpen ? 'close' : 'grid_view'}</span>
-            </button>
-          </div>
-        )}
-
         {currentUser && (
           <ModuleHub 
-            isOpen={isMenuOpen} 
-            onClose={() => setIsMenuOpen(false)} 
+            isOpen={isGlobalMenuOpen} 
+            onClose={() => setIsGlobalMenuOpen(false)} 
             onNavigate={handleNavigate}
             onLogout={handleLogout}
             currentScreen={currentScreen}

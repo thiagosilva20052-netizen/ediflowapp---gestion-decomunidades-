@@ -135,22 +135,13 @@ const LandingPage: React.FC<Props> = ({ onLoginClick, onNavigate }) => {
       </header>
 
       {/* Hero Section */}
-      <section className="relative w-full h-screen flex flex-col overflow-hidden">
-        {/* Background Video */}
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover z-0"
-          src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260403_050628_c4e32401-fab4-4a27-b7a8-6e9291cd5959.mp4"
-        />
-
-        {/* Dynamic Dark Overlay on Scroll */}
-        <div 
-          className="absolute inset-0 bg-black pointer-events-none z-0"
-          style={{ opacity: scrollOpacity }}
-        />
+      <section className="relative w-full h-screen flex flex-col overflow-hidden bg-[#0A0A0A]">
+        {/* Subtle Grid and Glow instead of Video/Image of buildings */}
+        <div className="absolute inset-0 z-0 opacity-20">
+           <div className="w-full h-full" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '40px 40px' }}></div>
+        </div>
+        <div className="absolute top-1/4 right-0 w-[600px] h-[600px] bg-ediflow-primary/10 blur-[150px] rounded-[100%] pointer-events-none z-0 mix-blend-screen"></div>
+        <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-blue-500/10 blur-[120px] rounded-[100%] pointer-events-none z-0 mix-blend-screen"></div>
 
         {/* Gradient Transition to next section */}
         <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-[#050505] to-transparent z-0 pointer-events-none" />
@@ -158,42 +149,99 @@ const LandingPage: React.FC<Props> = ({ onLoginClick, onNavigate }) => {
         {/* Main Layout Overlay */}
         <div className="relative z-10 flex flex-col h-full pt-20">
           {/* Hero Content */}
-          <div className="px-6 md:px-12 lg:px-16 flex-1 flex flex-col justify-end pb-12 lg:pb-16 w-full">
-            <div className="lg:grid lg:grid-cols-2 lg:items-end w-full">
+          <div className="px-6 md:px-12 lg:px-16 flex-1 flex flex-col justify-center lg:justify-end pb-12 lg:pb-16 w-full max-w-7xl mx-auto">
+            <div className="lg:grid lg:grid-cols-2 lg:items-center w-full gap-12">
               
-              {/* Left Column */}
+              {/* Left Column (Copywriter) */}
               <div className="flex flex-col items-start w-full">
-                <AnimatedHeading text={"Administra 10 condominios\nen el tiempo de uno."} />
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-light text-white tracking-tight leading-[1.1] mb-4">
+                  Cuadra tus gastos comunes en <span className="font-medium text-ediflow-primary">3 segundos</span> usando IA.
+                </h1>
+                <h2 className="text-xl md:text-2xl text-white font-medium mb-6 font-serif italic">
+                  Sin pelear con Excel ni arriesgar multas.
+                </h2>
                 
-                <FadeIn delay={800} duration={1000}>
-                  <p className="text-base md:text-lg text-gray-300 mb-5 max-w-xl">
-                    Ediflow es tu empleado operativo de Inteligencia Artificial. Extrae datos de facturas automáticamente, asiste a tu conserjería por voz y automatiza el cobro de gastos comunes.
+                <FadeIn delay={400} duration={1000}>
+                  <p className="text-base md:text-lg text-gray-300 mb-8 max-w-xl leading-relaxed">
+                    Ediflow lee tus facturas automáticamente, permite a los conserjes reportar por voz y a los residentes pagar con 0% de comisión. Tu condominio en piloto automático, cumpliendo con la Ley chilena.
                   </p>
                 </FadeIn>
 
-                <FadeIn delay={1200} duration={1000} className="w-full">
-                  <div className="flex flex-wrap gap-4">
+                <FadeIn delay={800} duration={1000} className="w-full">
+                  <div className="flex flex-col sm:flex-row gap-4 mb-8">
                     <button 
-                      onClick={onLoginClick}
-                      className="bg-white text-black px-8 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors"
+                      onClick={() => onNavigate && onNavigate('Pricing')}
+                      className="bg-ediflow-primary text-black px-8 py-3.5 rounded-xl font-semibold hover:bg-white transition-all shadow-[0_0_20px_rgba(0,174,239,0.2)] md:w-auto w-full flex justify-center items-center gap-2"
                     >
-                      Ver IA en Acción
+                      Empezar Prueba Gratis
                     </button>
-                    <button className="liquid-glass border border-white/20 text-white px-8 py-3 rounded-lg font-medium hover:bg-white hover:text-black transition-all" onClick={() => document.getElementById('superpoderes')?.scrollIntoView({ behavior: 'smooth' })}>
-                      Explorar Plataforma
+                    <button 
+                      onClick={() => onNavigate && onNavigate('BookDemo')}
+                      className="border border-white/20 text-white bg-transparent px-8 py-3.5 rounded-xl font-medium hover:bg-white/5 transition-all md:w-auto w-full flex justify-center items-center gap-2"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">play_circle</span> Ver IA en acción (3 min)
                     </button>
+                  </div>
+                  
+                  {/* Social Proof */}
+                  <div className="flex flex-col items-start gap-3 border-t border-white/10 pt-6">
+                    <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-[0.2em]">Integración nativa y segura con</p>
+                    <div className="flex items-center gap-6 opacity-70">
+                      <span className="text-sm font-bold tracking-tighter text-white">khipu</span>
+                      <div className="flex items-center gap-1 text-white">
+                        <span className="material-symbols-outlined text-[10px]">handshake</span>
+                        <span className="text-sm font-bold tracking-tighter">mercado<span className="opacity-80 font-normal">pago</span></span>
+                      </div>
+                    </div>
                   </div>
                 </FadeIn>
               </div>
 
-              {/* Right Column */}
-              <div className="flex items-end justify-start lg:justify-end mt-8 lg:mt-0 w-full">
+              {/* Right Column (Abstract SaaS Interface Representation) */}
+              <div className="hidden lg:flex items-center justify-end w-full h-[500px]">
                 <FadeIn delay={1400} duration={1000}>
-                  <div className="liquid-glass border border-white/20 px-6 py-3 rounded-xl">
-                    <span className="text-lg md:text-xl lg:text-2xl font-light">
-                      Inteligencia. Automatización. Control.
-                    </span>
-                  </div>
+                   <div className="relative w-[500px] h-[400px]">
+                      {/* Floating Dashboard Card */}
+                      <div className="absolute top-0 right-0 w-[380px] h-[220px] bg-[#111] border border-white/10 rounded-2xl p-5 shadow-2xl backdrop-blur transform -rotate-2 hover:rotate-0 transition-transform duration-500 z-20">
+                         <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-3">
+                            <span className="text-white text-sm font-medium">Lectura OCR de Gastos</span>
+                            <span className="bg-green-500/10 text-green-400 text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-semibold">+ 42 procesadas</span>
+                         </div>
+                         <div className="space-y-3">
+                            {[1, 2, 3].map(i => (
+                               <div key={i} className="flex justify-between items-center group">
+                                  <div className="w-1/2 h-2 bg-white/10 rounded overflow-hidden relative">
+                                    <div className="absolute top-0 left-0 h-full bg-ediflow-primary/70 animate-[pulse_2s_ease-in-out_infinite]" style={{width: `${Math.random() * 50 + 50}%`}}></div>
+                                  </div>
+                                  <span className="text-xs text-gray-400 font-mono group-hover:text-white transition-colors">Enel S.A.</span>
+                               </div>
+                            ))}
+                         </div>
+                      </div>
+
+                      {/* Floating Conserjería Card */}
+                      <div className="absolute bottom-0 left-0 w-[280px] h-[180px] bg-[#0A0A0A] border border-white/5 rounded-2xl p-5 shadow-2xl backdrop-blur-md transform rotate-3 hover:rotate-0 transition-transform duration-500 z-30">
+                          <div className="flex items-center gap-3 mb-4">
+                             <div className="w-8 h-8 rounded-full bg-ediflow-primary/20 flex items-center justify-center">
+                               <span className="material-symbols-outlined text-ediflow-primary text-sm">mic</span>
+                             </div>
+                             <div>
+                               <p className="text-white text-xs font-medium">Asistente de Voz</p>
+                               <p className="text-[10px] text-gray-500 uppercase tracking-widest">Activo 24/7</p>
+                             </div>
+                          </div>
+                          <div className="w-full bg-white/5 rounded-lg p-3 border border-white/5">
+                             <div className="w-4 h-4 bg-red-500 rounded-full animate-bounce inline-block mr-2"></div>
+                             <span className="text-xs text-gray-400 italic">"Registrando encomienda Depto 402..."</span>
+                          </div>
+                      </div>
+                      
+                      {/* Floating Payment Notification */}
+                      <div className="absolute -right-8 bottom-12 bg-white text-black px-4 py-2 rounded-xl text-xs font-medium shadow-[0_0_30px_rgba(255,255,255,0.2)] flex items-center gap-2 animate-[pulse_4s_ease-in-out_infinite]">
+                         <span className="material-symbols-outlined text-green-500 text-[14px]">check_circle</span>
+                         Gasto Común Pagado
+                      </div>
+                   </div>
                 </FadeIn>
               </div>
 

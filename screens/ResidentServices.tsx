@@ -1,280 +1,284 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScreenName } from '../App';
 import { Logo } from '../components/Logo';
-import { Card } from '../src/components/ui/Card';
-import { Button } from '../src/components/ui/Button';
-import { NotificationDrawer } from '../src/components/notifications/NotificationDrawer';
+import { useAppContext } from '../src/context/AppContext';
 
 interface Props {
   navigate: (screen: ScreenName) => void;
+  onLogout?: () => void;
 }
 
-const ResidentServices: React.FC<Props> = ({ navigate }) => {
-  const [isConciergeOnline, setIsConciergeOnline] = useState(true);
-  const [isNotificationDrawerOpen, setIsNotificationDrawerOpen] = useState(false);
+export const ResidentServices: React.FC<Props> = ({ navigate, onLogout }) => {
+  const { currentUser, setIsGlobalMenuOpen } = useAppContext();
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  const [isPaying, setIsPaying] = useState(false);
+  const [isPaid, setIsPaid] = useState(false);
+
+  const handleQuickPay = () => {
+    setIsPaying(true);
+    setTimeout(() => {
+      setIsPaid(true);
+      setIsPaying(false);
+    }, 800);
+  };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-[#000000] text-white">
+    <div className="flex h-screen bg-[#0A0A0A] text-white font-sans overflow-hidden py-safe selection:bg-white/10">
       
-      {/* Sidebar - Desktop Only */}
-      <aside className="hidden md:flex flex-col w-72 bg-[#121212] border-r-2 border-gray-800 p-8 sticky top-0 h-screen">
-        <Logo variant="horizontal" className="mb-12" />
-        
-        <nav className="flex-1 space-y-4">
-          <SidebarButton icon="home" label="Inicio" onClick={() => navigate('CommunityWall')} />
-          <SidebarButton icon="grid_view" label="Servicios" active />
-          <SidebarButton icon="payments" label="Pagos" onClick={() => navigate('PaymentsScreen')} />
-          <SidebarButton icon="chat" label="Mensajería" onClick={() => navigate('MessagesScreen')} />
-          <SidebarButton icon="person" label="Mi Perfil" onClick={() => navigate('UserProfile')} />
-        </nav>
-
-        <div className="mt-auto pt-8 border-t-2 border-gray-800">
-          <div className="flex items-center gap-4 p-4 bg-gray-900/50 rounded-2xl border-2 border-gray-800">
-            <div className="w-12 h-12 rounded-full bg-[#00AEEF] flex items-center justify-center font-black text-white">
-              JD
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold truncate">Jane Doe</p>
-              <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Depto 402</p>
-            </div>
-          </div>
+      {/* Sleek Collapsible Sidebar (Glassmorphism & Narrow) - Hidden Mobile */}
+      <aside 
+        className={`hidden md:flex flex-col bg-[#111]/40 backdrop-blur-3xl border-r border-white/5 py-8 px-4 transition-all duration-300 ease-in-out relative z-40 ${isSidebarExpanded ? 'w-64' : 'w-20 items-center'}`}
+        onMouseEnter={() => setIsSidebarExpanded(true)}
+        onMouseLeave={() => setIsSidebarExpanded(false)}
+      >
+        <div className="mb-8 pl-2">
+          {isSidebarExpanded ? (
+            <Logo variant="horizontal" color="#FFFFFF" className="scale-[0.85] origin-left" />
+          ) : (
+            <Logo variant="icon" color="#FFFFFF" className="scale-75" />
+          )}
         </div>
+
+        {/* User Identity at the top */}
+        <div className="w-full pb-6 mb-6 border-b border-white/5 flex flex-col gap-2">
+           <div className={`flex items-center gap-3 p-2 rounded-xl border border-transparent hover:border-white/5 hover:bg-white/5 cursor-pointer transition-colors ${isSidebarExpanded ? 'w-full' : 'justify-center'}`}>
+              <div className="shrink-0 w-8 h-8 rounded-full bg-ediflow-primary/20 text-ediflow-primary flex items-center justify-center font-bold text-xs ring-1 ring-ediflow-primary/30">
+                {currentUser?.name ? currentUser.name.charAt(0) : 'R'}
+              </div>
+              {isSidebarExpanded && (
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate text-gray-200">{currentUser?.name || "Jane Doe"}</p>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold flex items-center gap-1">
+                    Depto 402
+                  </p>
+                </div>
+              )}
+           </div>
+        </div>
+        
+        <nav className="flex-1 space-y-4 w-full overflow-y-auto no-scrollbar pb-4 block">
+          <SidebarItem icon="grid_view" label="Inicio" active expanded={isSidebarExpanded} />
+          <SidebarItem icon="qr_code_2" label="Accesos & Visitas" onClick={() => navigate('QRCodeScreen')} expanded={isSidebarExpanded} />
+          <SidebarItem icon="payments" label="Pagos y Boletas" onClick={() => navigate('PaymentsScreen')} expanded={isSidebarExpanded} />
+          <SidebarItem icon="deck" label="Reservar Áreas" onClick={() => navigate('Reservations')} expanded={isSidebarExpanded} />
+          <SidebarItem icon="forum" label="Comunidad" onClick={() => navigate('CommunityWall')} expanded={isSidebarExpanded} />
+          <SidebarItem icon="apps" label="Módulos" onClick={() => setIsGlobalMenuOpen(true)} expanded={isSidebarExpanded} />
+          <SidebarItem icon="assignment_late" label="Pánico" onClick={() => navigate('Emergency')} expanded={isSidebarExpanded} isDanger />
+        </nav>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col min-h-full pb-24 md:pb-10">
+      {/* Main Content Area */}
+      <main className="flex-1 flex flex-col h-full overflow-y-auto custom-scrollbar relative z-10 w-full">
         
-        {/* Header */}
-        <header className="px-6 md:px-10 pt-10 pb-6 flex flex-col md:flex-row md:items-center justify-between gap-6 sticky top-0 z-20 bg-[#000000]/80 backdrop-blur-md border-b-2 border-gray-800 md:border-none">
-          <div className="md:hidden flex justify-between items-center w-full">
-            <Logo variant="horizontal" className="scale-90 origin-left" />
-            <button onClick={() => setIsNotificationDrawerOpen(true)} className="w-12 h-12 rounded-full bg-[#121212] flex items-center justify-center border-2 border-gray-800 relative">
-              <span className="material-symbols-outlined">notifications</span>
-              <span className="absolute top-3 right-3 w-2 h-2 bg-[#00AEEF] rounded-full"></span>
-            </button>
-          </div>
-          
-          <div className="hidden md:block">
-            <h1 className="text-4xl font-black tracking-tight">Mis Servicios</h1>
-            <p className="text-gray-500 font-medium mt-1">Todo lo que necesitas para tu hogar.</p>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-3 bg-[#121212] border-2 border-gray-800 rounded-full px-6 py-3">
-              <span className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></span>
-              <span className="text-sm font-bold uppercase tracking-widest">Residente Activo</span>
-            </div>
-            <button 
-              onClick={() => setIsNotificationDrawerOpen(true)}
-              className="hidden md:flex w-14 h-14 rounded-full bg-[#121212] border-2 border-gray-800 items-center justify-center text-gray-400 hover:text-white transition-colors relative"
-            >
-              <span className="material-symbols-outlined text-3xl">notifications</span>
-              <span className="absolute top-4 right-4 w-3 h-3 bg-[#00AEEF] rounded-full border-2 border-[#121212]"></span>
-            </button>
+        {/* Mobile Header (Hidden on Desktop) */}
+        <header className="md:hidden flex items-center justify-between px-6 pt-12 pb-4">
+          <Logo variant="horizontal" className="scale-[0.8] origin-left" />
+          <div className="flex gap-3">
+             <button title="Notificaciones" className="w-10 h-10 rounded-full bg-[#111] border border-white/10 text-white flex items-center justify-center relative">
+               <span className="material-symbols-outlined text-[20px]">notifications</span>
+               <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-[#111]"></span>
+             </button>
+             <button onClick={onLogout} title="Cerrar Sesión" className="w-10 h-10 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center border border-red-500/20 active:scale-95 transition-transform">
+               <span className="material-symbols-outlined text-[20px]">logout</span>
+             </button>
           </div>
         </header>
 
-        {/* Dashboard Content */}
-        <div className="px-6 md:px-10 py-6 space-y-8 max-w-7xl mx-auto w-full">
-          
-          {/* Top Row: QR & Financial */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <header className="px-6 md:px-16 pt-4 md:pt-16 pb-8 sticky top-0 z-30 bg-gradient-to-b from-[#0A0A0A] via-[#0A0A0A] to-transparent pointer-events-none md:bg-none flex justify-between items-start">
+          <div className="pointer-events-auto">
+             <h1 className="text-3xl md:text-5xl font-light tracking-tight text-white md:mb-2">
+               Bienvenida, <span className="font-medium">{currentUser?.name ? currentUser.name.split(' ')[0] : 'Jane'}</span>. <br className="md:hidden" />
+             </h1>
+             <p className="text-gray-500 text-sm md:text-xl md:mt-2 block">Depto 402 al día. Todo en orden.</p>
+          </div>
+
+          {/* Desktop Right Actions */}
+          <div className="hidden md:flex items-center gap-4 pointer-events-auto">
+             <button 
+               title="Notificaciones"
+               className="relative w-12 h-12 rounded-full bg-[#111] border border-white/10 hover:border-white/20 flex items-center justify-center text-gray-400 hover:text-white transition-all active:scale-95"
+             >
+               <span className="material-symbols-outlined text-[24px]">notifications</span>
+               <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-red-500 border-2 border-[#111] rounded-full"></span>
+             </button>
+             
+             <button 
+               onClick={onLogout}
+               title="Cerrar Sesión"
+               className="px-6 h-12 rounded-full bg-red-500/10 border border-red-500/20 hover:bg-red-500 hover:text-white text-red-500 transition-all font-semibold uppercase tracking-wider text-[11px] flex items-center gap-2 active:scale-95"
+             >
+               <span className="material-symbols-outlined text-[18px]">logout</span>
+               Salir
+             </button>
+          </div>
+        </header>
+
+        <div className="px-6 md:px-16 pb-32 md:pb-20 max-w-6xl w-full mx-auto">
+          {/* Asymmetrical Bento Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            {/* QR Access Card */}
-            <Card className="p-8 bg-[#00AEEF] border-none text-white flex flex-col justify-between min-h-[300px] relative overflow-hidden group cursor-pointer" onClick={() => navigate('QRCodeScreen')}>
-              <div className="relative z-10">
-                <h2 className="text-3xl font-black mb-2">Acceso Rápido</h2>
-                <p className="text-white/80 font-medium mb-8">Genera tu código QR para visitas o acceso personal.</p>
-                <div className="w-32 h-32 bg-white p-2 rounded-2xl shadow-2xl group-hover:scale-110 transition-transform duration-500">
-                  <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=EdiflowAccess" alt="QR Code" className="w-full h-full" />
-                </div>
-              </div>
-              <div className="relative z-10 mt-8">
-                <span className="inline-flex items-center gap-2 bg-white text-[#00AEEF] px-6 py-3 rounded-full font-black text-sm">
-                  Abrir QR
-                  <span className="material-symbols-outlined">qr_code_2</span>
-                </span>
-              </div>
-              <span className="material-symbols-outlined absolute -right-10 -bottom-10 text-[220px] text-white/10 rotate-12 group-hover:rotate-0 transition-transform duration-500">
-                qr_code_scanner
-              </span>
-            </Card>
+            {/* LARGE CARD: Monthly Expenses (60% visually / col-span-2) */}
+            <div className="lg:col-span-2 bg-[#111] rounded-[2rem] border border-white/5 p-6 md:p-10 flex flex-col relative overflow-hidden shadow-2xl group">
+               {/* Ambient Glow */}
+               <div className={`absolute -top-32 -right-32 w-96 h-96 blur-[100px] rounded-full pointer-events-none transition-all duration-1000 ${isPaid ? 'bg-green-500/10' : 'bg-ediflow-primary/5 group-hover:bg-ediflow-primary/10'}`}></div>
 
-            {/* Financial Status */}
-            <Card className="lg:col-span-2 p-8 bg-[#121212] border-gray-800 flex flex-col justify-between">
-              <div className="flex justify-between items-start mb-8">
-                <div>
-                  <h3 className="text-2xl font-black">Gastos Comunes</h3>
-                  <p className="text-gray-500">Estado de cuenta actual</p>
+               <div className="flex items-center justify-between mb-8 relative z-10">
+                 <div className="flex items-center gap-3">
+                   <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                     <span className="material-symbols-outlined text-white text-[20px]">account_balance_wallet</span>
+                   </div>
+                   <div>
+                     <h2 className="text-xs md:text-sm font-semibold uppercase tracking-[0.2em] text-gray-400">Gastos Comunes</h2>
+                   </div>
+                 </div>
+                 {isPaid && (
+                   <span className="text-[10px] font-bold tracking-widest uppercase text-green-400 bg-green-500/10 px-3 py-1 rounded-full border border-green-500/20 hidden md:block">
+                     Pagado
+                   </span>
+                 )}
+               </div>
+
+               <div className="mb-10 relative z-10">
+                 <p className="text-sm font-medium text-gray-500 mb-2 uppercase tracking-wide">Mes en curso (Mayo)</p>
+                 <h3 className="text-5xl md:text-6xl font-light text-white tracking-tighter mb-4 flex items-baseline gap-2">
+                   {isPaid ? '$0' : '$125,400'} <span className="text-xl md:text-3xl text-gray-500 font-normal">CLP</span>
+                 </h3>
+                 {!isPaid && (
+                    <p className="text-xs md:text-sm text-gray-400 font-light flex items-center gap-2">
+                       <span className="w-2 h-2 rounded-full bg-ediflow-primary animate-pulse shrink-0"></span> Vence el 05 de Mayo
+                    </p>
+                 )}
+               </div>
+
+               {/* Payment Interaction Container */}
+               <div className="mt-auto relative md:h-20 min-h-[4rem] overflow-hidden rounded-2xl bg-[#0A0A0A] border border-white/5">
+                 
+                 {/* Success State */}
+                 <div className={`absolute inset-0 flex items-center justify-center p-4 md:p-0 bg-green-500/10 border border-green-500/20 transition-all duration-[600ms] cubic-bezier(0.4, 0, 0.2, 1) ${isPaid ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}`}>
+                    <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 text-center md:text-left">
+                       <div className="w-8 h-8 rounded-full bg-green-500 text-black flex items-center justify-center shrink-0">
+                         <span className="material-symbols-outlined text-[18px] font-bold">done_all</span>
+                       </div>
+                       <span className="text-green-400 font-medium text-xs md:text-sm">Deuda saldada. Boleta enviada al correo.</span>
+                    </div>
+                 </div>
+
+                 {/* Action State */}
+                 <div className={`absolute inset-0 flex items-center justify-between p-2 md:p-2 gap-2 transition-all duration-[600ms] cubic-bezier(0.4, 0, 0.2, 1) ${isPaying || isPaid ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'}`}>
+                    <div className="hidden md:flex items-center justify-center bg-white/5 border border-white/10 rounded-xl px-4 py-3 h-full gap-3 text-sm text-gray-400 font-medium">
+                       <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/Apple_Pay_logo.svg" alt="Apple Pay" className="h-4 brightness-200" /> 
+                       | Khipu | Tarjetas
+                    </div>
+                    <button 
+                      onClick={handleQuickPay}
+                      className="bg-white text-black px-6 py-4 md:py-0 w-full md:w-48 h-full rounded-xl text-sm font-bold hover:bg-gray-200 transition-all active:scale-95 flex items-center justify-center gap-2"
+                    >
+                      Pagar en un clic <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+                    </button>
+                 </div>
+
+               </div>
+            </div>
+
+            {/* SMALL CARDS CONTAINER (col-span-1) */}
+            <div className="flex flex-col gap-6">
+              
+              {/* Dynamic Action Card (E.g. Packages Waiting) */}
+              <div 
+                onClick={() => navigate('CommunityWall')}
+                className="bg-[#111] rounded-[2rem] border border-ediflow-primary/30 p-6 md:p-8 flex-1 flex flex-col hover:border-ediflow-primary/60 transition-colors cursor-pointer group relative overflow-hidden"
+              >
+                <div className="absolute top-0 left-0 w-1 h-full bg-ediflow-primary"></div>
+                <div className="flex items-center justify-between mb-4">
+                   <h2 className="text-xs font-semibold uppercase tracking-[0.15em] text-gray-400 group-hover:text-gray-300">Encomiendas</h2>
+                   <div className="w-8 h-8 rounded-full bg-ediflow-primary/20 text-ediflow-primary flex items-center justify-center">
+                     <span className="material-symbols-outlined text-[16px]">inventory_2</span>
+                   </div>
                 </div>
-                <span className="text-xs font-black bg-green-500/10 text-green-500 px-4 py-1.5 rounded-full border border-green-500/20">AL DÍA</span>
+                <p className="text-3xl font-light text-white mb-1">1 <span className="text-lg text-gray-500 font-normal">paquete</span></p>
+                <p className="text-sm font-medium text-ediflow-primary">Esperando en recepción</p>
+                
+                <div className="mt-auto pt-4 text-xs font-medium text-gray-500 group-hover:text-white transition-colors flex items-center justify-end gap-1 w-full">
+                  Ver código de retiro <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                </div>
               </div>
 
-              <div className="flex flex-col md:flex-row items-end gap-8">
-                <div className="flex-1">
-                  <p className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-1">Total a Pagar</p>
-                  <h4 className="text-5xl font-black">$125.400</h4>
-                  <p className="text-xs text-gray-500 mt-2 font-medium italic">Vence el 05 de Mayo, 2026</p>
-                </div>
-                <div className="flex gap-4 w-full md:w-auto">
-                  <Button onClick={() => navigate('PaymentsScreen')} className="flex-1 md:flex-none bg-white text-black border-none px-8 h-14 font-black">
-                    Ver Detalle
-                  </Button>
-                  <Button onClick={() => navigate('PaymentsScreen')} className="flex-1 md:flex-none bg-[#00AEEF] text-white border-none px-8 h-14 font-black">
-                    Pagar Ahora
-                  </Button>
-                </div>
+              {/* Quick Links Card */}
+              <div className="bg-[#111] rounded-[2rem] border border-white/5 p-6 hover:border-white/10 transition-colors">
+                 <h2 className="text-xs font-semibold uppercase tracking-[0.15em] text-gray-400 mb-4 px-2">Acceso Rápido</h2>
+                 <div className="grid grid-cols-2 gap-2">
+                    <div onClick={() => navigate('Reservations')} className="bg-[#0A0A0A] border border-white/5 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-white/20 transition-all text-gray-400 hover:text-white active:scale-95">
+                       <span className="material-symbols-outlined text-[24px]">deck</span>
+                       <span className="text-[10px] font-medium text-center">Reservar<br/>Áreas</span>
+                    </div>
+                    <div onClick={() => navigate('MessagesScreen')} className="bg-[#0A0A0A] border border-white/5 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-white/20 transition-all text-gray-400 hover:text-white active:scale-95">
+                       <span className="material-symbols-outlined text-[24px] text-blue-400">support_agent</span>
+                       <span className="text-[10px] font-medium text-center">Chat<br/>Conserjería</span>
+                    </div>
+                 </div>
               </div>
-            </Card>
+
+            </div>
+
           </div>
-
-          {/* Services Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <ServiceCard 
-              icon="package_2" 
-              label="Encomiendas" 
-              value="2" 
-              desc="Por retirar"
-              color="text-blue-500"
-              onClick={() => {}} 
-            />
-            <ServiceCard 
-              icon="deck" 
-              label="Reservas" 
-              value="1" 
-              desc="Activa"
-              color="text-amber-500"
-              onClick={() => navigate('Reservations')}
-            />
-            <ServiceCard 
-              icon="campaign" 
-              label="Anuncios" 
-              value="3" 
-              desc="Nuevos"
-              color="text-purple-500"
-              onClick={() => navigate('CommunityWall')}
-            />
-            <ServiceCard 
-              icon="chat" 
-              label="Mensajes" 
-              value="0" 
-              desc="Sin leer"
-              color="text-[#00AEEF]"
-              onClick={() => navigate('MessagesScreen')}
-            />
-          </div>
-
-          {/* Bottom Row: Concierge & Emergency */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            
-            {/* Concierge Status */}
-            <Card className="p-8 bg-[#121212] border-gray-800">
-              <h3 className="text-xl font-black mb-6 flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#00AEEF]">support_agent</span>
-                Conserje de Turno
-              </h3>
-              <div className="flex items-center gap-6">
-                <div className="relative">
-                  <img 
-                    src="https://images.unsplash.com/photo-1542596594-649edbc13630?auto=format&fit=crop&q=80&w=200" 
-                    alt="Concierge" 
-                    className={`w-24 h-24 rounded-2xl object-cover border-2 ${isConciergeOnline ? 'border-green-500' : 'border-gray-700 grayscale'}`}
-                  />
-                  <span className={`absolute -bottom-2 -right-2 w-6 h-6 rounded-full border-4 border-[#121212] ${isConciergeOnline ? 'bg-green-500' : 'bg-gray-700'}`}></span>
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-2xl font-black">{isConciergeOnline ? 'Carlos Ramirez' : 'Fuera de Turno'}</h4>
-                  <p className="text-gray-500 font-medium mb-4">Turno hasta las 20:00</p>
-                  <Button 
-                    onClick={() => navigate('MessagesScreen')}
-                    disabled={!isConciergeOnline}
-                    className={`${isConciergeOnline ? 'bg-[#00AEEF] text-white' : 'bg-gray-800 text-gray-500'} border-none px-6`}
-                    icon="chat"
-                  >
-                    Contactar
-                  </Button>
-                </div>
-              </div>
-            </Card>
-
-            {/* Emergency & SOS */}
-            <Card 
-              onClick={() => navigate('Emergency')}
-              className="p-8 bg-[#0A0A0A] border-2 border-white/5 flex items-center justify-between group cursor-pointer hover:border-red-500/50 transition-all duration-500 rounded-[32px] overflow-hidden"
-            >
-              <div className="flex items-center gap-6">
-                <div className="w-16 h-16 rounded-[22px] bg-red-500 flex items-center justify-center text-white shadow-[0_0_30px_rgba(239,68,68,0.3)] group-hover:scale-110 transition-transform duration-500">
-                  <span className="material-symbols-outlined text-4xl font-bold">emergency</span>
-                </div>
-                <div>
-                  <h4 className="font-black text-red-500 uppercase tracking-[0.2em] text-[10px] mb-1">Emergencia</h4>
-                  <h3 className="text-2xl font-black text-white leading-tight">Llamar a<br />Seguridad</h3>
-                </div>
-              </div>
-              <div className="w-12 h-20 rounded-full border border-white/10 flex items-center justify-center group-hover:bg-red-500 group-hover:border-red-500 transition-all duration-500">
-                <span className="material-symbols-outlined text-red-500 group-hover:text-white transition-colors text-3xl">arrow_forward</span>
-              </div>
-            </Card>
-          </div>
-
         </div>
-
-        {/* Mobile Nav */}
-        <nav className="md:hidden fixed bottom-0 w-full bg-[#121212] border-t-2 border-gray-800 pb-8 pt-4 px-6 flex justify-between items-center z-30">
-          <NavButton icon="home" label="Inicio" onClick={() => navigate('CommunityWall')} />
-          <NavButton icon="grid_view" label="Servicios" active />
-          <NavButton icon="payments" label="Pagos" onClick={() => navigate('PaymentsScreen')} />
-          <NavButton icon="person" label="Perfil" onClick={() => navigate('UserProfile')} />
-        </nav>
-
       </main>
 
-      <NotificationDrawer 
-        isOpen={isNotificationDrawerOpen} 
-        onClose={() => setIsNotificationDrawerOpen(false)} 
-      />
+      {/* Sticky Mobile Navbar - Bottom - iOS Style */}
+      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-[#0A0A0A]/90 backdrop-blur-xl border-t border-white/5 z-50 px-6 py-4 pb-safe flex justify-between items-center text-gray-500">
+         <div onClick={() => {}} className="flex flex-col items-center gap-1 cursor-pointer group text-ediflow-primary">
+            <span className="material-symbols-outlined text-[24px]">grid_view</span>
+            <span className="text-[10px] font-medium">Inicio</span>
+         </div>
+         <div onClick={() => navigate('PaymentsScreen')} className="flex flex-col items-center gap-1 cursor-pointer group hover:text-white transition-colors">
+            <span className="material-symbols-outlined text-[24px]">payments</span>
+            <span className="text-[10px] font-medium">Pagos</span>
+         </div>
+         <div onClick={() => navigate('Reservations')} className="flex flex-col items-center gap-1 cursor-pointer group hover:text-white transition-colors">
+            <span className="material-symbols-outlined text-[24px]">deck</span>
+            <span className="text-[10px] font-medium">Reservas</span>
+         </div>
+         <div onClick={() => setIsGlobalMenuOpen(true)} className="flex flex-col items-center gap-1 cursor-pointer group hover:text-white transition-colors">
+            <span className="material-symbols-outlined text-[24px]">apps</span>
+            <span className="text-[10px] font-medium">Módulos</span>
+         </div>
+         <div onClick={() => navigate('UserProfile')} className="flex flex-col items-center gap-1 cursor-pointer group hover:text-white transition-colors">
+            <div className="w-6 h-6 rounded-full bg-ediflow-primary/20 text-ediflow-primary flex items-center justify-center font-bold text-[10px] ring-1 ring-ediflow-primary/30">
+              {currentUser?.name ? currentUser.name.charAt(0) : 'R'}
+            </div>
+            <span className="text-[10px] font-medium">Perfil</span>
+         </div>
+      </nav>
+
     </div>
   );
 };
 
-const ServiceCard = ({ icon, label, value, desc, color, onClick }: any) => (
-  <Card 
-    onClick={onClick}
-    className="p-6 bg-[#121212] border-gray-800 flex flex-col justify-between h-40 relative overflow-hidden group hover:border-[#00AEEF] transition-colors cursor-pointer"
-  >
-    <div className="flex justify-between items-start relative z-10">
-      <div className={`w-12 h-12 rounded-2xl bg-gray-900 flex items-center justify-center ${color} border-2 border-gray-800`}>
-        <span className="material-symbols-outlined text-2xl">{icon}</span>
-      </div>
-      <span className="text-2xl font-black">{value}</span>
-    </div>
-    <div className="relative z-10">
-      <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">{label}</p>
-      <p className="text-xs font-bold text-white">{desc}</p>
-    </div>
-    <span className={`material-symbols-outlined absolute -right-4 -bottom-4 text-[100px] opacity-5 ${color} group-hover:scale-110 transition-transform duration-500`}>
-      {icon}
-    </span>
-  </Card>
-);
+// Sidebar Helper
+interface SidebarItemProps {
+  icon: string;
+  label: string;
+  active?: boolean;
+  expanded: boolean;
+  isDanger?: boolean;
+  onClick?: () => void;
+}
 
-const SidebarButton = ({ icon, label, active = false, onClick }: any) => (
-  <button 
-    onClick={onClick}
-    className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all group ${active ? 'bg-[#00AEEF] text-white shadow-lg shadow-[#00AEEF]/20' : 'text-gray-500 hover:bg-gray-800 hover:text-white'}`}
-  >
-    <span className={`material-symbols-outlined text-2xl ${active ? 'fill-current' : ''}`}>{icon}</span>
-    <span className="text-lg font-bold">{label}</span>
-  </button>
-);
-
-const NavButton = ({ icon, label, active = false, onClick }: { icon: string, label: string, active?: boolean, onClick?: () => void }) => (
-  <button 
-    onClick={onClick}
-    className={`flex flex-col items-center gap-1 p-2 active:scale-90 transition-all ${active ? 'text-[#00AEEF]' : 'text-gray-500 hover:text-white'}`}>
-    <span className={`material-symbols-outlined text-2xl ${active ? 'fill-current' : ''}`}>{icon}</span>
-    <span className="text-[10px] font-black uppercase tracking-tighter">{label}</span>
-  </button>
-);
+const SidebarItem: React.FC<SidebarItemProps> = ({ icon, label, active, expanded, isDanger, onClick }) => {
+  return (
+    <div 
+      onClick={onClick}
+      className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer transition-all duration-200 
+      ${active ? 'bg-ediflow-primary/10 text-ediflow-primary border border-ediflow-primary/20' 
+        : isDanger ? 'text-red-500 hover:bg-red-500/10 hover:border-red-500/30' 
+        : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'} 
+      ${expanded ? 'w-full px-4' : 'justify-center w-12 h-12 mx-auto'}`}
+      title={!expanded ? label : undefined}
+    >
+      <span className="material-symbols-outlined text-[20px] font-light">{icon}</span>
+      {expanded && <span className={`text-sm font-medium tracking-wide truncate ${isDanger ? 'text-red-500' : ''}`}>{label}</span>}
+    </div>
+  );
+};
 
 export default ResidentServices;

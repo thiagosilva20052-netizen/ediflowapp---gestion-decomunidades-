@@ -1,435 +1,289 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScreenName } from '../App';
 import { Logo } from '../components/Logo';
-import { Card } from '../src/components/ui/Card';
-import { Button } from '../src/components/ui/Button';
+import { useAppContext } from '../src/context/AppContext';
 
 interface Props {
   navigate: (screen: ScreenName) => void;
+  onLogout?: () => void;
 }
 
-interface Task {
-  id: string;
-  label: string;
-  urgent: boolean;
-  completed: boolean;
-}
+export const AdminDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
+  const { setIsGlobalMenuOpen } = useAppContext();
+  const [isApproved, setIsApproved] = useState(false);
+  const [isApproving, setIsApproving] = useState(false);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
 
-const AdminDashboard: React.FC<Props> = ({ navigate }) => {
-  const [tasks, setTasks] = useState<Task[]>([
-    { id: '1', label: 'Revisar conciliación bancaria Marzo', urgent: true, completed: false },
-    { id: '2', label: 'Aprobar presupuesto pintura fachada', urgent: false, completed: false },
-    { id: '3', label: 'Entrevista nuevo conserje nocturno', urgent: false, completed: false },
-    { id: '4', label: 'Responder reclamo Depto 804', urgent: true, completed: false },
-  ]);
-
-  const toggleTask = (id: string) => {
-    setTasks(prev => prev.map(task => 
-      task.id === id ? { ...task, completed: !task.completed } : task
-    ));
+  const handleApprove = () => {
+    setIsApproving(true);
+    setTimeout(() => {
+      setIsApproved(true);
+      setIsApproving(false);
+    }, 600); // Animation duration
   };
 
-  const sortedTasks = [...tasks].sort((a, b) => {
-    if (a.completed !== b.completed) return a.completed ? 1 : -1;
-    if (a.urgent !== b.urgent) return a.urgent ? -1 : 1;
-    return 0;
-  });
-
-  const urgentCount = tasks.filter(t => t.urgent && !t.completed).length;
-
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-black text-white font-sans">
+    <div className="flex h-screen bg-[#0A0A0A] text-white font-sans overflow-hidden selection:bg-white/10">
       
-      {/* Sidebar - Desktop Only */}
-      <aside className="hidden md:flex flex-col w-64 bg-[#0A0A0A] border-r border-white/5 p-6 sticky top-0 h-screen">
-        <Logo variant="horizontal" className="mb-10 scale-90 origin-left" />
-        
-        <nav className="flex-1 space-y-2">
-          <SidebarButton icon="dashboard" label="Resumen" active />
-          <SidebarButton icon="account_balance_wallet" label="Finanzas" onClick={() => navigate('ManageExpenses')} />
-          <SidebarButton icon="contacts" label="Directorio" onClick={() => navigate('ResidentDirectory')} />
-          <SidebarButton icon="badge" label="Personal" onClick={() => navigate('StaffManagement')} />
-          <SidebarButton icon="chat" label="Mensajería" onClick={() => navigate('MessagesScreen')} />
-          <SidebarButton icon="campaign" label="Comunidad" onClick={() => navigate('CommunityWall')} />
-        </nav>
-
-        <div className="mt-auto pt-6 border-t border-white/5">
-          <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
-            <div className="w-10 h-10 rounded-full bg-[#00AEEF]/20 flex items-center justify-center font-bold text-[#00AEEF]">
-              AD
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">Administrador</p>
-              <p className="text-[10px] text-gray-500 font-light tracking-wide">Premium Plan</p>
-            </div>
-          </div>
+      {/* Sleek Collapsible Sidebar (Glassmorphism & Narrow) - Hidden Mobile */}
+      <aside 
+        className={`hidden md:flex flex-col bg-[#111]/40 backdrop-blur-3xl border-r border-white/5 py-8 px-4 transition-all duration-300 ease-in-out relative z-40 ${isSidebarExpanded ? 'w-64' : 'w-20 items-center'}`}
+        onMouseEnter={() => setIsSidebarExpanded(true)}
+        onMouseLeave={() => setIsSidebarExpanded(false)}
+      >
+        <div className="mb-8 pl-2">
+          {isSidebarExpanded ? (
+            <Logo variant="horizontal" color="#FFFFFF" className="scale-[0.85] origin-left" />
+          ) : (
+            <Logo variant="icon" color="#FFFFFF" className="scale-75" />
+          )}
         </div>
+        
+        {/* User Identity at the top */}
+        <div className="w-full pb-6 mb-6 border-b border-white/5 flex flex-col gap-2">
+           <div className={`flex items-center gap-3 p-2 rounded-xl border border-transparent hover:border-white/5 hover:bg-white/5 cursor-pointer transition-colors ${isSidebarExpanded ? 'w-full' : 'justify-center'}`}>
+              <div className="shrink-0 w-8 h-8 rounded-full bg-ediflow-primary/20 text-ediflow-primary flex items-center justify-center font-bold text-xs ring-1 ring-ediflow-primary/30">
+                A
+              </div>
+              {isSidebarExpanded && (
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate text-gray-200">Admin Juan</p>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span> Online
+                  </p>
+                </div>
+              )}
+           </div>
+        </div>
+
+        <nav className="flex-1 space-y-4 w-full overflow-y-auto no-scrollbar pb-4 block">
+          <SidebarItem icon="grid_view" label="Dashboard" active expanded={isSidebarExpanded} />
+          <SidebarItem icon="document_scanner" label="Finanzas & OCR" onClick={() => navigate('ManageExpenses')} expanded={isSidebarExpanded} />
+          <SidebarItem icon="storefront" label="Conserjería" onClick={() => navigate('BitacoraScreen')} expanded={isSidebarExpanded} />
+          <SidebarItem icon="apartment" label="Unidades" onClick={() => navigate('ResidentDirectory')} expanded={isSidebarExpanded} />
+          <SidebarItem icon="apps" label="Módulos" onClick={() => setIsGlobalMenuOpen(true)} expanded={isSidebarExpanded} />
+          <SidebarItem icon="settings" label="Configuración" expanded={isSidebarExpanded} />
+        </nav>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col min-h-full pb-20 md:pb-8">
+      {/* Main Content Area */}
+      <main className="flex-1 flex flex-col h-full overflow-y-auto custom-scrollbar relative z-10 w-full">
         
-        {/* Header */}
-        <header className="px-6 md:px-10 pt-8 pb-6 flex flex-col md:flex-row md:items-center justify-between gap-6 sticky top-0 z-20 bg-black/80 backdrop-blur-xl border-b border-white/5">
-          <div className="md:hidden flex justify-between items-center w-full">
-            <Logo variant="horizontal" className="scale-[0.8] origin-left" />
-            <button onClick={() => navigate('UserProfile')} className="w-10 h-10 rounded-full bg-[#0A0A0A] flex items-center justify-center border border-white/5">
-              <span className="material-symbols-outlined text-[20px]">notifications</span>
-            </button>
-          </div>
-          
-          <div className="hidden md:block">
-            <h1 className="text-3xl font-light tracking-tight">Panel de Control</h1>
-            <p className="text-sm text-gray-500 font-light mt-1">Bienvenido de nuevo, Administrador.</p>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-2 bg-[#0A0A0A] border border-white/5 rounded-full px-4 py-2">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-              <span className="text-[11px] font-medium text-gray-400 uppercase tracking-widest">Sistema Online</span>
-            </div>
-            <Button 
-              onClick={() => navigate('ManageExpenses')}
-              className="bg-white hover:bg-gray-200 text-black px-6 py-2 h-10 text-sm font-medium border-none"
-              icon="add"
-            >
-              Nuevo Gasto
-            </Button>
+        {/* Mobile Header (Hidden on Desktop) */}
+        <header className="md:hidden flex items-center justify-between px-6 pt-12 pb-4">
+          <Logo variant="horizontal" className="scale-[0.8] origin-left" />
+          <div className="flex gap-3">
+             <button title="Notificaciones" className="w-10 h-10 rounded-full bg-[#111] border border-white/10 text-white flex items-center justify-center relative">
+               <span className="material-symbols-outlined text-[20px]">notifications</span>
+               <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-[#111]"></span>
+             </button>
+             <button onClick={onLogout} title="Cerrar Sesión" className="w-10 h-10 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center border border-red-500/20 active:scale-95 transition-transform">
+               <span className="material-symbols-outlined text-[20px]">logout</span>
+             </button>
           </div>
         </header>
 
-        {/* Dashboard Grid */}
-        <div className="px-6 md:px-10 py-6 space-y-6 max-w-7xl mx-auto w-full">
-          
-          {/* Key Metrics Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <MetricCard 
-              label="Balance Mensual" 
-              value="$4.250.000" 
-              trend="+12.5%" 
-              trendUp={true}
-              icon="account_balance"
-              color="text-green-500"
-              onClick={() => navigate('ManageExpenses')}
-            />
-            <MetricCard 
-              label="Gastos Pendientes" 
-              value="$850.200" 
-              trend="5 Deptos" 
-              trendUp={false}
-              icon="pending_actions"
-              color="text-amber-500"
-              onClick={() => navigate('ManageExpenses')}
-            />
-            <MetricCard 
-              label="Ocupación" 
-              value="94%" 
-              trend="152/160" 
-              trendUp={true}
-              icon="home"
-              color="text-[#00AEEF]"
-              onClick={() => navigate('ResidentDirectory')}
-            />
-            <MetricCard 
-              label="Personal Activo" 
-              value="8" 
-              trend="En turno" 
-              trendUp={true}
-              icon="badge"
-              color="text-purple-500"
-              onClick={() => navigate('StaffManagement')}
-            />
+        <header className="px-6 md:px-16 pt-4 md:pt-16 pb-8 sticky top-0 z-30 bg-gradient-to-b from-[#0A0A0A] via-[#0A0A0A] to-transparent pointer-events-none md:bg-none flex justify-between items-start">
+          <div className="pointer-events-auto">
+             <h1 className="text-3xl md:text-4xl font-light tracking-tight text-white md:mb-2">
+               Hola Juan. <br className="md:hidden" />
+               <span className="text-gray-500 text-lg md:text-3xl mt-1 md:mt-0 block md:inline">El pulso de tu comunidad.</span>
+             </h1>
           </div>
+          
+          {/* Desktop Right Actions */}
+          <div className="hidden md:flex items-center gap-4 pointer-events-auto">
+             <button 
+               title="Notificaciones"
+               className="relative w-12 h-12 rounded-full bg-[#111] border border-white/10 hover:border-white/20 flex items-center justify-center text-gray-400 hover:text-white transition-all active:scale-95"
+             >
+               <span className="material-symbols-outlined text-[24px]">notifications</span>
+               <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-red-500 border-2 border-[#111] rounded-full"></span>
+             </button>
+             
+             <button 
+               onClick={onLogout}
+               title="Cerrar Sesión"
+               className="px-6 h-12 rounded-full bg-red-500/10 border border-red-500/20 hover:bg-red-500 hover:text-white text-red-500 transition-all font-semibold uppercase tracking-wider text-[11px] flex items-center gap-2 active:scale-95"
+             >
+               <span className="material-symbols-outlined text-[18px]">logout</span>
+               Salir
+             </button>
+          </div>
+        </header>
 
-          {/* Main Bento Grid */}
+        <div className="px-6 md:px-16 pb-32 md:pb-20 max-w-6xl w-full mx-auto">
+          {/* Asymmetrical Bento Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            {/* Financial Health - Large Card */}
-            <Card className="lg:col-span-2 p-6 flex flex-col h-full bg-[#0A0A0A] border border-white/5 rounded-[24px]">
-              <div className="flex justify-between items-center mb-6">
-                <div>
-                  <h2 className="text-xl font-light">Salud Financiera</h2>
-                  <p className="text-xs text-gray-500">Ingresos vs Gastos (Últimos 6 meses)</p>
-                </div>
-                <div className="flex gap-2">
-                  <div className="flex items-center gap-2 px-2.5 py-1 bg-green-500/10 rounded-full border border-green-500/20">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                    <span className="text-[10px] font-medium text-green-500 uppercase tracking-wide">Ingresos</span>
-                  </div>
-                  <div className="flex items-center gap-2 px-2.5 py-1 bg-red-500/10 rounded-full border border-red-500/20">
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-                    <span className="text-[10px] font-medium text-red-500 uppercase tracking-wide">Gastos</span>
-                  </div>
-                </div>
-              </div>
+            {/* LARGE CARD: Pending Payments & AI OCR Expenses (60% visually / col-span-2) */}
+            <div className="lg:col-span-2 bg-[#111] rounded-[2rem] border border-white/5 p-6 md:p-10 flex flex-col relative overflow-hidden shadow-2xl group">
+               {/* Ambient Glow */}
+               <div className="absolute -top-32 -right-32 w-96 h-96 bg-ediflow-primary/5 blur-[100px] rounded-full pointer-events-none transition-opacity group-hover:opacity-100 opacity-60"></div>
+
+               <div className="flex items-center gap-3 mb-8">
+                 <div className="w-10 h-10 rounded-xl bg-ediflow-primary/10 border border-ediflow-primary/20 flex items-center justify-center shrink-0">
+                   <span className="material-symbols-outlined text-ediflow-primary text-[20px]">psychology</span>
+                 </div>
+                 <div>
+                   <h2 className="text-xs md:text-sm font-semibold uppercase tracking-[0.2em] text-gray-400">Acción Requerida</h2>
+                 </div>
+               </div>
+
+               <div className="mb-10">
+                 <h3 className="text-4xl md:text-5xl font-light text-white tracking-tighter mb-4">
+                   $1,540,000 <span className="text-lg md:text-2xl text-gray-500 font-normal">CLP</span>
+                 </h3>
+                 <p className="text-xs md:text-sm text-gray-400 font-light flex items-center gap-2">
+                   <span className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse shrink-0"></span> pendientes de revisión mediante IA.
+                 </p>
+               </div>
+
+               {/* Micro-interaction Container */}
+               <div className="mt-auto relative md:h-24 min-h-[5rem] overflow-hidden rounded-2xl bg-[#0A0A0A] border border-white/5">
+                 
+                 {/* Success State (Hidden initially, slides in) */}
+                 <div className={`absolute inset-0 flex items-center justify-center p-4 md:p-0 bg-green-500/10 border border-green-500/20 transition-all duration-[600ms] cubic-bezier(0.4, 0, 0.2, 1) ${isApproved ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}`}>
+                    <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 text-center md:text-left">
+                       <div className="w-8 h-8 rounded-full bg-green-500 text-black flex items-center justify-center shrink-0">
+                         <span className="material-symbols-outlined text-[18px] font-bold">check</span>
+                       </div>
+                       <span className="text-green-400 font-medium text-xs md:text-sm">Gasto procesado y cuadrado en la contabilidad.</span>
+                    </div>
+                 </div>
+
+                 {/* Action State (Visible initially, slides out) */}
+                 <div className={`absolute inset-0 flex flex-col md:flex-row items-start md:items-center justify-between p-4 md:px-6 gap-4 md:gap-2 transition-all duration-[600ms] cubic-bezier(0.4, 0, 0.2, 1) ${isApproving || isApproved ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'}`}>
+                    <div className="flex items-center gap-4">
+                       <span className="material-symbols-outlined text-gray-400 shrink-0">receipt_long</span>
+                       <div>
+                         <p className="text-sm font-medium text-white">Factura Enel S.A.</p>
+                         <p className="text-xs text-gray-500 font-mono">Lectura: $420,000 (Sin discrepancias)</p>
+                       </div>
+                    </div>
+                    <button 
+                      onClick={handleApprove}
+                      className="bg-[#008080] text-white px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-[#006666] transition-all shadow-[0_0_15px_rgba(0,128,128,0.3)] active:scale-95 w-full md:w-auto"
+                    >
+                      Aprobar
+                    </button>
+                 </div>
+
+               </div>
+            </div>
+
+            {/* SMALL CARDS CONTAINER (col-span-1) */}
+            <div className="flex flex-col gap-6">
               
-              <div className="flex-1 min-h-[250px]">
-                <FinancialChart />
-              </div>
-            </Card>
-
-            {/* Quick Actions & Modules */}
-            <div className="space-y-4">
-              <Card className="p-6 bg-[#00AEEF] border-none text-white overflow-hidden relative group cursor-pointer rounded-[24px]" onClick={() => navigate('ResidentDirectory')}>
-                <div className="relative z-10">
-                  <h3 className="text-lg font-semibold mb-2">Directorio Inteligente</h3>
-                  <p className="text-white/80 text-sm font-light mb-6">Gestiona residentes y vehículos.</p>
-                  <span className="inline-flex items-center gap-2 bg-white text-[#00AEEF] px-4 py-2 rounded-full font-medium text-xs group-hover:bg-gray-100 transition-colors">
-                    Abrir Directorio
-                    <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                  </span>
+              {/* SMALL CARD 1: Logbook updates */}
+              <div className="bg-[#111] rounded-[2rem] border border-white/5 p-6 md:p-8 flex-1 flex flex-col hover:border-white/10 transition-colors">
+                <div className="flex items-center justify-between mb-6">
+                   <h2 className="text-xs font-semibold uppercase tracking-[0.15em] text-gray-400">Libro de Novedades</h2>
+                   <span className="material-symbols-outlined text-gray-600 text-[18px]">menu_book</span>
                 </div>
-                <span className="material-symbols-outlined absolute -right-6 -bottom-6 text-[120px] text-white/20 rotate-12 group-hover:rotate-0 transition-transform duration-500">
-                  contacts
-                </span>
-              </Card>
-
-              <div className="grid grid-cols-2 gap-4">
-                <QuickModuleButton 
-                  icon="badge" 
-                  label="Personal" 
-                  onClick={() => navigate('StaffManagement')}
-                  color="bg-purple-500/10 text-purple-500 border-purple-500/20"
-                />
-                <QuickModuleButton 
-                  icon="campaign" 
-                  label="Anuncios" 
-                  onClick={() => navigate('CommunityWall')}
-                  color="bg-amber-500/10 text-amber-500 border-amber-500/20"
-                />
-                <QuickModuleButton 
-                  icon="chat" 
-                  label="Mensajes" 
-                  onClick={() => navigate('MessagesScreen')}
-                  color="bg-blue-500/10 text-blue-500 border-blue-500/20"
-                />
-                <QuickModuleButton 
-                  icon="person" 
-                  label="Perfil" 
-                  onClick={() => navigate('UserProfile')}
-                  color="bg-gray-500/10 text-gray-500 border-gray-500/20"
-                />
+                <div className="space-y-4">
+                   <div className="flex items-start gap-3">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 mt-1.5 shrink-0 shadow-[0_0_8px_rgba(239,68,68,0.8)]"></span>
+                      <div>
+                         <p className="text-sm text-gray-200 font-medium leading-snug">Filtración de agua reportada</p>
+                         <p className="text-[10px] text-gray-500">Unidad 1204 • Hace 15 min</p>
+                      </div>
+                   </div>
+                   <div className="flex items-start gap-3">
+                      <span className="w-1.5 h-1.5 rounded-full bg-gray-500 mt-1.5 shrink-0"></span>
+                      <div>
+                         <p className="text-sm text-gray-400 leading-snug hover:text-gray-200 transition-colors cursor-pointer">Cambio de turno conserjería</p>
+                         <p className="text-[10px] text-gray-600">Turno Día • Hace 2 horas</p>
+                      </div>
+                   </div>
+                   <div className="flex items-start gap-3">
+                      <span className="w-1.5 h-1.5 rounded-full bg-gray-500 mt-1.5 shrink-0"></span>
+                      <div>
+                         <p className="text-sm text-gray-400 leading-snug hover:text-gray-200 transition-colors cursor-pointer">Recepción de encomiendas OK</p>
+                         <p className="text-[10px] text-gray-600">Recepción • Hace 3 horas</p>
+                      </div>
+                   </div>
+                </div>
+                <button 
+                  onClick={() => navigate('BitacoraScreen')}
+                  className="mt-auto pt-4 text-xs font-medium text-[#008080] hover:text-ediflow-primary transition-colors flex items-center justify-end gap-1 w-full"
+                >
+                  Ver bitácora <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                </button>
               </div>
+
+              {/* SMALL CARD 2: Packages */}
+              <div className="bg-[#111] rounded-[2rem] border border-white/5 p-6 md:p-8 hover:border-white/10 transition-colors">
+                <div className="flex items-center justify-between mb-4">
+                   <h2 className="text-xs font-semibold uppercase tracking-[0.15em] text-gray-400">Paquetería</h2>
+                   <span className="material-symbols-outlined text-gray-600 text-[18px]">inventory_2</span>
+                </div>
+                <div className="flex items-end gap-2 mb-2">
+                   <span className="text-3xl font-light text-white">12</span>
+                   <span className="text-sm text-gray-500 mb-1">sin entregar</span>
+                </div>
+                <div className="w-full h-1 bg-[#0A0A0A] rounded-full overflow-hidden mt-4">
+                  <div className="w-1/3 h-full bg-yellow-500/50 rounded-full"></div>
+                </div>
+                <p className="text-[10px] text-gray-500 mt-2 text-right">4 requieren atención (+48 hrs)</p>
+              </div>
+
             </div>
 
           </div>
-
-          {/* Bottom Row: Recent Activity & Alerts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <Card className="p-6 bg-[#0A0A0A] border border-white/5 rounded-[24px]">
-              <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
-                <span className="material-symbols-outlined text-gray-400 text-xl">history</span>
-                Actividad Reciente
-              </h3>
-              <div className="space-y-4">
-                <ActivityItem 
-                  icon="payments" 
-                  title="Gasto Común Registrado" 
-                  desc="Depto 402 - $125.000" 
-                  time="Hace 10 min" 
-                  color="bg-green-500/10 text-green-500"
-                  onClick={() => navigate('ManageExpenses')}
-                />
-                <ActivityItem 
-                  icon="person_add" 
-                  title="Nuevo Residente" 
-                  desc="Depto 1105 - Carlos Rodríguez" 
-                  time="Hace 2 horas" 
-                  color="bg-[#00AEEF]/10 text-[#00AEEF]"
-                  onClick={() => navigate('ResidentDirectory')}
-                />
-                <ActivityItem 
-                  icon="warning" 
-                  title="Alerta de Mantenimiento" 
-                  desc="Ascensor Torre B - Reportado por Conserje" 
-                  time="Hace 4 horas" 
-                  color="bg-red-500/10 text-red-500"
-                  onClick={() => navigate('Maintenance')}
-                />
-              </div>
-            </Card>
-
-            <Card className="p-6 bg-[#0A0A0A] border border-white/5 rounded-[24px]">
-              <h3 className="text-lg font-medium mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-amber-500 text-xl">assignment_late</span>
-                  Tareas Pendientes
-                </div>
-                {urgentCount > 0 && (
-                  <span className="text-[10px] font-semibold bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2.5 py-1 rounded-full">
-                    {urgentCount} URGENTE
-                  </span>
-                )}
-              </h3>
-              <div className="space-y-3">
-                {sortedTasks.map(task => (
-                  <TaskItem 
-                    key={task.id} 
-                    label={task.label} 
-                    urgent={task.urgent} 
-                    completed={task.completed}
-                    onToggle={() => toggleTask(task.id)}
-                  />
-                ))}
-              </div>
-            </Card>
-
-            {/* Emergency Card for Admin */}
-            <Card 
-              onClick={() => navigate('Emergency')}
-              className="p-6 bg-[#0A0A0A] border border-red-500/10 flex items-center justify-between group cursor-pointer hover:border-red-500/30 transition-all duration-300 rounded-[24px] overflow-hidden lg:col-span-2"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center text-red-500 group-hover:bg-red-500 group-hover:text-white transition-all duration-300">
-                  <span className="material-symbols-outlined text-2xl font-normal">emergency</span>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-red-500 uppercase tracking-widest text-[9px] mb-0.5">Emergencia</h4>
-                  <h3 className="text-lg font-light text-white leading-tight">Acceso Directo a Centro</h3>
-                </div>
-              </div>
-              <div className="w-8 h-8 rounded-full border border-white/5 flex items-center justify-center group-hover:bg-red-500 group-hover:border-red-500 transition-all duration-300">
-                <span className="material-symbols-outlined text-gray-500 group-hover:text-white transition-colors text-lg">arrow_forward</span>
-              </div>
-            </Card>
-          </div>
-
         </div>
-
-        {/* Mobile Nav */}
-        <nav className="md:hidden fixed bottom-0 w-full bg-black border-t border-white/5 pb-6 pt-3 px-6 flex justify-between items-center z-30">
-          <NavButton icon="dashboard" label="Resumen" active />
-          <NavButton icon="account_balance_wallet" label="Finanzas" onClick={() => navigate('ManageExpenses')} />
-          <NavButton icon="contacts" label="Directorio" onClick={() => navigate('ResidentDirectory')} />
-          <NavButton icon="chat" label="Mensajes" onClick={() => navigate('MessagesScreen')} />
-          <NavButton icon="person" label="Perfil" onClick={() => navigate('UserProfile')} />
-        </nav>
-
       </main>
-    </div>
-  );
-};
 
-const MetricCard = ({ label, value, trend, trendUp, icon, color, onClick }: any) => (
-  <Card 
-    onClick={onClick}
-    className={`p-5 bg-[#0A0A0A] border border-white/5 flex flex-col justify-between h-32 relative overflow-hidden group hover:border-[#00AEEF]/50 transition-colors rounded-[20px] ${onClick ? 'cursor-pointer' : ''}`}
-  >
-    <div className="flex justify-between items-start relative z-10">
-      <div className={`w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center ${color} border border-white/5`}>
-        <span className="material-symbols-outlined text-[18px]">{icon}</span>
-      </div>
-      <div className={`flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full border ${trendUp ? 'text-green-500 border-green-500/20 bg-green-500/10' : 'text-amber-500 border-amber-500/20 bg-amber-500/10'}`}>
-        <span className="material-symbols-outlined text-[12px]">{trendUp ? 'trending_up' : 'info'}</span>
-        {trend}
-      </div>
-    </div>
-    <div className="relative z-10">
-      <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-0.5">{label}</p>
-      <h3 className="text-2xl font-light">{value}</h3>
-    </div>
-  </Card>
-);
-
-const FinancialChart = () => {
-  const data = [
-    { month: 'Oct', in: 85, out: 65 },
-    { month: 'Nov', in: 92, out: 70 },
-    { month: 'Dic', in: 78, out: 85 },
-    { month: 'Ene', in: 95, out: 60 },
-    { month: 'Feb', in: 88, out: 75 },
-    { month: 'Mar', in: 100, out: 68 },
-  ];
-
-  return (
-    <div className="flex items-end justify-between h-full gap-4 pt-10">
-      {data.map((d, i) => (
-        <div key={i} className="flex-1 flex flex-col items-center gap-4 h-full group">
-          <div className="flex-1 w-full flex items-end justify-center gap-1.5 relative">
-            <div 
-              className="w-3 bg-green-500 rounded-t-full transition-all duration-1000 ease-out group-hover:brightness-125"
-              style={{ height: `${d.in}%` }}
-            ></div>
-            <div 
-              className="w-3 bg-red-500 rounded-t-full transition-all duration-1000 ease-out group-hover:brightness-125"
-              style={{ height: `${d.out}%` }}
-            ></div>
-            
-            {/* Tooltip */}
-            <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-white text-black text-[10px] font-black px-3 py-1.5 rounded-lg shadow-2xl opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100 z-10 pointer-events-none whitespace-nowrap">
-              <span className="text-green-600">+{d.in}%</span> / <span className="text-red-600">-{d.out}%</span>
-              <div className="absolute bottom-[-4px] left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-white"></div>
+      {/* Sticky Mobile Navbar - Bottom - iOS Style */}
+      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-[#0A0A0A]/90 backdrop-blur-xl border-t border-white/5 z-50 px-6 py-4 pb-safe flex justify-between items-center">
+         <div onClick={() => {}} className="flex flex-col items-center gap-1 cursor-pointer group text-ediflow-primary">
+            <span className="material-symbols-outlined text-[24px]">grid_view</span>
+            <span className="text-[10px] font-medium">Inicio</span>
+         </div>
+         <div onClick={() => navigate('ManageExpenses')} className="flex flex-col items-center gap-1 cursor-pointer group text-gray-500 hover:text-white transition-colors">
+            <span className="material-symbols-outlined text-[24px]">document_scanner</span>
+            <span className="text-[10px] font-medium">Gastos</span>
+         </div>
+         <div onClick={() => navigate('BitacoraScreen')} className="flex flex-col items-center gap-1 cursor-pointer group text-gray-500 hover:text-white transition-colors">
+            <span className="material-symbols-outlined text-[24px]">storefront</span>
+            <span className="text-[10px] font-medium">Conserje</span>
+         </div>
+         <div onClick={() => setIsGlobalMenuOpen(true)} className="flex flex-col items-center gap-1 cursor-pointer group text-gray-500 hover:text-white transition-colors">
+            <span className="material-symbols-outlined text-[24px]">apps</span>
+            <span className="text-[10px] font-medium">Módulos</span>
+         </div>
+         <div onClick={() => {}} className="flex flex-col items-center gap-1 cursor-pointer group text-gray-500 hover:text-white transition-colors">
+            <div className="w-6 h-6 rounded-full bg-ediflow-primary/20 text-ediflow-primary flex items-center justify-center font-bold text-[10px] ring-1 ring-ediflow-primary/30">
+              A
             </div>
-          </div>
-          <span className="text-xs font-black text-gray-500 group-hover:text-white transition-colors uppercase tracking-widest">{d.month}</span>
-        </div>
-      ))}
+            <span className="text-[10px] font-medium">Perfil</span>
+         </div>
+      </nav>
+
     </div>
   );
 };
 
-const QuickModuleButton = ({ icon, label, onClick, color }: any) => (
-  <button 
-    onClick={onClick}
-    className={`flex flex-col items-center justify-center gap-2 p-4 rounded-[20px] bg-[#0A0A0A] border border-white/5 transition-all active:scale-95 hover:bg-white/5 ${color.replace('border- ', '')}`}
-  >
-    <span className={`material-symbols-outlined text-2xl ${color.split(' ')[1]}`}>{icon}</span>
-    <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">{label}</span>
-  </button>
-);
+// Subcomponent for Sidebar Items
+interface SidebarItemProps {
+  icon: string;
+  label: string;
+  active?: boolean;
+  expanded: boolean;
+  onClick?: () => void;
+}
 
-const ActivityItem = ({ icon, title, desc, time, color, onClick }: any) => (
-  <div className="flex items-center gap-3 group cursor-pointer p-2 hover:bg-white/5 rounded-xl transition-colors -mx-2" onClick={onClick}>
-    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border border-white/5 group-hover:border-white/20 transition-colors ${color}`}>
-      <span className="material-symbols-outlined text-[18px]">{icon}</span>
-    </div>
-    <div className="flex-1 min-w-0">
-      <h4 className="text-xs font-medium truncate text-gray-200">{title}</h4>
-      <p className="text-[10px] text-gray-500 truncate">{desc}</p>
-    </div>
-    <span className="text-[9px] font-medium text-gray-600 uppercase whitespace-nowrap">{time}</span>
-  </div>
-);
-
-const TaskItem = ({ label, urgent, completed, onToggle }: any) => (
-  <div 
-    onClick={onToggle}
-    className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer group 
-      ${completed ? 'bg-black border-white/5 opacity-50' : 
-        urgent ? 'bg-red-500/5 border-red-500/20 hover:border-red-500/40' : 'bg-[#0A0A0A] border-white/5 hover:border-white/20'}`}
-  >
-    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all 
-      ${completed ? 'bg-green-500/20 border-green-500' : 
-        urgent ? 'border-red-500/50 group-hover:bg-red-500/20' : 'border-gray-700 group-hover:border-white/40'}`}
+const SidebarItem: React.FC<SidebarItemProps> = ({ icon, label, active, expanded, onClick }) => {
+  return (
+    <div 
+      onClick={onClick}
+      className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer transition-all duration-200 ${active ? 'bg-ediflow-primary/10 text-ediflow-primary border border-ediflow-primary/20' : 'text-gray-500 hover:text-white hover:bg-white/5 border border-transparent'} ${expanded ? 'w-full px-4' : 'justify-center w-12 h-12 mx-auto'}`}
+      title={!expanded ? label : undefined}
     >
-      <span className={`material-symbols-outlined text-[12px] transition-opacity ${completed ? 'opacity-100 text-green-500' : 'opacity-0'}`}>
-        check
-      </span>
+      <span className="material-symbols-outlined text-[20px] font-light">{icon}</span>
+      {expanded && <span className="text-sm font-medium tracking-wide truncate">{label}</span>}
     </div>
-    <span className={`text-xs font-light flex-1 transition-all ${completed ? 'text-gray-600 line-through' : urgent ? 'text-red-200' : 'text-gray-300'}`}>
-      {label}
-    </span>
-    {urgent && !completed && <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping"></span>}
-  </div>
-);
-
-const SidebarButton = ({ icon, label, active = false, onClick }: any) => (
-  <button 
-    onClick={onClick}
-    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all group ${active ? 'bg-white text-black' : 'text-gray-500 hover:bg-white/5 hover:text-white'}`}
-  >
-    <span className={`material-symbols-outlined text-[20px]`}>{icon}</span>
-    <span className="text-sm font-medium">{label}</span>
-  </button>
-);
-
-const NavButton = ({ icon, label, active = false, onClick }: { icon: string, label: string, active?: boolean, onClick?: () => void }) => (
-  <button 
-    onClick={onClick}
-    className={`flex flex-col items-center gap-1 p-2 active:scale-90 transition-all ${active ? 'text-[#00AEEF]' : 'text-gray-500 hover:text-white'}`}>
-    <span className={`material-symbols-outlined text-2xl ${active ? 'fill-current' : ''}`}>{icon}</span>
-    <span className="text-[10px] font-black uppercase tracking-tighter">{label}</span>
-  </button>
-);
+  );
+};
 
 export default AdminDashboard;
