@@ -66,7 +66,7 @@ export const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col h-full overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-10 pb-20 pt-8 md:pt-12 max-w-6xl mx-auto w-full">
+      <main className="flex-1 flex flex-col h-full overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-10 pb-20 pt-8 md:pt-12 max-w-7xl mx-auto w-full">
         
         {/* Mobile Header (Hidden on Desktop) */}
         <header className="md:hidden flex justify-between items-center mb-6 px-2">
@@ -177,28 +177,28 @@ export const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
             {/* Quick Record: Packages */}
             <div 
               onClick={() => navigate('PackageEntry')}
-              className="bg-[#111] rounded-[2rem] border border-white/5 p-6 md:p-8 flex items-center justify-between cursor-pointer hover:bg-ediflow-primary/5 hover:border-ediflow-primary/30 transition-all group"
+              className="bg-[#111] rounded-[2rem] border border-white/5 p-6 md:p-8 flex items-center justify-between cursor-pointer hover:bg-[#151515] hover:border-blue-400/30 transition-all group scale-100 active:scale-[0.98] shadow-lg hover:shadow-[0_0_20px_rgba(96,165,250,0.1)]"
             >
-               <div>
-                  <h3 className="text-lg font-medium text-white mb-1 group-hover:text-ediflow-primary transition-colors">Escanear Paquete</h3>
-                  <p className="text-xs text-gray-500">Extraer datos con cámara (OCR)</p>
+               <div className="group-hover:translate-x-1 transition-transform">
+                  <h3 className="text-lg font-bold text-white tracking-tight mb-1 group-hover:text-blue-400 transition-colors">Escanear Paquete</h3>
+                  <p className="text-xs text-gray-500 font-medium">Extraer datos con OCR</p>
                </div>
-               <div className="w-12 h-12 rounded-2xl bg-[#0A0A0A] border border-white/10 flex items-center justify-center group-hover:bg-ediflow-primary group-hover:text-black transition-all">
-                  <span className="material-symbols-outlined text-2xl">qr_code_scanner</span>
+               <div className="w-14 h-14 rounded-2xl bg-[#0A0A0A] border border-white/10 flex items-center justify-center group-hover:bg-blue-400 group-hover:text-black group-hover:border-blue-400 transition-all">
+                  <span className="material-symbols-outlined text-[28px]">qr_code_scanner</span>
                </div>
             </div>
 
             {/* Quick Record: Visitors */}
             <div 
               onClick={() => navigate('ManualVisitorRegistration')}
-              className="bg-[#111] rounded-[2rem] border border-white/5 p-6 md:p-8 flex items-center justify-between cursor-pointer hover:bg-white/5 hover:border-white/20 transition-all group"
+              className="bg-[#111] rounded-[2rem] border border-white/5 p-6 md:p-8 flex items-center justify-between cursor-pointer hover:bg-[#151515] hover:border-purple-400/30 transition-all group scale-100 active:scale-[0.98] shadow-lg hover:shadow-[0_0_20px_rgba(192,132,252,0.1)]"
             >
-               <div>
-                  <h3 className="text-lg font-medium text-white mb-1">Registrar Visita</h3>
-                  <p className="text-xs text-gray-500">Ingreso manual RUT/Pasaporte</p>
+               <div className="group-hover:translate-x-1 transition-transform">
+                  <h3 className="text-lg font-bold text-white tracking-tight mb-1 group-hover:text-purple-400 transition-colors">Registrar Visita</h3>
+                  <p className="text-xs text-gray-500 font-medium">Ingreso manual o por lista</p>
                </div>
-               <div className="w-12 h-12 rounded-2xl bg-[#0A0A0A] border border-white/10 flex items-center justify-center text-gray-400 group-hover:bg-white group-hover:text-black transition-all">
-                  <span className="material-symbols-outlined text-2xl">person_add</span>
+               <div className="w-14 h-14 rounded-2xl bg-[#0A0A0A] border border-white/10 flex items-center justify-center text-gray-400 group-hover:bg-purple-400 group-hover:text-black group-hover:border-purple-400 transition-all">
+                  <span className="material-symbols-outlined text-[28px]">person_add</span>
                </div>
             </div>
 
@@ -221,8 +221,8 @@ export const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
                      </div>
                   </div>
                </div>
-               <button onClick={() => navigate('BitacoraScreen')} className="mt-4 text-[#008080] text-xs font-medium hover:text-white transition-colors text-right flex items-center justify-end gap-1 w-full">
-                  Ver Bitácora Diaria <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+               <button onClick={() => navigate('BitacoraScreen')} className="mt-auto pt-4 text-gray-400 text-xs font-bold uppercase tracking-widest hover:text-white transition-colors text-right flex items-center justify-end gap-2 w-full group">
+                  <span className="group-hover:translate-x-1 transition-transform">Ver Bitácora Diaria</span> <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
                </button>
             </div>
 

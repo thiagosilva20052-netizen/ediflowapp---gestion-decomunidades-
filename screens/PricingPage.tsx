@@ -66,7 +66,7 @@ const PricingPage: React.FC<Props> = ({ onLoginClick, onNavigate }) => {
             </button>
             <button 
               onClick={() => onNavigate && onNavigate('BookDemo')}
-              className="bg-ediflow-primary text-black px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-white transition-all shadow-[0_0_15px_rgba(0,174,239,0.15)] hover:shadow-[0_0_25px_rgba(0,174,239,0.3)]"
+              className="bg-white text-black px-6 py-2.5 rounded-xl text-sm font-bold tracking-tight hover:bg-gray-200 active:scale-95 transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] flex items-center gap-2"
             >
               Agendar Demo
             </button>
@@ -143,7 +143,7 @@ const PricingPage: React.FC<Props> = ({ onLoginClick, onNavigate }) => {
                  <span className="text-sm text-gray-300 font-light">Pagos integrados con Khipu y MercadoPago</span>
                </li>
              </ul>
-             <button className="w-full bg-transparent border border-white/20 text-white rounded-xl py-3.5 text-sm font-medium hover:bg-white/5 transition-colors mt-auto">
+             <button className="w-full bg-[#111] hover:bg-white/10 border border-white/20 text-white rounded-xl py-4 text-sm font-medium transition-all mt-auto active:scale-[0.98]">
                Comenzar Gratis
              </button>
           </div>
@@ -196,9 +196,10 @@ const PricingPage: React.FC<Props> = ({ onLoginClick, onNavigate }) => {
              </ul>
              <button 
                onClick={() => onNavigate && onNavigate('BookDemo')}
-               className="w-full bg-ediflow-primary text-black rounded-xl py-3.5 text-sm font-semibold hover:bg-white transition-colors mt-auto shadow-[0_0_15px_rgba(0,174,239,0.3)]"
+               className="group w-full bg-white text-black rounded-xl py-4 text-sm font-bold tracking-tight hover:bg-gray-100 active:scale-[0.98] transition-all mt-auto shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:shadow-[0_0_30px_rgba(255,255,255,0.25)] flex items-center justify-center gap-2"
              >
                Agendar Demo Pro
+               <span className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
              </button>
           </div>
 
@@ -244,7 +245,7 @@ const PricingPage: React.FC<Props> = ({ onLoginClick, onNavigate }) => {
              </ul>
              <button 
                onClick={() => onNavigate && onNavigate('BookDemo')}
-               className="w-full bg-transparent border border-white/20 text-white rounded-xl py-3.5 text-sm font-medium hover:bg-white/5 transition-colors mt-auto"
+               className="w-full bg-[#111] hover:bg-white/10 border border-white/20 text-white rounded-xl py-4 text-sm font-medium transition-all mt-auto active:scale-[0.98]"
              >
                Hablar con Ventas
              </button>

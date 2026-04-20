@@ -48,52 +48,50 @@ const PaymentsScreen: React.FC<Props> = ({ navigate, role }) => {
         </div>
       </header>
 
-      <main className="flex-1 p-4 pb-24 space-y-6">
+      <main className="flex-1 p-6 md:px-12 pb-24 md:pb-12 max-w-4xl mx-auto w-full space-y-8">
         
         {/* Pareto 80/20: The Main Action (Pay Current Debt) */}
-        <section>
-            <Card gradient className="text-center">
+        <section className="animate-fade-in-up">
+            <Card gradient className="text-center group border border-white/5 hover:border-[#00AEEF]/30 transition-all shadow-2xl relative overflow-hidden">
                 {/* Decorative background */}
-                <div className="absolute -right-10 -top-10 w-40 h-40 bg-ediflow-primary/5 rounded-full blur-3xl pointer-events-none"></div>
+                <div className="absolute top-0 right-0 w-64 h-64 bg-[#00AEEF]/5 rounded-full blur-[80px] group-hover:bg-[#00AEEF]/15 transition-colors pointer-events-none"></div>
                 
-                <div className="relative z-10 flex flex-col items-center text-center">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Total a Pagar • Abril 2026</p>
+                <div className="relative z-10 flex flex-col items-center text-center py-6">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">Total a Pagar • Abril 2026</p>
                     
                     {paymentStatus === 'success' ? (
                         <div className="flex flex-col items-center animate-fade-in-up">
-                            <div className="w-16 h-16 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mb-3">
+                            <div className="w-20 h-20 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mb-4 border border-green-500/20">
                                 <span className="material-symbols-outlined text-4xl">check_circle</span>
                             </div>
-                            <h2 className="text-3xl font-bold text-white mb-1">$0</h2>
-                            <p className="text-sm text-green-400 font-medium">¡Estás al día!</p>
+                            <h2 className="text-4xl font-light text-white mb-2">$0</h2>
+                            <p className="text-sm text-green-400 font-bold uppercase tracking-widest">¡Estás al día!</p>
                         </div>
                     ) : (
                         <>
-                            <h2 className="text-4xl font-bold text-white mb-1 tracking-tight">$125.400</h2>
-                            <p className="text-xs text-red-400 font-medium mb-6">Vence el 05 de Mayo</p>
+                            <h2 className="text-5xl md:text-6xl font-light text-white mb-2 tracking-tight">$125.400</h2>
+                            <p className="text-xs text-red-400 font-bold uppercase tracking-widest mb-10">Vence el 05 de Mayo</p>
                             
                             {/* 80% - Digital Transfer */}
-                            <Button 
+                            <button 
                                 onClick={() => setShowKhipuModal(true)}
-                                fullWidth
-                                icon="account_balance"
+                                className="w-full h-16 bg-[#00AEEF] hover:bg-white text-black font-bold uppercase tracking-widest text-sm rounded-2xl transition-all shadow-[0_0_30px_rgba(0,174,239,0.2)] hover:shadow-[0_0_40px_rgba(255,255,255,0.3)] flex items-center justify-center gap-3 active:scale-[0.98] mb-4"
                             >
+                                <span className="material-symbols-outlined">account_balance</span>
                                 Pagar con Transferencia
-                            </Button>
+                            </button>
                             
                             {/* 20% - Manual/Cash Payment Alternative */}
-                            <Button 
+                            <button 
                                 onClick={() => setShowCashModal(true)}
-                                variant="outline"
-                                fullWidth
-                                icon="payments"
-                                className="mt-3"
+                                className="w-full h-16 bg-[#111] hover:bg-white/10 text-white font-bold uppercase tracking-widest text-sm rounded-2xl transition-all border border-white/10 flex items-center justify-center gap-3 active:scale-[0.98]"
                             >
+                                <span className="material-symbols-outlined">payments</span>
                                 Pagar en Conserjería
-                            </Button>
+                            </button>
 
-                            <p className="text-[10px] text-gray-500 mt-4 flex items-center justify-center gap-1">
-                                <span className="material-symbols-outlined text-[12px]">lock</span>
+                            <p className="text-[10px] text-gray-500 mt-6 flex items-center justify-center gap-1.5 uppercase font-semibold tracking-widest">
+                                <span className="material-symbols-outlined text-[14px]">lock</span>
                                 Pagos seguros y registrados
                             </p>
                         </>

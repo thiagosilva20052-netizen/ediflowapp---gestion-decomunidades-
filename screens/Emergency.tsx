@@ -135,7 +135,7 @@ const Emergency: React.FC<Props> = ({ navigate, from, role }) => {
                 <a 
                   key={index}
                   href={`tel:${contact.number}`}
-                  className="flex items-center justify-between p-5 bg-[#111] rounded-[1.5rem] border border-white/5 hover:border-white/20 hover:bg-[#141414] transition-all active:scale-[0.98] group relative overflow-hidden"
+                  className="flex items-center justify-between p-5 bg-[#111] rounded-[1.5rem] border border-white/5 hover:border-white/20 hover:bg-[#141414] transition-all active:scale-[0.98] group relative overflow-hidden shadow-lg hover:shadow-xl"
                 >
                   {/* Hover gradient subtle background */}
                   <div className={`absolute right-0 top-0 w-32 h-32 blur-[50px] opacity-0 group-hover:opacity-10 transition-opacity pointer-events-none ${contact.color}`}></div>
@@ -146,7 +146,7 @@ const Emergency: React.FC<Props> = ({ navigate, from, role }) => {
                     </div>
                     <div className="flex flex-col">
                       <h4 className="font-semibold text-white tracking-tight text-sm md:text-base leading-none mb-1.5">{contact.name}</h4>
-                      <p className="text-xs text-gray-500 font-mono font-bold tracking-widest">{contact.number}</p>
+                      <p className="text-[10px] text-gray-500 font-mono font-bold tracking-widest">{contact.number}</p>
                     </div>
                   </div>
                   
@@ -167,22 +167,24 @@ const Emergency: React.FC<Props> = ({ navigate, from, role }) => {
             
             <div className="flex flex-col gap-4">
               {protocols.map((protocol, idx) => (
-                <div key={idx} className="bg-[#111] rounded-[1.5rem] border border-white/5 overflow-hidden group hover:border-white/10 transition-all flex flex-col hover:bg-[#141414]">
+                <div key={idx} className="bg-[#111] rounded-[1.5rem] border border-white/5 overflow-hidden group hover:border-white/10 transition-all flex flex-col hover:bg-[#141414] shadow-lg">
                   
                   <div className="px-6 py-4 flex items-center gap-4 border-b border-white/5 relative">
-                    <div className="w-10 h-10 rounded-xl bg-[#0A0A0A] border border-white/5 flex items-center justify-center text-gray-400 group-hover:text-red-400 transition-colors">
+                    {/* Subtle underline glow on hover */}
+                    <div className="absolute bottom-0 left-0 h-[1px] w-0 bg-red-500/50 group-hover:w-full transition-all duration-500 ease-out"></div>
+                    <div className="w-10 h-10 rounded-xl bg-[#0A0A0A] border border-white/5 flex items-center justify-center text-gray-400 group-hover:text-red-400 group-hover:border-red-400/30 transition-colors shadow-inner">
                       <span className="material-symbols-outlined text-[20px]">{protocol.icon}</span>
                     </div>
-                    <h4 className="font-semibold text-white tracking-tight text-sm">{protocol.title}</h4>
+                    <h4 className="font-semibold text-white tracking-tight text-sm uppercase">{protocol.title}</h4>
                   </div>
                   
                   <div className="px-6 py-5 flex flex-col gap-4">
                     {protocol.steps.map((step, sIdx) => (
-                      <div key={sIdx} className="flex gap-4 items-start">
-                        <span className="w-6 h-6 rounded-md bg-[#0A0A0A] text-gray-500 flex-shrink-0 flex items-center justify-center text-[10px] font-bold border border-white/10 mt-0.5">
+                      <div key={sIdx} className="flex gap-4 items-start group/step cursor-default">
+                        <span className="w-6 h-6 rounded-md bg-[#0A0A0A] text-gray-400 group-hover/step:text-white flex-shrink-0 flex items-center justify-center text-[10px] font-bold border border-white/10 mt-0.5 shadow-sm transition-colors group-hover/step:border-white/30">
                           {sIdx + 1}
                         </span>
-                        <p className="text-xs md:text-[13px] text-gray-400 font-medium leading-relaxed">{step}</p>
+                        <p className="text-xs md:text-[13px] text-gray-400 font-medium leading-relaxed group-hover/step:text-gray-300 transition-colors">{step}</p>
                       </div>
                     ))}
                   </div>

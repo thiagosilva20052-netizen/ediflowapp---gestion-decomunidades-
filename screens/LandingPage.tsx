@@ -84,49 +84,49 @@ const LandingPage: React.FC<Props> = ({ onLoginClick, onNavigate }) => {
   return (
     <div className="bg-black text-white font-sans selection:bg-white/20 selection:text-white">
       {/* Sticky Navigation Bar */}
-      <header className={`fixed top-0 inset-x-0 w-full z-50 transition-all duration-500 ease-in-out ${scrollOpacity > 0.05 ? 'bg-[#0A0A0A]/80 backdrop-blur-md border-b border-white/5 py-4' : 'bg-transparent py-6'}`}>
+      <header className={`fixed top-0 inset-x-0 w-full z-50 transition-all duration-500 ease-in-out ${scrollOpacity > 0.05 ? 'bg-[#0A0A0A]/90 backdrop-blur-2xl border-b border-white/5 py-3' : 'bg-transparent py-6'}`}>
         <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-16 flex items-center justify-between">
           {/* Left: Logo */}
-          <div className="flex items-center gap-2 cursor-pointer transition-transform hover:scale-105" onClick={() => window.scrollTo(0,0)}>
-            <Logo variant="horizontal" color="#FFFFFF" className="scale-[0.8] origin-left" />
+          <div className="flex items-center gap-2 cursor-pointer transition-transform hover:scale-105 active:scale-95" onClick={() => window.scrollTo(0,0)}>
+            <Logo variant="horizontal" color="#FFFFFF" className="scale-[0.8] origin-left drop-shadow-md" />
           </div>
 
           {/* Center: Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-10">
             <div 
               onClick={() => onNavigate && onNavigate('Solutions')}
-              className="group relative cursor-pointer flex items-center gap-1 text-sm font-medium text-[#A3A3A3] hover:text-white transition-colors"
+              className="group relative cursor-pointer flex items-center gap-1 text-sm font-medium text-gray-400 hover:text-white transition-colors"
             >
               Soluciones <span className="material-symbols-outlined text-[14px] group-hover:rotate-180 transition-transform">expand_more</span>
             </div>
-            <div className="group relative cursor-pointer flex items-center gap-1 text-sm font-medium text-[#A3A3A3] hover:text-white transition-colors">
+            <div className="group relative cursor-pointer flex items-center gap-1 text-sm font-medium text-gray-400 hover:text-white transition-colors">
               Producto <span className="material-symbols-outlined text-[14px] group-hover:rotate-180 transition-transform">expand_more</span>
             </div>
             <div 
               onClick={() => onNavigate && onNavigate('Resources')}
-              className="cursor-pointer text-sm font-medium text-[#A3A3A3] hover:text-white transition-colors"
+              className="cursor-pointer text-sm font-medium text-gray-400 hover:text-white transition-colors"
             >
               Recursos
             </div>
             <div 
               onClick={() => onNavigate && onNavigate('Pricing')}
-              className="cursor-pointer text-sm font-medium text-[#A3A3A3] hover:text-white transition-colors"
+              className="cursor-pointer text-sm font-medium text-gray-400 hover:text-white transition-colors"
             >
               Precios
             </div>
           </nav>
 
           {/* Right: Actions */}
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-8">
             <button 
               onClick={onLoginClick} 
-              className="hidden md:block text-sm font-medium text-[#A3A3A3] hover:text-white transition-colors"
+              className="hidden md:block text-sm font-semibold text-white hover:text-ediflow-primary transition-colors tracking-tight"
             >
-              Iniciar Sesión
+              Inicia Sesión
             </button>
             <button 
               onClick={() => onNavigate && onNavigate('BookDemo')}
-              className="bg-ediflow-primary text-black px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-white transition-all shadow-[0_0_15px_rgba(0,174,239,0.15)] hover:shadow-[0_0_25px_rgba(0,174,239,0.3)]"
+              className="bg-ediflow-primary text-black px-6 py-2.5 rounded-xl text-sm font-bold tracking-tight hover:bg-white active:scale-95 transition-all shadow-[0_0_20px_rgba(0,174,239,0.3)] hover:shadow-[0_0_30px_rgba(255,255,255,0.4)] flex items-center gap-2"
             >
               Agendar Demo
             </button>
@@ -135,110 +135,112 @@ const LandingPage: React.FC<Props> = ({ onLoginClick, onNavigate }) => {
       </header>
 
       {/* Hero Section */}
-      <section className="relative w-full h-screen flex flex-col overflow-hidden bg-[#0A0A0A]">
+      <section className="relative w-full min-h-screen flex flex-col justify-center overflow-hidden bg-[#0A0A0A]">
         {/* Subtle Grid and Glow instead of Video/Image of buildings */}
-        <div className="absolute inset-0 z-0 opacity-20">
+        <div className="absolute inset-0 z-0 opacity-20 hidden md:block">
            <div className="w-full h-full" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '40px 40px' }}></div>
         </div>
-        <div className="absolute top-1/4 right-0 w-[600px] h-[600px] bg-ediflow-primary/10 blur-[150px] rounded-[100%] pointer-events-none z-0 mix-blend-screen"></div>
-        <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-blue-500/10 blur-[120px] rounded-[100%] pointer-events-none z-0 mix-blend-screen"></div>
-
-        {/* Gradient Transition to next section */}
-        <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-[#050505] to-transparent z-0 pointer-events-none" />
+        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-[#00AEEF]/10 blur-[150px] rounded-[100%] pointer-events-none z-0"></div>
+        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-[#0A0A0A] blur-[100px] rounded-[100%] pointer-events-none z-0"></div>
 
         {/* Main Layout Overlay */}
-        <div className="relative z-10 flex flex-col h-full pt-20">
+        <div className="relative z-10 flex flex-col pt-32 pb-16">
           {/* Hero Content */}
-          <div className="px-6 md:px-12 lg:px-16 flex-1 flex flex-col justify-center lg:justify-end pb-12 lg:pb-16 w-full max-w-7xl mx-auto">
-            <div className="lg:grid lg:grid-cols-2 lg:items-center w-full gap-12">
+          <div className="px-6 md:px-12 lg:px-16 w-full max-w-7xl mx-auto">
+            <div className="lg:grid lg:grid-cols-12 lg:items-center w-full gap-16">
               
               {/* Left Column (Copywriter) */}
-              <div className="flex flex-col items-start w-full">
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-light text-white tracking-tight leading-[1.1] mb-4">
-                  Cuadra tus gastos comunes en <span className="font-medium text-ediflow-primary">3 segundos</span> usando IA.
+              <div className="col-span-12 lg:col-span-6 flex flex-col items-start w-full">
+                <FadeIn delay={100} duration={1000}>
+                   <div className="flex items-center gap-2 bg-[#111] border border-white/5 py-1.5 px-3 rounded-full mb-6">
+                      <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                      <span className="text-[10px] text-gray-300 font-bold uppercase tracking-widest">IA Financiera Activa</span>
+                   </div>
+                </FadeIn>
+                <h1 className="text-5xl md:text-6xl lg:text-7xl font-medium text-white tracking-tight leading-[1.05] mb-6 drop-shadow-2xl">
+                  Cuadra tus gastos en <span className="font-light text-transparent bg-clip-text bg-gradient-to-r from-ediflow-primary to-blue-400">segundos</span> con IA.
                 </h1>
-                <h2 className="text-xl md:text-2xl text-white font-medium mb-6 font-serif italic">
-                  Sin pelear con Excel ni arriesgar multas.
-                </h2>
                 
                 <FadeIn delay={400} duration={1000}>
-                  <p className="text-base md:text-lg text-gray-300 mb-8 max-w-xl leading-relaxed">
-                    Ediflow lee tus facturas automáticamente, permite a los conserjes reportar por voz y a los residentes pagar con 0% de comisión. Tu condominio en piloto automático, cumpliendo con la Ley chilena.
+                  <p className="text-lg md:text-xl text-gray-400 mb-10 max-w-xl leading-relaxed font-light">
+                    Ediflow lee tus facturas automáticamente, permite a los conserjes reportar por voz y a los residentes pagar con 0% de comisión. El sistema operativo para edificios modernos.
                   </p>
                 </FadeIn>
 
-                <FadeIn delay={800} duration={1000} className="w-full">
-                  <div className="flex flex-col sm:flex-row gap-4 mb-8">
+                <FadeIn delay={600} duration={1000} className="w-full">
+                  <div className="flex flex-col sm:flex-row items-center gap-4 mb-10">
                     <button 
                       onClick={() => onNavigate && onNavigate('Pricing')}
-                      className="bg-ediflow-primary text-black px-8 py-3.5 rounded-xl font-semibold hover:bg-white transition-all shadow-[0_0_20px_rgba(0,174,239,0.2)] md:w-auto w-full flex justify-center items-center gap-2"
+                      className="group bg-white text-black px-8 py-4 rounded-xl font-bold tracking-tight hover:bg-ediflow-primary active:scale-95 transition-all shadow-[0_0_30px_rgba(255,255,255,0.15)] hover:shadow-[0_0_40px_rgba(0,174,239,0.3)] w-full sm:w-auto flex justify-center items-center gap-2 border border-transparent"
                     >
-                      Empezar Prueba Gratis
+                      Comenzar Prueba Gratis
+                      <span className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
                     </button>
                     <button 
                       onClick={() => onNavigate && onNavigate('BookDemo')}
-                      className="border border-white/20 text-white bg-transparent px-8 py-3.5 rounded-xl font-medium hover:bg-white/5 transition-all md:w-auto w-full flex justify-center items-center gap-2"
+                      className="group bg-transparent border border-white/20 text-white px-8 py-4 rounded-xl font-medium hover:bg-white/5 hover:border-white/40 active:scale-95 transition-all w-full sm:w-auto flex justify-center items-center gap-3 backdrop-blur-sm"
                     >
-                      <span className="material-symbols-outlined text-[18px]">play_circle</span> Ver IA en acción (3 min)
+                      <span className="material-symbols-outlined text-[20px] text-gray-400 group-hover:text-white transition-colors">play_circle</span>
+                      <span>Ver IA en acción</span>
                     </button>
                   </div>
                   
                   {/* Social Proof */}
-                  <div className="flex flex-col items-start gap-3 border-t border-white/10 pt-6">
-                    <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-[0.2em]">Integración nativa y segura con</p>
-                    <div className="flex items-center gap-6 opacity-70">
-                      <span className="text-sm font-bold tracking-tighter text-white">khipu</span>
-                      <div className="flex items-center gap-1 text-white">
-                        <span className="material-symbols-outlined text-[10px]">handshake</span>
-                        <span className="text-sm font-bold tracking-tighter">mercado<span className="opacity-80 font-normal">pago</span></span>
+                  <div className="flex flex-col items-start gap-4">
+                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em]">Integraciones Nativas Seguras</p>
+                    <div className="flex items-center gap-8 opacity-80 mix-blend-screen">
+                      <span className="text-sm font-bold tracking-tighter text-white/80">khipu.</span>
+                      <div className="flex items-center gap-1 text-white/80">
+                        <span className="text-sm font-bold tracking-tight">mercado<span className="font-light">pago</span></span>
                       </div>
+                      <span className="text-sm font-bold tracking-tighter text-white/80 italic">aws</span>
                     </div>
                   </div>
                 </FadeIn>
               </div>
 
               {/* Right Column (Abstract SaaS Interface Representation) */}
-              <div className="hidden lg:flex items-center justify-end w-full h-[500px]">
-                <FadeIn delay={1400} duration={1000}>
-                   <div className="relative w-[500px] h-[400px]">
+              <div className="hidden lg:flex col-span-12 lg:col-span-6 items-center justify-end w-full h-full relative">
+                <FadeIn delay={1000} duration={1000}>
+                   <div className="relative w-[500px] h-[550px] perspective-1000">
                       {/* Floating Dashboard Card */}
-                      <div className="absolute top-0 right-0 w-[380px] h-[220px] bg-[#111] border border-white/10 rounded-2xl p-5 shadow-2xl backdrop-blur transform -rotate-2 hover:rotate-0 transition-transform duration-500 z-20">
-                         <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-3">
-                            <span className="text-white text-sm font-medium">Lectura OCR de Gastos</span>
-                            <span className="bg-green-500/10 text-green-400 text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-semibold">+ 42 procesadas</span>
+                      <div className="absolute top-10 right-0 w-[420px] bg-[#111]/80 border border-white/10 rounded-3xl p-6 shadow-2xl backdrop-blur-xl transform -rotate-2 hover:rotate-0 hover:scale-105 transition-all duration-500 z-20">
+                         <div className="flex items-center justify-between mb-6 border-b border-white/5 pb-4">
+                            <span className="text-white text-sm font-medium flex items-center gap-2"><span className="material-symbols-outlined text-ediflow-primary text-[18px]">auto_awesome</span> Procesamiento IA</span>
+                            <span className="bg-ediflow-primary/10 text-ediflow-primary text-[10px] px-3 py-1 rounded-full uppercase tracking-widest font-bold">Activo</span>
                          </div>
-                         <div className="space-y-3">
+                         <div className="space-y-4">
                             {[1, 2, 3].map(i => (
                                <div key={i} className="flex justify-between items-center group">
-                                  <div className="w-1/2 h-2 bg-white/10 rounded overflow-hidden relative">
-                                    <div className="absolute top-0 left-0 h-full bg-ediflow-primary/70 animate-[pulse_2s_ease-in-out_infinite]" style={{width: `${Math.random() * 50 + 50}%`}}></div>
+                                  <div className="w-2/3 h-2.5 bg-white/5 rounded overflow-hidden relative">
+                                    <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-ediflow-primary to-[#00AEEF]" style={{width: `${Math.random() * 50 + 50}%`}}></div>
                                   </div>
-                                  <span className="text-xs text-gray-400 font-mono group-hover:text-white transition-colors">Enel S.A.</span>
+                                  <span className="text-xs text-gray-500 font-mono group-hover:text-white transition-colors">Enel S.A.</span>
                                </div>
                             ))}
                          </div>
                       </div>
 
                       {/* Floating Conserjería Card */}
-                      <div className="absolute bottom-0 left-0 w-[280px] h-[180px] bg-[#0A0A0A] border border-white/5 rounded-2xl p-5 shadow-2xl backdrop-blur-md transform rotate-3 hover:rotate-0 transition-transform duration-500 z-30">
-                          <div className="flex items-center gap-3 mb-4">
-                             <div className="w-8 h-8 rounded-full bg-ediflow-primary/20 flex items-center justify-center">
-                               <span className="material-symbols-outlined text-ediflow-primary text-sm">mic</span>
+                      <div className="absolute bottom-10 left-0 w-[300px] bg-[#0A0A0A]/90 border border-white/10 rounded-3xl p-6 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] backdrop-blur-xl transform rotate-3 hover:rotate-0 hover:scale-105 transition-all duration-500 z-30">
+                          <div className="flex items-center gap-4 mb-5">
+                             <div className="w-10 h-10 rounded-xl bg-ediflow-primary/20 flex items-center justify-center border border-ediflow-primary/30">
+                               <span className="material-symbols-outlined text-ediflow-primary text-lg">mic</span>
                              </div>
                              <div>
-                               <p className="text-white text-xs font-medium">Asistente de Voz</p>
-                               <p className="text-[10px] text-gray-500 uppercase tracking-widest">Activo 24/7</p>
+                               <p className="text-white text-sm font-medium">Recepción por Voz</p>
+                               <p className="text-[10px] text-gray-500 uppercase tracking-widest">IA NLP</p>
                              </div>
                           </div>
-                          <div className="w-full bg-white/5 rounded-lg p-3 border border-white/5">
-                             <div className="w-4 h-4 bg-red-500 rounded-full animate-bounce inline-block mr-2"></div>
-                             <span className="text-xs text-gray-400 italic">"Registrando encomienda Depto 402..."</span>
+                          <div className="w-full bg-[#111] rounded-2xl p-4 border border-white/5">
+                             <div className="w-2 h-2 bg-red-500 rounded-full animate-[pulse_1s_ease-in-out_infinite] inline-block mr-2 mb-0.5"></div>
+                             <span className="text-xs text-gray-400 italic">"Registrando encomienda para departamento 402..."</span>
                           </div>
                       </div>
                       
                       {/* Floating Payment Notification */}
-                      <div className="absolute -right-8 bottom-12 bg-white text-black px-4 py-2 rounded-xl text-xs font-medium shadow-[0_0_30px_rgba(255,255,255,0.2)] flex items-center gap-2 animate-[pulse_4s_ease-in-out_infinite]">
-                         <span className="material-symbols-outlined text-green-500 text-[14px]">check_circle</span>
+                      <div className="absolute top-1/2 -left-12 -translate-y-1/2 bg-white text-black px-5 py-3 rounded-2xl text-xs font-bold uppercase tracking-widest shadow-[0_20px_40px_rgba(255,255,255,0.15)] flex items-center gap-3 animate-float-slow z-40">
+                         <span className="material-symbols-outlined text-[#00AEEF] text-[18px]">verified</span>
                          Gasto Común Pagado
                       </div>
                    </div>
@@ -276,68 +278,71 @@ const LandingPage: React.FC<Props> = ({ onLoginClick, onNavigate }) => {
       </section>
 
       {/* Superpowers Section (PAS Formula) */}
-      <section id="superpoderes" className="py-24 px-6 lg:px-16 max-w-7xl mx-auto bg-black relative z-20">
+      <section id="superpoderes" className="py-32 px-6 lg:px-16 max-w-7xl mx-auto bg-black relative z-20">
         <div className="text-center max-w-3xl mx-auto mb-20">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-light mb-6 tracking-tight">Superpoderes en tu equipo.</h2>
-          <p className="text-base md:text-lg text-gray-400 font-light max-w-2xl mx-auto">Resolviendo los dolores reales de la administración moderna con tecnología que funciona sola.</p>
+          <div className="flex items-center justify-center gap-2 mb-6">
+            <span className="text-[10px] bg-white/5 border border-white/10 px-3 py-1 rounded-full uppercase tracking-widest text-ediflow-primary font-bold">Características Clave</span>
+          </div>
+          <h2 className="text-4xl md:text-5xl lg:text-5xl font-medium mb-6 tracking-tight text-white">Superpoderes en tu equipo.</h2>
+          <p className="text-lg md:text-xl text-gray-400 font-light max-w-2xl mx-auto leading-relaxed">Resolviendo los dolores reales de la administración moderna con tecnología que funciona sola.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Gastos */}
-          <div className="p-8 bg-[#0A0A0A] border border-white/10 hover:border-white/20 transition-colors duration-500 flex flex-col h-full rounded-[24px]">
-            <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center text-white mb-6">
-              <span className="material-symbols-outlined text-xl">receipt_long</span>
+          <div className="p-10 bg-[#111] border border-white/5 hover:border-white/10 hover:bg-[#141414] transition-all duration-500 flex flex-col h-full rounded-[2rem] shadow-2xl group">
+            <div className="w-14 h-14 bg-[#0A0A0A] border border-white/10 rounded-2xl flex items-center justify-center text-gray-400 group-hover:text-ediflow-primary group-hover:scale-110 transition-all mb-8 shadow-inner">
+              <span className="material-symbols-outlined text-2xl">receipt_long</span>
             </div>
-            <h3 className="text-lg font-medium text-white mb-8 tracking-wide">1. Gastos</h3>
+            <h3 className="text-xl font-medium text-white mb-6 tracking-tight group-hover:text-ediflow-primary transition-colors">1. Gastos Automatizados</h3>
             <div className="space-y-6 flex-1 text-sm">
               <div>
-                <span className="inline-block text-[10px] font-semibold text-white/40 border border-white/10 px-2 py-1 rounded-full uppercase tracking-widest mb-3">Problema</span>
-                <p className="text-gray-300">¿Pasas horas digitando facturas manualmente a fin de mes?</p>
+                <span className="inline-block text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-2">Problema</span>
+                <p className="text-gray-400 font-light leading-relaxed">¿Pasas horas digitando facturas manualmente a fin de mes?</p>
               </div>
-              <div>
-                <span className="inline-block text-[10px] font-semibold text-white/40 border border-white/10 px-2 py-1 rounded-full uppercase tracking-widest mb-3">Solución IA</span>
-                <p className="text-gray-400 leading-relaxed">
-                  Sube una foto. Nuestra Inteligencia Artificial extrae los montos, proveedores y cuadra los fondos en <strong className="text-white font-normal">3 segundos</strong>, listo para revisión.
+              <div className="pt-6 border-t border-white/5">
+                <span className="inline-block text-[9px] font-bold text-ediflow-primary uppercase tracking-widest mb-2">Solución IA</span>
+                <p className="text-gray-300 font-light leading-relaxed">
+                  Sube una foto. Nuestra IA extrae los montos, proveedores y cuadra los fondos en <strong className="text-white font-medium">3 segundos</strong>, listo para revisión.
                 </p>
               </div>
             </div>
           </div>
 
           {/* Conserjería */}
-          <div className="p-8 bg-[#0A0A0A] border border-white/10 hover:border-white/20 transition-colors duration-500 flex flex-col h-full rounded-[24px]">
-            <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center text-white mb-6">
-              <span className="material-symbols-outlined text-xl">mic</span>
+          <div className="p-10 bg-[#111] border border-white/5 hover:border-white/10 hover:bg-[#141414] transition-all duration-500 flex flex-col h-full rounded-[2rem] shadow-2xl group">
+            <div className="w-14 h-14 bg-[#0A0A0A] border border-white/10 rounded-2xl flex items-center justify-center text-gray-400 group-hover:text-ediflow-primary group-hover:scale-110 transition-all mb-8 shadow-inner">
+              <span className="material-symbols-outlined text-2xl">mic</span>
             </div>
-            <h3 className="text-lg font-medium text-white mb-8 tracking-wide">2. Conserjería</h3>
+            <h3 className="text-xl font-medium text-white mb-6 tracking-tight group-hover:text-ediflow-primary transition-colors">2. Conserjería IA</h3>
             <div className="space-y-6 flex-1 text-sm">
               <div>
-                <span className="inline-block text-[10px] font-semibold text-white/40 border border-white/10 px-2 py-1 rounded-full uppercase tracking-widest mb-3">Problema</span>
-                <p className="text-gray-300">Libros de novedades ilegibles e información que se pierde entre turnos.</p>
+                <span className="inline-block text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-2">Problema</span>
+                <p className="text-gray-400 font-light leading-relaxed">Libros de novedades ilegibles e información que se pierde entre turnos.</p>
               </div>
-              <div>
-                <span className="inline-block text-[10px] font-semibold text-white/40 border border-white/10 px-2 py-1 rounded-full uppercase tracking-widest mb-3">Solución IA</span>
-                <p className="text-gray-400 leading-relaxed">
-                  Tu equipo solo debe hablarle a la app. La IA transcribe reportes perfectos, detecta anomalías y los capacita con el <strong className="text-white font-normal">Simulador OS10</strong>.
+              <div className="pt-6 border-t border-white/5">
+                <span className="inline-block text-[9px] font-bold text-ediflow-primary uppercase tracking-widest mb-2">Solución IA</span>
+                <p className="text-gray-300 font-light leading-relaxed">
+                  Tu equipo solo debe hablarle a la app. La IA transcribe reportes perfectos, detecta anomalías y capacita con el <strong className="text-white font-medium">Simulador OS10</strong>.
                 </p>
               </div>
             </div>
           </div>
 
           {/* Cobros */}
-          <div className="p-8 bg-[#0A0A0A] border border-white/10 hover:border-white/20 transition-colors duration-500 flex flex-col h-full rounded-[24px]">
-            <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center text-white mb-6">
-              <span className="material-symbols-outlined text-xl">payments</span>
+          <div className="p-10 bg-[#111] border border-white/5 hover:border-white/10 hover:bg-[#141414] transition-all duration-500 flex flex-col h-full rounded-[2rem] shadow-2xl group">
+            <div className="w-14 h-14 bg-[#0A0A0A] border border-white/10 rounded-2xl flex items-center justify-center text-gray-400 group-hover:text-ediflow-primary group-hover:scale-110 transition-all mb-8 shadow-inner">
+              <span className="material-symbols-outlined text-2xl">payments</span>
             </div>
-            <h3 className="text-lg font-medium text-white mb-8 tracking-wide">3. Cobros</h3>
+            <h3 className="text-xl font-medium text-white mb-6 tracking-tight group-hover:text-ediflow-primary transition-colors">3. Cobros Sin Fricción</h3>
             <div className="space-y-6 flex-1 text-sm">
               <div>
-                <span className="inline-block text-[10px] font-semibold text-white/40 border border-white/10 px-2 py-1 rounded-full uppercase tracking-widest mb-3">Problema</span>
-                <p className="text-gray-300">Alta morosidad y roces constantes por el cobro de gastos comunes.</p>
+                <span className="inline-block text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-2">Problema</span>
+                <p className="text-gray-400 font-light leading-relaxed">Alta morosidad y roces constantes por el cobro de gastos comunes.</p>
               </div>
-              <div>
-                <span className="inline-block text-[10px] font-semibold text-white/40 border border-white/10 px-2 py-1 rounded-full uppercase tracking-widest mb-3">Solución IA</span>
-                <p className="text-gray-400 leading-relaxed">
-                  Notificaciones automáticas al celular. Pagan con <strong className="text-white font-normal">Khipu o MercadoPago en 1 clic</strong> y el sistema concilia el banco por ti.
+              <div className="pt-6 border-t border-white/5">
+                <span className="inline-block text-[9px] font-bold text-ediflow-primary uppercase tracking-widest mb-2">Solución IA</span>
+                <p className="text-gray-300 font-light leading-relaxed">
+                  Notificaciones push al celular. Pagan vía <strong className="text-white font-medium">Khipu o MercadoPago en 1 clic</strong> y el sistema concilia el banco.
                 </p>
               </div>
             </div>
@@ -346,26 +351,29 @@ const LandingPage: React.FC<Props> = ({ onLoginClick, onNavigate }) => {
       </section>
 
       {/* Contabilidad Autonoma */}
-      <section className="bg-[#050505] py-24 px-6 lg:px-16 border-t border-white/5 relative z-20">
-        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16">
+      <section className="bg-black py-32 px-6 lg:px-16 border-t border-white/5 relative z-20 overflow-hidden">
+        <div className="absolute top-1/2 -left-1/4 w-[600px] h-[600px] bg-ediflow-primary/5 blur-[150px] rounded-full pointer-events-none"></div>
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-20">
           {/* Left: Text */}
-          <div className="flex-1 w-full relative">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-light mb-6 tracking-tight leading-tight">
-              Tu contabilidad cuadra sola en <span className="font-medium text-white">3 segundos</span>.
+          <div className="flex-1 w-full relative z-10">
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-medium mb-8 tracking-tight leading-[1.1] text-white">
+              Tu contabilidad cuadra sola en <span className="font-light text-transparent bg-clip-text bg-gradient-to-r from-ediflow-primary to-blue-400">3 segundos</span>.
             </h2>
             {/* PAS Formula */}
-            <div className="space-y-6 mb-8 mt-12">
+            <div className="space-y-8 mt-12 bg-[#111] border border-white/5 p-8 md:p-10 rounded-[2rem] shadow-2xl">
               <div>
-                 <span className="inline-block text-[10px] font-semibold text-white/40 border border-white/10 px-2 py-1 rounded-full uppercase tracking-widest mb-3">Problema</span>
-                 <p className="text-gray-300 font-light text-base md:text-lg leading-relaxed">¿Pasas horas digitando facturas a fin de mes?</p>
+                 <span className="inline-block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Problema Común</span>
+                 <p className="text-gray-400 font-light text-base md:text-lg leading-relaxed">¿Pasas horas digitando facturas y cuadrando excels a fin de mes?</p>
               </div>
-              <div>
-                 <span className="inline-block text-[10px] font-semibold text-red-400/60 border border-red-500/20 px-2 py-1 rounded-full text-red-400 uppercase tracking-widest mb-3 bg-red-500/5">Agitación</span>
-                 <p className="text-gray-400 font-light leading-relaxed">Un error de tipeo no solo genera reclamos por parte de la comunidad, te expone a <strong className="text-white font-normal">sanciones legales</strong>.</p>
+              <div className="pt-6 border-t border-white/5">
+                 <span className="inline-block text-[10px] font-bold text-red-500 border border-red-500/20 px-3 py-1 rounded-full uppercase tracking-widest mb-3 bg-red-500/10">Riesgo Financiero</span>
+                 <p className="text-gray-400 font-light leading-relaxed text-base">Un error de tipeo no solo genera reclamos por parte de la comunidad, te expone a <strong className="text-white font-medium">sanciones y multas legales</strong>.</p>
               </div>
-              <div>
-                 <span className="inline-block text-[10px] font-semibold text-ediflow-primary/80 border border-ediflow-primary/30 px-2 py-1 rounded-full text-ediflow-primary tracking-widest mb-3 bg-ediflow-primary/5 uppercase">Solución</span>
-                 <p className="text-gray-300 font-light leading-relaxed">Sube la foto del gasto: nuestro OCR extrae los montos, identifica al proveedor y calcula el prorrateo al instante.</p>
+              <div className="pt-6 border-t border-white/5">
+                 <span className="inline-block text-[10px] font-bold text-ediflow-primary border border-ediflow-primary/30 px-3 py-1 rounded-full bg-ediflow-primary/10 tracking-widest mb-3 uppercase flex items-center gap-1.5 w-fit">
+                    <span className="material-symbols-outlined text-[14px]">auto_awesome</span> Solución Ediflow
+                 </span>
+                 <p className="text-gray-300 font-light leading-relaxed text-base">Sube la foto del gasto: nuestro motor OCR extrae los montos, identifica al proveedor y calcula el prorrateo al instante.</p>
               </div>
             </div>
 
@@ -373,78 +381,71 @@ const LandingPage: React.FC<Props> = ({ onLoginClick, onNavigate }) => {
             <div className="sr-only">
               Alternativas a Edipro en Chile. Alternativas a ComunidadFeliz en Chile. Alternativas a Kastor en Chile. Software de gastos comunes líder en automatización e inteligencia artificial.
             </div>
-            <p className="text-[9px] text-gray-600/50 uppercase tracking-widest font-semibold flex items-center gap-2">
-              <span className="material-symbols-outlined text-[12px]">search</span>
-              Alternativas a software de gastos comunes
-            </p>
           </div>
 
           {/* Right: Mockup */}
-          <div className="flex-1 w-full relative">
-            {/* Decorative */}
-            <div className="absolute -top-32 -right-32 w-64 h-64 bg-ediflow-primary/5 rounded-full blur-3xl opacity-50"></div>
-            
-            <div className="w-full bg-[#0A0A0A] border border-white/10 rounded-[32px] overflow-hidden flex flex-col shadow-2xl group">
+          <div className="flex-1 w-full relative z-10 lg:pl-10">
+            <div className="w-full bg-[#111] border border-white/10 rounded-[2.5rem] overflow-hidden flex flex-col shadow-2xl shadow-ediflow-primary/10 group">
               {/* Header Mockup */}
-              <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-black/50">
+              <div className="px-8 py-5 border-b border-white/5 flex items-center justify-between bg-[#0A0A0A]">
                 <div className="flex items-center gap-3">
-                  <span className="material-symbols-outlined text-gray-400 text-xl">document_scanner</span>
-                  <span className="text-sm font-medium text-white">Scanner Inteligente OCR</span>
+                  <span className="material-symbols-outlined text-ediflow-primary text-xl">document_scanner</span>
+                  <span className="text-sm font-medium text-white">Motor OCR Inteligente</span>
                 </div>
-                <span className="text-[9px] bg-green-500/10 text-green-400 border border-green-500/20 px-2 py-0.5 rounded uppercase tracking-widest font-semibold flex items-center gap-1">
-                  Sincronizado
+                <span className="text-[10px] bg-green-500/10 text-green-400 border border-green-500/20 px-3 py-1 rounded-full uppercase tracking-widest font-bold flex items-center gap-1">
+                  En Línea
                 </span>
               </div>
 
               {/* Content Mockup */}
-              <div className="p-6 grid grid-cols-2 gap-6 relative">
+              <div className="p-8 grid grid-cols-2 gap-8 relative">
                 {/* Receipt Visual */}
-                <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col items-center justify-center relative overflow-hidden h-48">
+                <div className="bg-[#0A0A0A] border border-white/5 rounded-2xl p-5 flex flex-col items-center justify-center relative overflow-hidden h-56 shadow-inner">
                   {/* Simulated receipt text with scanning line */}
-                  <div className="w-24 h-36 bg-black border border-white/20 p-2 flex flex-col gap-2 rounded shadow-inner justify-between">
+                  <div className="w-28 h-40 bg-black border border-white/10 p-3 flex flex-col gap-2 rounded-lg shadow-inner justify-between">
                      <div>
-                       <div className="h-1 lg:h-1.5 bg-white/20 w-3/4 rounded mb-2"></div>
-                       <div className="h-1 lg:h-1.5 bg-white/20 w-1/2 rounded mb-4"></div>
-                       <div className="h-1 lg:h-1.5 bg-white/10 w-full rounded mt-4"></div>
-                       <div className="h-1 lg:h-1.5 bg-white/10 w-5/6 rounded mt-2"></div>
-                       <div className="h-1 lg:h-1.5 bg-white/10 w-4/6 rounded mt-2"></div>
+                       <div className="h-1.5 bg-white/20 w-3/4 rounded mb-3"></div>
+                       <div className="h-1.5 bg-white/20 w-1/2 rounded mb-5"></div>
+                       <div className="h-1.5 bg-white/10 w-full rounded mt-3"></div>
+                       <div className="h-1.5 bg-white/10 w-5/6 rounded mt-3"></div>
+                       <div className="h-1.5 bg-white/10 w-4/6 rounded mt-3"></div>
                      </div>
-                     <div className="text-[10px] font-mono text-gray-300 mt-auto self-end font-bold">$45.000</div>
+                     <div className="text-[11px] font-mono text-gray-400 mt-auto self-end font-bold tracking-tight">$45.000</div>
                   </div>
                   {/* Scanning Laser */}
-                  <div className="absolute top-0 left-0 w-full h-[2px] bg-ediflow-primary shadow-[0_0_15px_#00AEEF] animate-[scan_2s_ease-in-out_infinite]">
+                  <div className="absolute top-0 left-0 w-full h-[2px] bg-[#00AEEF] shadow-[0_0_20px_#00AEEF] animate-[scan_2.5s_ease-in-out_infinite]">
                      <style>{`
                        @keyframes scan {
-                         0% { top: 10%; opacity: 0; }
+                         0% { top: 5%; opacity: 0; }
                          15% { opacity: 1; }
                          85% { opacity: 1; }
-                         100% { top: 90%; opacity: 0; }
+                         100% { top: 95%; opacity: 0; }
                        }
                      `}</style>
                   </div>
                 </div>
 
                 {/* Data Visual */}
-                <div className="flex flex-col gap-3 justify-center">
-                   <div className="flex flex-col gap-1 transition-all duration-700 delay-100 opacity-100">
-                     <span className="text-[9px] text-gray-500 uppercase tracking-widest font-semibold">Proveedor</span>
-                     <div className="bg-black border border-ediflow-primary/30 rounded py-2.5 px-3 flex items-center justify-between shadow-[0_0_15px_rgba(0,174,239,0.1)]">
-                       <span className="text-xs text-white">Enel Distribución</span>
-                       <span className="material-symbols-outlined text-[14px] text-ediflow-primary">check_circle</span>
+                <div className="flex flex-col gap-4 justify-center">
+                   <div className="flex flex-col gap-1.5 transition-all duration-700 delay-100 opacity-100">
+                     <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Proveedor Extraído</span>
+                     <div className="bg-[#0A0A0A] border border-white/5 rounded-xl py-3 px-4 flex items-center justify-between shadow-inner">
+                       <span className="text-xs text-white font-medium">Enel Distribución</span>
+                       <span className="material-symbols-outlined text-[16px] text-ediflow-primary drop-shadow-[0_0_10px_rgba(0,174,239,0.5)]">check_circle</span>
                      </div>
                    </div>
-                   <div className="flex flex-col gap-1 transition-all duration-700 delay-300 opacity-100">
-                     <span className="text-[9px] text-gray-500 uppercase tracking-widest font-semibold">Monto Total</span>
-                     <div className="bg-black border border-ediflow-primary/30 rounded py-2.5 px-3 flex items-center justify-between shadow-[0_0_15px_rgba(0,174,239,0.1)]">
-                       <span className="text-xs text-white font-mono">$45.000</span>
-                       <span className="material-symbols-outlined text-[14px] text-ediflow-primary">check_circle</span>
+                   <div className="flex flex-col gap-1.5 transition-all duration-700 delay-300 opacity-100">
+                     <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Monto Detectado</span>
+                     <div className="bg-[#0A0A0A] border border-white/5 rounded-xl py-3 px-4 flex items-center justify-between shadow-inner">
+                       <span className="text-xs text-white font-mono font-medium">$45.000</span>
+                       <span className="material-symbols-outlined text-[16px] text-ediflow-primary drop-shadow-[0_0_10px_rgba(0,174,239,0.5)]">check_circle</span>
                      </div>
                    </div>
-                   <div className="flex flex-col gap-1 transition-all duration-700 delay-500 opacity-100">
-                     <span className="text-[9px] text-gray-500 uppercase tracking-widest font-semibold">Categoría</span>
-                     <div className="bg-black border border-ediflow-primary/30 rounded py-2.5 px-3 flex items-center justify-between shadow-[0_0_15px_rgba(0,174,239,0.1)]">
-                       <span className="text-xs text-white">Gastos Básicos</span>
-                       <span className="material-symbols-outlined text-[14px] text-ediflow-primary">check_circle</span>
+                   <div className="flex flex-col gap-1.5 transition-all duration-700 delay-500 opacity-100">
+                     <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Clasificación IA</span>
+                     <div className="bg-[#0A0A0A] border border-white/5 rounded-xl py-3 px-4 flex items-center justify-between shadow-inner">
+                       <span className="text-xs text-white font-medium">Gastos Básicos</span>
+                       <span className="material-symbols-outlined text-[16px] text-ediflow-primary drop-shadow-[0_0_10px_rgba(0,174,239,0.5)]">auto_awesome</span>
                      </div>
                    </div>
                 </div>
@@ -553,9 +554,10 @@ const LandingPage: React.FC<Props> = ({ onLoginClick, onNavigate }) => {
             
             <button 
               onClick={() => onNavigate && onNavigate('BookDemo')}
-              className="bg-ediflow-primary text-black px-8 py-4 rounded-xl font-medium hover:bg-white hover:text-black transition-colors w-full md:w-auto shadow-[0_0_20px_rgba(0,174,239,0.2)]"
+              className="group bg-white text-black px-8 py-5 rounded-2xl font-bold tracking-tight hover:bg-gray-100 active:scale-[0.98] transition-all w-full md:w-auto shadow-[0_0_40px_rgba(255,255,255,0.15)] flex items-center justify-center gap-3"
             >
               Agendar Diagnóstico de mi Edificio
+              <span className="material-symbols-outlined text-[20px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
             </button>
             <p className="text-[10px] text-gray-500 mt-4 tracking-widest uppercase">Agenda disponible en 2 minutos.</p>
           </div>
@@ -619,7 +621,7 @@ const LandingPage: React.FC<Props> = ({ onLoginClick, onNavigate }) => {
               />
               <button 
                 type="submit"
-                className="w-full h-14 bg-white hover:bg-gray-200 text-black font-medium rounded-xl transition-all shadow-lg flex items-center justify-center gap-3 text-sm group"
+                className="w-full h-14 bg-white hover:bg-gray-200 text-black font-bold tracking-tight rounded-xl transition-all shadow-[0_0_30px_rgba(255,255,255,0.15)] hover:shadow-[0_0_40px_rgba(255,255,255,0.25)] flex items-center justify-center gap-3 group active:scale-[0.98] border border-transparent"
               >
                 Iniciar Evaluación Gratuita
                 <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>

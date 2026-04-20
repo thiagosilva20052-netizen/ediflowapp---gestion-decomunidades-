@@ -341,26 +341,26 @@ const Reservations: React.FC<Props> = ({ navigate, role, from }) => {
               {reservations
                 .filter(r => view === 'my-reservations' ? (r.userId === currentUser?.id || r.userId === 'anon') : true)
                 .map((res) => (
-                <div key={res.id} className={`bg-[#111] rounded-[2rem] border border-white/5 p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 group hover:border-white/10 hover:bg-[#141414] transition-all relative overflow-hidden`}>
+                <div key={res.id} className={`bg-[#111] rounded-[2rem] border border-white/5 p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 group hover:border-white/10 hover:bg-[#141414] transition-all relative overflow-hidden shadow-lg hover:shadow-2xl`}>
                   
                   {/* Subtle Gradient bar status */}
-                  <div className={`absolute left-0 top-0 bottom-0 w-1 ${res.status === 'confirmed' ? 'bg-green-500' : res.status === 'pending' ? 'bg-amber-500' : 'bg-red-500'}`}></div>
+                  <div className={`absolute left-0 top-0 bottom-0 w-1.5 transition-all duration-300 ${res.status === 'confirmed' ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]' : res.status === 'pending' ? 'bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]' : 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]'}`}></div>
 
-                  <div className="flex items-center gap-5 md:gap-6 pl-2">
-                    <div className="w-16 h-16 rounded-[1.5rem] bg-[#0A0A0A] border border-white/10 flex items-center justify-center text-gray-400">
+                  <div className="flex items-center gap-5 md:gap-6 pl-4">
+                    <div className={`w-16 h-16 rounded-[1.5rem] bg-[#0A0A0A] border border-white/10 flex items-center justify-center text-gray-400 group-hover:text-${primaryAccent} group-hover:border-${primaryAccent}/30 transition-colors shadow-inner`}>
                       <span className="material-symbols-outlined text-[28px]">{COMMON_AREAS.find(a => a.id === res.areaId)?.icon || 'event'}</span>
                     </div>
                     <div>
                       <div className="flex items-center gap-3 mb-1">
                         <h3 className="text-xl font-medium text-white tracking-tight">{res.areaName}</h3>
                         {view === 'all-reservations' && (
-                          <span className={`text-[10px] font-extrabold bg-${primaryAccent}/10 text-${primaryAccent} px-2 py-1 rounded border border-${primaryAccent}/20 uppercase tracking-widest`}>
+                          <span className={`text-[10px] font-extrabold bg-${primaryAccent}/10 text-${primaryAccent} px-2.5 py-1 rounded-md border border-${primaryAccent}/20 uppercase tracking-widest shadow-sm`}>
                             D. {res.apartment}
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mb-1.5 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[14px]">event</span> {res.date} <span className="opacity-30">|</span> {res.startTime} - {res.endTime}
+                      <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest mb-1.5 flex items-center gap-2">
+                        <span className={`material-symbols-outlined text-[14px] text-${primaryAccent}`}>event</span> {res.date} <span className="opacity-30">|</span> <span className="text-gray-300">{res.startTime} - {res.endTime}</span>
                       </p>
                       {view === 'all-reservations' && <p className="text-sm text-gray-400 font-medium">{res.userName}</p>}
                     </div>
@@ -368,23 +368,26 @@ const Reservations: React.FC<Props> = ({ navigate, role, from }) => {
 
                   <div className="flex items-center justify-between md:justify-end gap-6 border-t md:border-t-0 border-white/5 pt-5 md:pt-0">
                     <div className="text-left md:text-right">
-                      <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mb-1">Aforo</p>
+                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Aforo Permitido</p>
                       <p className="text-sm font-medium text-white flex items-center gap-1.5 justify-start md:justify-end">
-                        <span className="material-symbols-outlined text-[16px] text-gray-500">group</span> {res.guestsCount}
+                        <span className={`material-symbols-outlined text-[16px] text-${primaryAccent}`}>group</span> {res.guestsCount}
                       </p>
                     </div>
                     
                     <div className="flex items-center gap-4">
-                      <span className={`text-[10px] font-extrabold px-3.5 py-1.5 rounded-lg border uppercase tracking-widest ${getStatusColor(res.status)}`}>
+                      <span className={`text-[10px] font-extrabold px-3.5 py-1.5 rounded-lg border uppercase tracking-widest flex items-center gap-1.5 ${getStatusColor(res.status)}`}>
+                        {res.status === 'confirmed' && <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>}
+                        {res.status === 'pending' && <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>}
+                        {res.status === 'cancelled' && <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>}
                         {res.status === 'confirmed' ? 'Confirmado' : res.status === 'pending' ? 'Pendiente' : 'Cancelado'}
                       </span>
                       
                       {role === 'admin' && res.status === 'pending' && (
-                        <div className="flex gap-2">
-                          <button className="w-10 h-10 rounded-xl bg-[#0A0A0A] text-green-500 border border-green-500/20 flex items-center justify-center hover:bg-green-500 hover:text-black transition-all active:scale-95 cursor-pointer">
+                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <button className="w-10 h-10 rounded-xl bg-[#0A0A0A] text-green-500 border border-green-500/20 flex items-center justify-center hover:bg-green-500 hover:text-black transition-all active:scale-95 cursor-pointer shadow-sm hover:shadow-[0_0_15px_rgba(34,197,94,0.3)]">
                             <span className="material-symbols-outlined text-[20px]">check</span>
                           </button>
-                          <button className="w-10 h-10 rounded-xl bg-[#0A0A0A] text-red-500 border border-red-500/20 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all active:scale-95 cursor-pointer">
+                          <button className="w-10 h-10 rounded-xl bg-[#0A0A0A] text-red-500 border border-red-500/20 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all active:scale-95 cursor-pointer shadow-sm hover:shadow-[0_0_15px_rgba(239,68,68,0.3)]">
                             <span className="material-symbols-outlined text-[20px]">close</span>
                           </button>
                         </div>
@@ -396,12 +399,21 @@ const Reservations: React.FC<Props> = ({ navigate, role, from }) => {
               ))}
               
               {reservations.filter(r => view === 'my-reservations' ? (r.userId === currentUser?.id || r.userId === 'anon') : true).length === 0 && (
-                 <div className="text-center py-24 bg-[#111] rounded-[2rem] border border-dashed border-white/10">
-                   <div className="w-20 h-20 bg-[#0A0A0A] rounded-full flex items-center justify-center mx-auto mb-6 border border-white/5">
-                     <span className="material-symbols-outlined text-4xl text-gray-600">event_busy</span>
+                 <div className="text-center py-24 bg-[#111] rounded-[2rem] border border-dashed border-white/10 hover:border-white/20 transition-colors group">
+                   <div className="w-20 h-20 bg-[#0A0A0A] rounded-full flex items-center justify-center mx-auto mb-6 border border-white/5 shadow-inner group-hover:scale-110 transition-transform">
+                     <span className={`material-symbols-outlined text-4xl text-gray-600 group-hover:text-${primaryAccent} transition-colors`}>event_busy</span>
                    </div>
-                   <p className="text-gray-400 font-medium text-lg mb-2">No hay reservas activas.</p>
-                   <p className="text-gray-600 text-sm">Explora las áreas comunes para programar un evento.</p>
+                   <p className="text-gray-300 font-medium text-lg mb-2">No tienes reservas activas.</p>
+                   <p className="text-gray-500 text-xs uppercase tracking-widest font-semibold max-w-xs mx-auto">Explora nuestras áreas comunes y agenda tu próximo evento.</p>
+                   
+                   {role === 'resident' && (
+                     <button 
+                       onClick={() => setView('browse')}
+                       className={`mt-8 px-8 py-3 rounded-full text-xs font-bold uppercase tracking-widest border border-white/10 text-white hover:bg-${primaryAccent} hover:text-black hover:border-${primaryAccent} transition-all active:scale-95`}
+                     >
+                       Ir a Explorar
+                     </button>
+                   )}
                  </div>
               )}
             </div>
@@ -414,54 +426,78 @@ const Reservations: React.FC<Props> = ({ navigate, role, from }) => {
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Stat Card 1 */}
-              <div className="bg-[#111] p-8 rounded-[2rem] border border-white/5 relative overflow-hidden group hover:border-[#A855F7]/30 transition-all">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-[#A855F7]/10 rounded-full blur-[40px]"></div>
+              <div className="bg-[#111] p-8 rounded-[2rem] border border-white/5 relative overflow-hidden group hover:border-[#A855F7]/30 transition-all shadow-lg hover:shadow-2xl">
+                <div className="absolute top-0 right-0 w-48 h-48 bg-[#A855F7]/10 rounded-full blur-[60px] group-hover:bg-[#A855F7]/20 transition-colors pointer-events-none"></div>
                 <div className="relative z-10 flex flex-col h-full">
-                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-4">Total Reservas (Mes)</p>
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em]">Total Reservas (Mes)</p>
+                    <span className="material-symbols-outlined text-gray-600">confirmation_number</span>
+                  </div>
                   <h4 className="text-5xl font-light text-white tracking-tight mb-2">124</h4>
-                  <p className="text-[11px] text-green-500 font-bold uppercase tracking-widest mt-auto">+12% vs Anterior</p>
+                  <div className="mt-auto flex items-center gap-1.5 text-green-500 bg-green-500/10 w-fit px-2 py-1 rounded-md border border-green-500/20">
+                    <span className="material-symbols-outlined text-[14px]">trending_up</span>
+                    <p className="text-[10px] font-bold uppercase tracking-widest">+12% vs Anterior</p>
+                  </div>
                 </div>
               </div>
 
               {/* Stat Card 2 */}
-              <div className="bg-[#111] p-8 rounded-[2rem] border border-white/5 relative overflow-hidden group hover:border-white/10 transition-all">
+              <div className="bg-[#111] p-8 rounded-[2rem] border border-white/5 relative overflow-hidden group hover:border-[#00AEEF]/30 transition-all shadow-lg hover:shadow-2xl">
+                <div className="absolute top-0 right-0 w-48 h-48 bg-[#00AEEF]/5 rounded-full blur-[60px] group-hover:bg-[#00AEEF]/15 transition-colors pointer-events-none"></div>
                 <div className="relative z-10 flex flex-col h-full">
-                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-4">Área más Demandada</p>
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em]">Área Demandada</p>
+                    <span className="material-symbols-outlined text-gray-600">star</span>
+                  </div>
                   <h4 className="text-3xl font-medium text-white tracking-tight mb-2">Quincho P.12</h4>
-                  <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-auto">42 agendamientos</p>
+                  <div className="mt-auto flex items-center gap-1.5 text-[#00AEEF] bg-[#00AEEF]/10 w-fit px-2 py-1 rounded-md border border-[#00AEEF]/20">
+                    <span className="material-symbols-outlined text-[14px]">bar_chart</span>
+                    <p className="text-[10px] font-bold uppercase tracking-widest">42 agendamientos</p>
+                  </div>
                 </div>
               </div>
 
               {/* Stat Card 3 */}
-              <div className="bg-[#111] p-8 rounded-[2rem] border border-white/5 relative overflow-hidden group hover:border-white/10 transition-all">
+              <div className="bg-[#111] p-8 rounded-[2rem] border border-white/5 relative overflow-hidden group hover:border-[#F59E0B]/30 transition-all shadow-lg hover:shadow-2xl">
+                 <div className="absolute top-0 right-0 w-48 h-48 bg-[#F59E0B]/5 rounded-full blur-[60px] group-hover:bg-[#F59E0B]/15 transition-colors pointer-events-none"></div>
                 <div className="relative z-10 flex flex-col h-full">
-                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-4">Ingresos Estimados</p>
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em]">Ingresos Estimados</p>
+                    <span className="material-symbols-outlined text-gray-600">payments</span>
+                  </div>
                   <h4 className="text-3xl font-medium text-white tracking-tight mb-2">$845.000</h4>
-                  <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-auto">A descontar en GG.CC.</p>
+                  <div className="mt-auto flex items-center gap-1.5 text-[#F59E0B] bg-[#F59E0B]/10 w-fit px-2 py-1 rounded-md border border-[#F59E0B]/20">
+                    <span className="material-symbols-outlined text-[14px]">account_balance_wallet</span>
+                    <p className="text-[10px] font-bold uppercase tracking-widest">A descontar en GG.CC.</p>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <section className="bg-[#111] rounded-[2rem] border border-white/5 p-8 md:p-10">
-              <h3 className="text-base font-semibold text-white tracking-widest uppercase mb-8 flex items-center gap-3">
-                <span className="material-symbols-outlined text-[#A855F7] text-[20px]">analytics</span>
-                Uso Estructural por Espacio
-              </h3>
+            <section className="bg-[#111] rounded-[2.5rem] border border-white/5 p-8 md:p-10 shadow-xl">
+              <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                <h3 className="text-sm font-semibold text-white tracking-widest uppercase flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#A855F7]/10 flex items-center justify-center border border-[#A855F7]/20 shadow-inner">
+                    <span className="material-symbols-outlined text-[#A855F7] text-[20px]">analytics</span>
+                  </div>
+                  Uso Estructural por Espacio
+                </h3>
+              </div>
               <div className="space-y-6">
                 {COMMON_AREAS.map((area, idx) => (
                   <div key={area.id} className="group">
                     <div className="flex justify-between items-center mb-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-[#0A0A0A] border border-white/5 flex items-center justify-center text-gray-500 group-hover:text-white transition-colors">
+                        <div className="w-8 h-8 rounded-lg bg-[#0A0A0A] border border-white/5 flex items-center justify-center text-gray-400 group-hover:text-white transition-colors shadow-inner">
                           <span className="material-symbols-outlined text-[16px]">{area.icon}</span>
                         </div>
                         <span className="font-medium text-gray-300 text-sm">{area.name}</span>
                       </div>
-                      <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">{85 - (idx * 15)}%</span>
+                      <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest bg-white/5 px-2 py-0.5 rounded-md">{85 - (idx * 15)}%</span>
                     </div>
                     <div className="h-1.5 w-full bg-[#0A0A0A] rounded-full overflow-hidden border border-white/5">
                       <div 
-                        className="h-full bg-gradient-to-r from-[#A855F7] to-[#8B5CF6] rounded-full transition-all duration-1000 ease-out" 
+                        className="h-full bg-gradient-to-r from-[#A855F7] to-[#8B5CF6] rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(168,85,247,0.5)]" 
                         style={{ width: `${85 - (idx * 15)}%` }}
                       ></div>
                     </div>

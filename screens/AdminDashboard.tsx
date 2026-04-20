@@ -60,7 +60,7 @@ export const AdminDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
           <SidebarItem icon="grid_view" label="Dashboard" active expanded={isSidebarExpanded} />
           <SidebarItem icon="document_scanner" label="Finanzas & OCR" onClick={() => navigate('ManageExpenses')} expanded={isSidebarExpanded} />
           <SidebarItem icon="storefront" label="Conserjería" onClick={() => navigate('BitacoraScreen')} expanded={isSidebarExpanded} />
-          <SidebarItem icon="apartment" label="Unidades" onClick={() => navigate('ResidentDirectory')} expanded={isSidebarExpanded} />
+          <SidebarItem icon="group" label="Residentes" onClick={() => navigate('ResidentDirectory')} expanded={isSidebarExpanded} />
           <SidebarItem icon="apps" label="Módulos" onClick={() => setIsGlobalMenuOpen(true)} expanded={isSidebarExpanded} />
           <SidebarItem icon="settings" label="Configuración" expanded={isSidebarExpanded} />
         </nav>
@@ -112,9 +112,9 @@ export const AdminDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
           </div>
         </header>
 
-        <div className="px-6 md:px-16 pb-32 md:pb-20 max-w-6xl w-full mx-auto">
+        <div className="px-6 md:px-16 pb-32 md:pb-24 max-w-7xl w-full mx-auto">
           {/* Asymmetrical Bento Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
             
             {/* LARGE CARD: Pending Payments & AI OCR Expenses (60% visually / col-span-2) */}
             <div className="lg:col-span-2 bg-[#111] rounded-[2rem] border border-white/5 p-6 md:p-10 flex flex-col relative overflow-hidden shadow-2xl group">
@@ -163,9 +163,10 @@ export const AdminDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
                     </div>
                     <button 
                       onClick={handleApprove}
-                      className="bg-[#008080] text-white px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-[#006666] transition-all shadow-[0_0_15px_rgba(0,128,128,0.3)] active:scale-95 w-full md:w-auto"
+                      className="group bg-ediflow-primary text-black px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white transition-all shadow-[0_0_20px_rgba(0,174,239,0.2)] hover:shadow-[0_0_30px_rgba(255,255,255,0.3)] active:scale-[0.98] w-full md:w-auto flex items-center justify-center gap-2"
                     >
-                      Aprobar
+                      <span>Aprobar Captura</span>
+                      <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
                     </button>
                  </div>
 
@@ -206,9 +207,9 @@ export const AdminDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
                 </div>
                 <button 
                   onClick={() => navigate('BitacoraScreen')}
-                  className="mt-auto pt-4 text-xs font-medium text-[#008080] hover:text-ediflow-primary transition-colors flex items-center justify-end gap-1 w-full"
+                  className="mt-auto pt-5 text-xs font-bold text-gray-500 uppercase tracking-widest hover:text-white transition-colors flex items-center justify-end gap-2 w-full group"
                 >
-                  Ver bitácora <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                  <span className="group-hover:translate-x-1 transition-transform">Ver Bitácora Diaria</span> <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
                 </button>
               </div>
 

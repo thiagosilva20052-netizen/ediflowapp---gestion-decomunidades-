@@ -147,38 +147,44 @@ const MessagesScreen: React.FC<Props> = ({ navigate, role }) => {
               {/* Back button strictly for mobile or custom exits */}
               <button 
                   onClick={handleBack}
-                  className="w-10 h-10 mb-6 flex items-center justify-center rounded-xl bg-[#111] hover:bg-[#1A1A1A] active:scale-95 transition-all text-white border border-white/5"
+                  className="w-10 h-10 mb-6 flex items-center justify-center rounded-xl bg-[#111] hover:bg-[#1A1A1A] active:scale-95 transition-all text-gray-400 hover:text-white border border-white/5 shadow-sm group"
               >
-                  <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+                  <span className="material-symbols-outlined text-[20px] group-hover:-translate-x-1 transition-transform">arrow_back</span>
               </button>
 
-              <div className="mb-12">
-                  <h2 className="text-[11px] md:text-xs font-semibold uppercase tracking-widest text-[#00AEEF] mb-2">Comunicaciones</h2>
+              <div className="mb-12 relative">
+                  <div className="absolute -top-10 -left-10 w-48 h-48 bg-[#00AEEF]/10 rounded-full blur-[80px] pointer-events-none"></div>
+                  <h2 className="text-[11px] md:text-xs font-semibold uppercase tracking-[0.2em] text-[#00AEEF] mb-3 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[14px]">forum</span>
+                    Comunicaciones
+                  </h2>
                   <h1 className="text-4xl md:text-5xl font-light tracking-tight text-white leading-tight">
-                      Canales <span className="font-medium">Seguros</span>.
+                      Canales <span className="font-medium text-transparent bg-clip-text bg-gradient-to-r from-white to-[#00AEEF]">Seguros</span>.
                   </h1>
-                  <p className="text-gray-500 text-sm md:text-base mt-2 max-w-lg">
+                  <p className="text-gray-400 text-sm md:text-base mt-4 max-w-lg leading-relaxed mix-blend-plus-lighter">
                       Conexión encriptada y directa con el equipo operativo de la comunidad. 
                   </p>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full relative z-10">
                   {conciergeChat && (
                       <button 
                           onClick={() => setActiveChat(conciergeChat)}
-                          className="flex flex-col text-left bg-[#111] p-8 rounded-[2rem] border border-white/5 hover:bg-[#141414] hover:border-[#00AEEF]/50 transition-all active:scale-[0.98] group relative overflow-hidden shadow-2xl"
+                          className="flex flex-col text-left bg-[#111] p-8 rounded-[2rem] border border-white/5 hover:bg-[#141414] hover:border-[#00AEEF]/50 transition-all active:scale-[0.98] group relative overflow-hidden shadow-lg hover:shadow-[0_0_30px_rgba(0,174,239,0.15)]"
                       >
-                          <div className="absolute top-0 right-0 w-64 h-64 bg-[#00AEEF]/5 rounded-full blur-[80px] group-hover:bg-[#00AEEF]/10 transition-colors pointer-events-none"></div>
+                          <div className="absolute top-0 right-0 w-64 h-64 bg-[#00AEEF]/5 rounded-full blur-[80px] group-hover:bg-[#00AEEF]/15 transition-colors pointer-events-none"></div>
                           
-                          <div className="w-14 h-14 rounded-2xl bg-[#0A0A0A] border border-white/10 flex items-center justify-center mb-16 relative z-10 transition-colors group-hover:border-[#00AEEF]/30 group-hover:bg-[#00AEEF]/10 group-hover:shadow-[0_0_20px_rgba(0,174,239,0.15)]">
+                          <div className="w-14 h-14 rounded-[1.25rem] bg-[#0A0A0A] border border-white/10 flex items-center justify-center mb-16 relative z-10 transition-all group-hover:border-[#00AEEF]/40 group-hover:bg-[#00AEEF]/10 group-hover:shadow-[inset_0_0_20px_rgba(0,174,239,0.2)]">
                               <span className="material-symbols-outlined text-3xl text-gray-400 group-hover:text-[#00AEEF] transition-colors">support_agent</span>
                           </div>
                           <div className="relative z-10 flex-1 flex flex-col justify-end w-full">
-                              <div className="flex items-center justify-between w-full mb-2">
+                              <div className="flex items-center justify-between w-full mb-3">
                                 <h3 className="text-white font-medium text-2xl tracking-tight">Conserjería</h3>
-                                <span className="material-symbols-outlined text-white/20 group-hover:text-[#00AEEF] transition-colors">arrow_forward</span>
+                                <div className="w-8 h-8 rounded-full bg-[#0A0A0A] border border-white/5 flex items-center justify-center text-gray-600 group-hover:bg-white group-hover:text-black group-hover:border-transparent transition-all">
+                                   <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                                </div>
                               </div>
-                              <p className="text-sm text-gray-500 tracking-wide">Visitas, paquetes y emergencias (24/7)</p>
+                              <p className="text-sm text-gray-400 font-medium tracking-wide leading-relaxed">Visitas, paquetes y emergencias (24/7)</p>
                           </div>
                       </button>
                   )}
@@ -186,27 +192,29 @@ const MessagesScreen: React.FC<Props> = ({ navigate, role }) => {
                   {adminChat && (
                       <button 
                           onClick={() => setActiveChat(adminChat)}
-                          className="flex flex-col text-left bg-[#111] p-8 rounded-[2rem] border border-white/5 hover:bg-[#141414] hover:border-ediflow-primary/50 transition-all active:scale-[0.98] group relative overflow-hidden shadow-2xl"
+                          className="flex flex-col text-left bg-[#111] p-8 rounded-[2rem] border border-white/5 hover:bg-[#141414] hover:border-ediflow-primary/50 transition-all active:scale-[0.98] group relative overflow-hidden shadow-lg hover:shadow-[0_0_30px_rgba(168,85,247,0.15)]"
                       >
-                          <div className="absolute top-0 right-0 w-64 h-64 bg-ediflow-primary/5 rounded-full blur-[80px] group-hover:bg-ediflow-primary/10 transition-colors pointer-events-none"></div>
+                          <div className="absolute top-0 right-0 w-64 h-64 bg-ediflow-primary/5 rounded-full blur-[80px] group-hover:bg-ediflow-primary/15 transition-colors pointer-events-none"></div>
 
                           <div className="flex w-full justify-between items-start relative z-10 mb-16">
-                            <div className="w-14 h-14 rounded-2xl bg-[#0A0A0A] border border-white/10 flex items-center justify-center transition-colors group-hover:border-ediflow-primary/30 group-hover:bg-ediflow-primary/10 group-hover:shadow-[0_0_20px_rgba(168,85,247,0.15)]">
+                            <div className="w-14 h-14 rounded-[1.25rem] bg-[#0A0A0A] border border-white/10 flex items-center justify-center transition-all group-hover:border-ediflow-primary/40 group-hover:bg-ediflow-primary/10 group-hover:shadow-[inset_0_0_20px_rgba(168,85,247,0.2)]">
                                 <span className="material-symbols-outlined text-3xl text-gray-400 group-hover:text-ediflow-primary transition-colors">admin_panel_settings</span>
                             </div>
                             {adminChat.unread ? (
-                                <div className="w-8 h-8 rounded-full bg-ediflow-primary text-black flex items-center justify-center text-sm font-bold shadow-[0_0_15px_rgba(168,85,247,0.6)] animate-pulse-soft">
+                                <div className="w-8 h-8 rounded-full bg-ediflow-primary text-black flex items-center justify-center text-sm font-bold shadow-[0_0_20px_rgba(168,85,247,0.8)] animate-pulse-soft border border-black">
                                     {adminChat.unread}
                                 </div>
                             ) : null}
                           </div>
 
                           <div className="relative z-10 flex-1 flex flex-col justify-end w-full">
-                              <div className="flex items-center justify-between w-full mb-2">
+                              <div className="flex items-center justify-between w-full mb-3">
                                 <h3 className="text-white font-medium text-2xl tracking-tight">Administración</h3>
-                                <span className="material-symbols-outlined text-white/20 group-hover:text-ediflow-primary transition-colors">arrow_forward</span>
+                                <div className="w-8 h-8 rounded-full bg-[#0A0A0A] border border-white/5 flex items-center justify-center text-gray-600 group-hover:bg-white group-hover:text-black group-hover:border-transparent transition-all">
+                                   <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                                </div>
                               </div>
-                              <p className="text-sm text-gray-500 tracking-wide">Facturación, reclamos y documentación</p>
+                              <p className="text-sm text-gray-400 font-medium tracking-wide leading-relaxed">Facturación, reclamos y documentación</p>
                           </div>
                       </button>
                   )}
@@ -234,22 +242,26 @@ const MessagesScreen: React.FC<Props> = ({ navigate, role }) => {
               </button>
 
               {/* Header Box */}
-              <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-6">
-                <div>
-                  <h1 className="text-3xl md:text-5xl font-light tracking-tight text-white leading-tight mb-2">
+              <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-6 relative">
+                 <div className="absolute -top-20 -left-20 w-48 h-48 bg-ediflow-primary/10 rounded-full blur-[80px] pointer-events-none"></div>
+                <div className="relative z-10">
+                  <h1 className="text-3xl md:text-5xl font-light tracking-tight text-white leading-tight mb-3">
                       Comunicaciones.
                   </h1>
-                  <p className="text-[10px] md:text-xs font-semibold uppercase tracking-widest text-[#00AEEF]">Centro de Operaciones</p>
+                  <p className="text-[10px] md:text-xs font-semibold uppercase tracking-[0.2em] text-ediflow-primary flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[14px]">headset_mic</span>
+                    Centro de Operaciones
+                  </p>
                 </div>
                 
-                <div className="w-full md:w-96 relative">
-                    <span className="material-symbols-outlined absolute left-4 top-3.5 text-gray-500">search</span>
+                <div className="w-full md:w-96 relative z-10 group">
+                    <span className="material-symbols-outlined absolute left-4 top-3.5 text-gray-500 group-focus-within:text-ediflow-primary transition-colors">search</span>
                     <input 
                         type="text" 
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Buscar residente, depto o área..." 
-                        className="w-full bg-[#111] text-white rounded-2xl py-3.5 pl-12 pr-4 text-sm focus:outline-none focus:ring-1 focus:ring-ediflow-primary border border-white/5 shadow-inner placeholder:text-gray-600 transition-shadow"
+                        className="w-full bg-[#111] text-white rounded-2xl py-3.5 pl-12 pr-4 text-sm focus:outline-none focus:ring-1 focus:ring-ediflow-primary focus:border-ediflow-primary/50 border border-white/5 shadow-inner placeholder:text-gray-600 transition-all hover:border-white/10"
                     />
                 </div>
               </div>
@@ -261,49 +273,57 @@ const MessagesScreen: React.FC<Props> = ({ navigate, role }) => {
                           <div 
                               key={chat.id}
                               onClick={() => setActiveChat(chat)}
-                              className={`flex items-center gap-5 p-4 rounded-2xl bg-[#0F0F0F] border hover:bg-[#141414] cursor-pointer active:scale-[0.99] transition-all
-                                ${chat.unread ? 'border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.5)]' : 'border-transparent'}`}
+                              className={`flex items-center gap-5 p-4 rounded-2xl bg-[#0A0A0A] border hover:bg-[#111] cursor-pointer active:scale-[0.99] transition-all group overflow-hidden relative
+                                ${chat.unread ? 'border-ediflow-primary/30 shadow-[0_0_20px_rgba(168,85,247,0.1)]' : 'border-white/5 hover:border-white/10'}`}
                           >
+                              {/* Hover background effect */}
+                              <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 opacity-0 group-hover:opacity-100 blur-[40px] transition-opacity pointer-events-none"></div>
+
                               {/* Avatar & Status */}
-                              <div className="relative shrink-0">
+                              <div className="relative shrink-0 z-10">
                                   {chat.icon ? (
-                                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border ${chat.type === 'admin' ? 'bg-[#111] text-blue-400 border-white/5' : 'bg-[#111] text-[#00AEEF] border-white/5'}`}>
-                                          <span className="material-symbols-outlined text-[24px]">{chat.icon}</span>
+                                      <div className={`w-14 h-14 rounded-[1.25rem] flex items-center justify-center border shadow-inner ${chat.type === 'admin' ? 'bg-[#141414] text-blue-400 border-white/5' : 'bg-[#141414] text-[#00AEEF] border-white/5'}`}>
+                                          <span className="material-symbols-outlined text-[24px] group-hover:scale-110 transition-transform">{chat.icon}</span>
                                       </div>
                                   ) : (
-                                      <img src={chat.avatar} className="w-14 h-14 rounded-2xl object-cover border border-white/5" />
+                                      <img src={chat.avatar} className="w-14 h-14 rounded-[1.25rem] object-cover border border-white/5 shadow-inner" />
                                   )}
-                                  {chat.online && <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-4 border-[#0F0F0F]"></div>}
+                                  {chat.online && <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-[3px] border-[#0A0A0A] shadow-[0_0_10px_rgba(34,197,94,0.5)]"></div>}
                               </div>
 
                               {/* Info */}
-                              <div className="flex-1 min-w-0">
-                                  <div className="flex justify-between items-center mb-1">
-                                      <h3 className="text-white font-medium text-sm md:text-base tracking-tight truncate flex items-center gap-2">
+                              <div className="flex-1 min-w-0 z-10">
+                                  <div className="flex justify-between items-center mb-1.5">
+                                      <h3 className={`text-sm md:text-base tracking-tight truncate flex items-center gap-2 ${chat.unread ? 'text-white font-semibold' : 'text-gray-300 font-medium'}`}>
                                           {chat.name} 
-                                          {chat.depto && <span className="bg-white/10 text-white px-2 py-0.5 rounded text-[10px] font-bold tracking-widest">DEPTO {chat.depto}</span>}
+                                          {chat.depto && <span className="bg-[#141414] border border-white/10 text-gray-400 px-2.5 py-0.5 rounded-md text-[9px] font-bold tracking-[0.15em] uppercase">Dep. {chat.depto}</span>}
                                       </h3>
-                                      <span className={`text-[10px] font-semibold tracking-widest uppercase ${chat.unread ? 'text-ediflow-primary' : 'text-gray-600'}`}>{chat.time}</span>
+                                      <span className={`text-[10px] font-bold tracking-widest uppercase ${chat.unread ? 'text-ediflow-primary' : 'text-gray-600'}`}>{chat.time}</span>
                                   </div>
-                                  <p className={`text-xs md:text-sm truncate w-full pr-4 ${chat.unread ? 'text-gray-300 font-medium' : 'text-gray-500'}`}>{chat.lastMessage}</p>
+                                  <p className={`text-xs md:text-sm truncate w-full pr-4 ${chat.unread ? 'text-white font-medium' : 'text-gray-500'}`}>{chat.lastMessage}</p>
                               </div>
 
                               {/* Indicators */}
-                              {chat.unread ? (
-                                  <div className="w-6 h-6 bg-ediflow-primary rounded-full flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(168,85,247,0.4)]">
-                                      <span className="text-[10px] font-bold text-black">{chat.unread}</span>
-                                  </div>
-                              ) : (
-                                  <span className="material-symbols-outlined text-gray-700 text-[20px] hidden md:block">chevron_right</span>
-                              )}
+                              <div className="z-10">
+                                {chat.unread ? (
+                                    <div className="w-6 h-6 bg-ediflow-primary rounded-full flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(168,85,247,0.4)] border border-black">
+                                        <span className="text-[10px] font-bold text-black">{chat.unread}</span>
+                                    </div>
+                                ) : (
+                                    <div className="w-8 h-8 rounded-full border border-transparent group-hover:border-white/10 flex items-center justify-center transition-all bg-transparent group-hover:bg-[#1A1A1A]">
+                                        <span className="material-symbols-outlined text-gray-700 text-[18px] group-hover:text-white transition-colors">chevron_right</span>
+                                    </div>
+                                )}
+                              </div>
                           </div>
                       ))
                   ) : (
-                      <div className="flex flex-col items-center justify-center py-20 text-center">
-                          <div className="w-16 h-16 rounded-full bg-[#111] border border-white/5 flex items-center justify-center mb-4">
-                            <span className="material-symbols-outlined text-3xl text-gray-600">search_off</span>
+                      <div className="flex flex-col items-center justify-center py-24 text-center bg-[#111] rounded-[2rem] border border-dashed border-white/10 mx-2 mt-4">
+                          <div className="w-20 h-20 rounded-full bg-[#0A0A0A] border border-white/5 flex items-center justify-center mb-6 shadow-inner">
+                            <span className="material-symbols-outlined text-4xl text-gray-600">search_off</span>
                           </div>
-                          <p className="text-gray-400 font-medium">No se encontraron resultados.</p>
+                          <p className="text-gray-300 font-medium text-lg mb-2">No se encontraron resultados.</p>
+                          <p className="text-gray-500 text-xs uppercase tracking-widest font-semibold max-w-xs mx-auto">Revisa los términos de búsqueda e intenta nuevamente.</p>
                       </div>
                   )}
               </div>
@@ -326,55 +346,70 @@ const MessagesScreen: React.FC<Props> = ({ navigate, role }) => {
       return (
           <div className="flex flex-col h-full bg-[#0A0A0A] relative z-50">
               {/* Premium Chat Header */}
-              <div className="flex items-center gap-4 px-4 md:px-8 py-4 bg-[#0A0A0A]/90 backdrop-blur-2xl sticky top-0 z-30 border-b border-white/5">
+              <div className="flex items-center gap-4 px-6 md:px-8 py-5 bg-[#0A0A0A]/90 backdrop-blur-3xl sticky top-0 z-30 border-b border-white/5 shadow-sm">
                   <button 
                       onClick={handleBack}
-                      className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#111] hover:bg-[#1A1A1A] active:scale-95 transition-all text-white border border-white/5"
+                      className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#111] hover:bg-[#1A1A1A] active:scale-95 transition-all text-gray-400 hover:text-white border border-white/5 shadow-sm group"
                   >
-                      <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+                      <span className="material-symbols-outlined text-[20px] group-hover:-translate-x-1 transition-transform">arrow_back</span>
                   </button>
 
-                  <div className="relative shrink-0">
+                  <div className="relative shrink-0 ml-2">
                       {activeChat.icon ? (
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-[#111] border border-white/5 text-white`}>
-                              <span className="material-symbols-outlined text-[20px]">{activeChat.icon}</span>
+                          <div className={`w-12 h-12 rounded-[1.25rem] flex items-center justify-center bg-[#111] border border-white/5 shadow-inner ${activeChat.type === 'admin' ? 'text-blue-400' : 'text-[#00AEEF]'}`}>
+                              <span className="material-symbols-outlined text-[24px]">{activeChat.icon}</span>
                           </div>
                       ) : (
-                          <img src={activeChat.avatar} className="w-10 h-10 rounded-xl object-cover border border-white/5" />
+                          <img src={activeChat.avatar} className="w-12 h-12 rounded-[1.25rem] object-cover border border-white/5 shadow-inner" />
                       )}
-                      {activeChat.online && <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-green-500 rounded-full border-[3px] border-[#0A0A0A]"></div>}
+                      {activeChat.online && <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-[3px] border-[#0A0A0A] shadow-[0_0_10px_rgba(34,197,94,0.5)]"></div>}
                   </div>
 
-                  <div className="flex-1 min-w-0">
-                      <h2 className="text-white font-medium text-sm md:text-base tracking-tight truncate flex items-center gap-2">
+                  <div className="flex-1 min-w-0 flex flex-col justify-center ml-1">
+                      <h2 className="text-white font-medium text-base md:text-lg tracking-tight truncate flex items-center gap-2">
                         {activeChat.name}
-                        {activeChat.type === 'admin' && <span className="material-symbols-outlined text-[14px] text-blue-400">verified</span>}
+                        {activeChat.type === 'admin' && <span className="material-symbols-outlined text-[16px] text-blue-400">verified</span>}
                       </h2>
-                      <p className="text-[10px] font-semibold text-gray-500 tracking-widest uppercase truncate">
+                      <p className="text-[10px] font-bold text-gray-500 tracking-[0.15em] uppercase truncate mt-0.5">
                           {activeChat.depto ? `Depto ${activeChat.depto}` : activeChat.type === 'admin' ? 'Soporte Global' : 'Base de Control'}
                       </p>
                   </div>
+                  
+                  {/* Optional Right Action (e.g., info or call) */}
+                  <button className="w-10 h-10 rounded-full bg-transparent flex items-center justify-center text-gray-600 hover:text-white hover:bg-white/5 transition-colors">
+                     <span className="material-symbols-outlined text-[22px]">more_vert</span>
+                  </button>
               </div>
 
               {/* Chat Messages */}
-              <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 bg-[#0A0A0A]">
-                  <div className="flex items-center justify-center my-6">
-                      <span className="px-3 py-1 bg-[#111] border border-white/5 rounded-full text-[10px] uppercase tracking-widest font-semibold text-gray-600">Conexión Segura (Hoy)</span>
+              <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 bg-[#0A0A0A] relative">
+                  {/* Subtle Background Pattern/Glow */}
+                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white/[0.02] via-transparent to-transparent pointer-events-none"></div>
+
+                  <div className="flex items-center justify-center my-8 relative z-10">
+                      <span className="px-4 py-1.5 bg-[#141414] border border-white/10 rounded-full text-[9px] uppercase tracking-[0.2em] font-bold text-gray-500 shadow-sm flex items-center gap-1.5">
+                         <span className="material-symbols-outlined text-[12px]">lock</span> Conexión Segura (Hoy)
+                      </span>
                   </div>
 
-                  {messages.map((msg) => (
-                      <div key={msg.id} className={`flex flex-col w-full ${msg.isMe ? 'items-end' : 'items-start'}`}>
-                          <div className={`relative max-w-[85%] md:max-w-[70%] rounded-2xl px-5 py-3 text-sm md:text-base leading-relaxed ${
-                              msg.isMe 
-                                ? `${accentColor} border border-[transparent] rounded-tr-[4px]` 
-                                : 'bg-[#141414] text-gray-200 border border-white/5 rounded-tl-[4px]'
-                          }`}>
-                              {msg.text}
+                  <div className="relative z-10 space-y-6 flex flex-col justify-end min-h-[50%]">
+                      {messages.map((msg) => (
+                          <div key={msg.id} className={`flex flex-col w-full ${msg.isMe ? 'items-end' : 'items-start'} animate-fade-in-up`}>
+                              <div className={`relative max-w-[85%] md:max-w-[65%] rounded-2xl px-5 py-3.5 text-sm md:text-base leading-relaxed shadow-md ${
+                                  msg.isMe 
+                                    ? `${accentColor} border ${role === 'resident' && activeChat.type !== 'admin' ? 'border-[#0089bd]' : 'border-ediflow-primary/80'} rounded-tr-sm` 
+                                    : 'bg-[#141414] text-gray-200 border border-white/10 rounded-tl-sm'
+                              }`}>
+                                  {msg.text}
+                              </div>
+                              <div className={`flex items-center justify-end gap-1 mt-1.5 px-1 ${msg.isMe ? 'text-right' : 'text-left'}`}>
+                                  <span className="text-[10px] font-bold tracking-widest text-gray-600">{msg.time}</span>
+                                  {msg.isMe && <span className={`material-symbols-outlined text-[14px] ${role === 'resident' && activeChat.type === 'admin' ? 'text-ediflow-primary' : 'text-[#00AEEF]'}`}>done_all</span>}
+                              </div>
                           </div>
-                          <span className="text-[10px] font-semibold tracking-widest text-gray-600 mt-2 px-1">{msg.time}</span>
-                      </div>
-                  ))}
-                  <div ref={messagesEndRef} className="h-4" />
+                      ))}
+                      <div ref={messagesEndRef} className="h-4" />
+                  </div>
               </div>
 
               {/* Quick Replies - Glassy pills */}
@@ -393,39 +428,51 @@ const MessagesScreen: React.FC<Props> = ({ navigate, role }) => {
               )}
 
               {/* Sleek Input Tool */}
-              <div className="p-4 md:p-6 bg-[#0A0A0A] border-t border-white/5 flex gap-3 pb-safe">
-                  <div className="flex-1 bg-[#111] rounded-2xl border border-white/10 flex items-end p-1.5 focus-within:border-gray-500 focus-within:bg-[#141414] transition-all shadow-inner">
-                      <button className="w-10 h-10 shrink-0 flex items-center justify-center rounded-xl bg-transparent text-gray-500 hover:text-white transition-colors">
-                          <span className="material-symbols-outlined text-[20px]">add</span>
+              <div className="p-4 md:p-6 bg-[#0A0A0A] border-t border-white/5 flex flex-col gap-3 pb-safe z-30 relative shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+                  {/* Action Bar (Attachments, Photos) */}
+                  <div className="flex items-center gap-4 px-2 mb-1">
+                      <button className="text-gray-500 hover:text-white transition-colors active:scale-95 tooltip-trigger group flex items-center gap-1.5">
+                          <span className="material-symbols-outlined text-[20px]">attach_file</span>
+                          <span className="text-[10px] font-bold uppercase tracking-widest hidden md:block">Adjuntar</span>
                       </button>
-                      <textarea 
-                          value={newMessage}
-                          onChange={(e) => setNewMessage(e.target.value)}
-                          onKeyDown={(e) => {
-                              if (e.key === 'Enter' && !e.shiftKey) {
-                                  e.preventDefault();
-                                  handleSendMessage();
-                              }
-                          }}
-                          placeholder="Escribe un mensaje..."
-                          className="flex-1 bg-transparent text-white text-sm px-2 py-3 max-h-32 outline-none resize-none no-scrollbar placeholder:text-gray-600 font-medium"
-                          rows={1}
-                      />
-                      <button className="w-10 h-10 shrink-0 flex items-center justify-center rounded-xl text-gray-500 hover:text-white transition-colors mr-1">
-                          <span className="material-symbols-outlined text-[20px]">mic</span>
+                      <button className="text-gray-500 hover:text-white transition-colors active:scale-95 tooltip-trigger group flex items-center gap-1.5">
+                          <span className="material-symbols-outlined text-[20px]">image</span>
+                          <span className="text-[10px] font-bold uppercase tracking-widest hidden md:block">Galería</span>
                       </button>
                   </div>
 
-                  <button 
-                      onClick={() => handleSendMessage()}
-                      disabled={!newMessage.trim()}
-                      className={`w-[52px] h-[52px] shrink-0 flex items-center justify-center rounded-2xl transition-all active:scale-[0.95]
-                        ${newMessage.trim() 
-                          ? `${accentColor} shadow-[0_0_15px_rgba(168,85,247,0.3)]` 
-                          : 'bg-[#111] text-gray-600 border border-white/5 cursor-not-allowed'}`}
-                  >
-                      <span className="material-symbols-outlined text-[20px] ml-1">send</span>
-                  </button>
+                  <div className="flex gap-3">
+                      <div className="flex-1 bg-[#111] rounded-2xl border border-white/10 flex items-end p-1 focus-within:border-white/30 focus-within:bg-[#141414] transition-all shadow-inner group">
+                          <textarea 
+                              value={newMessage}
+                              onChange={(e) => setNewMessage(e.target.value)}
+                              onKeyDown={(e) => {
+                                  if (e.key === 'Enter' && !e.shiftKey) {
+                                      e.preventDefault();
+                                      handleSendMessage();
+                                  }
+                              }}
+                              placeholder="Escribe un mensaje..."
+                              className="flex-1 bg-transparent text-white text-sm px-4 py-3.5 max-h-32 outline-none resize-none no-scrollbar placeholder:text-gray-600 font-medium"
+                              rows={1}
+                          />
+                          <button className="w-10 h-10 shrink-0 flex items-center justify-center rounded-xl text-gray-500 hover:text-white focus:text-white transition-colors m-1">
+                              <span className="material-symbols-outlined text-[20px]">mic</span>
+                          </button>
+                      </div>
+
+                      <button 
+                          onClick={() => handleSendMessage()}
+                          disabled={!newMessage.trim()}
+                          className={`w-14 h-14 shrink-0 flex items-center justify-center rounded-2xl transition-all active:scale-[0.95] ${
+                              newMessage.trim() 
+                                ? `${accentColor} shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:brightness-110` 
+                                : 'bg-[#111] text-gray-600 border border-white/5 cursor-not-allowed'
+                          }`}
+                      >
+                          <span className="material-symbols-outlined text-[24px] ml-1">send</span>
+                      </button>
+                  </div>
               </div>
           </div>
       );
