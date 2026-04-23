@@ -24,234 +24,243 @@ export const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
   return (
     <div className="flex h-screen bg-[#0A0A0A] text-white font-sans overflow-hidden py-safe selection:bg-white/10">
       
-      {/* Sleek Collapsible Sidebar (Glassmorphism & Narrow) */}
+      {/* Sleek Collapsible Sidebar (Glassmorphism & Narrow) - Hidden Mobile */}
       <aside 
-        className={`hidden md:flex flex-col bg-[#111]/40 backdrop-blur-3xl border-r border-white/5 py-8 px-4 transition-all duration-300 ease-in-out relative z-40 ${isSidebarExpanded ? 'w-64' : 'w-20 items-center'}`}
+        className={`hidden md:flex flex-col bg-[#050505] border-r border-white/5 py-8 px-4 transition-all duration-300 ease-in-out relative z-40 ${isSidebarExpanded ? 'w-64' : 'w-20 items-center'}`}
         onMouseEnter={() => setIsSidebarExpanded(true)}
         onMouseLeave={() => setIsSidebarExpanded(false)}
       >
-        <div className="mb-8 pl-2">
+        <div className="mb-10 pl-2 opacity-90 transition-opacity hover:opacity-100 cursor-pointer text-[#00AEEF]">
           {isSidebarExpanded ? (
-            <Logo variant="horizontal" color="#FFFFFF" className="scale-[0.85] origin-left" />
+            <span className="text-xl font-bold tracking-tighter">Ediflow</span>
           ) : (
-            <Logo variant="icon" color="#FFFFFF" className="scale-75" />
+            <span className="text-2xl font-bold">E.</span>
           )}
         </div>
 
         {/* User Identity at the top */}
         <div className="w-full pb-6 mb-6 border-b border-white/5 flex flex-col gap-2">
-           <div className={`flex items-center gap-3 p-2 rounded-xl border border-transparent hover:border-white/5 hover:bg-white/5 cursor-pointer transition-colors ${isSidebarExpanded ? 'w-full' : 'justify-center'}`}>
-              <div className="shrink-0 w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-xs ring-1 ring-blue-500/30">
+           <div className={`flex items-center gap-3 py-2 px-1.5 rounded-xl border border-transparent hover:border-white/5 hover:bg-white/5 cursor-pointer transition-colors ${isSidebarExpanded ? 'w-full' : 'justify-center'}`}>
+              <div className="shrink-0 w-9 h-9 rounded-xl bg-blue-500 text-white flex items-center justify-center font-bold text-sm shadow-[0_0_15px_rgba(59,130,246,0.3)]">
                 {currentUser?.name ? currentUser.name.charAt(0) : 'C'}
               </div>
               {isSidebarExpanded && (
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate text-gray-200">{currentUser?.name || "Conserje Turno"}</p>
-                  <p className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span> En línea
+                  <p className="text-sm font-medium truncate text-white">{currentUser?.name || "Conserje Turno"}</p>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold flex items-center gap-1 mt-0.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]"></span> Turno Activo
                   </p>
                 </div>
               )}
            </div>
         </div>
         
-        <nav className="flex-1 space-y-4 w-full overflow-y-auto no-scrollbar pb-4 block">
-          <SidebarItem icon="home" label="Consola Principal" active expanded={isSidebarExpanded} />
-          <SidebarItem icon="inventory_2" label="Paquetería OCR" onClick={() => navigate('PackageEntry')} expanded={isSidebarExpanded} />
-          <SidebarItem icon="badge" label="Registro Visitas" onClick={() => navigate('ManualVisitorRegistration')} expanded={isSidebarExpanded} />
-          <SidebarItem icon="menu_book" label="Libro Novedades" onClick={() => navigate('BitacoraScreen')} expanded={isSidebarExpanded} />
-          <SidebarItem icon="apps" label="Módulos" onClick={() => setIsGlobalMenuOpen(true)} expanded={isSidebarExpanded} />
-          <SidebarItem icon="assignment_late" label="Pánico" onClick={() => navigate('Emergency')}  expanded={isSidebarExpanded} isDanger/>
+        <nav className="flex-1 space-y-2 w-full overflow-y-auto no-scrollbar pb-4 block">
+          <SidebarItem icon="dashboard" label="Mesa de Control" active expanded={isSidebarExpanded} />
+          <SidebarItem icon="inventory_2" label="Ingreso Paquete" onClick={() => navigate('PackageEntry')} expanded={isSidebarExpanded} />
+          <SidebarItem icon="person_add" label="Ingreso Visita" onClick={() => navigate('ManualVisitorRegistration')} expanded={isSidebarExpanded} />
+          <SidebarItem icon="menu_book" label="Libro Diario" onClick={() => navigate('BitacoraScreen')} expanded={isSidebarExpanded} />
+          <SidebarItem icon="quick_reference_all" label="Directorio" onClick={() => navigate('ResidentDirectory')} expanded={isSidebarExpanded} />
+          
+          <div className="pt-6 mt-4 border-t border-white/5">
+            <SidebarItem icon="sos" label="Pánico / Emergencia" onClick={() => navigate('Emergency')}  expanded={isSidebarExpanded} isDanger/>
+          </div>
         </nav>
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col h-full overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-10 pb-20 pt-8 md:pt-12 max-w-7xl mx-auto w-full">
+      <main className="flex-1 flex flex-col h-full overflow-y-auto custom-scrollbar relative z-10 w-full">
         
         {/* Mobile Header (Hidden on Desktop) */}
-        <header className="md:hidden flex justify-between items-center mb-6 px-2">
-           <Logo variant="horizontal" className="scale-[0.8] origin-left" />
-           <div className="flex gap-3">
-             <button title="Notificaciones" className="relative w-10 h-10 rounded-full bg-[#111] border border-white/10 text-white flex items-center justify-center">
+        <header className="md:hidden flex items-center justify-between px-6 pt-12 pb-4 border-b border-white/5 sticky top-0 bg-[#0A0A0A]/90 backdrop-blur-xl z-30">
+           <span className="text-xl font-bold tracking-tighter text-[#00AEEF]">Ediflow</span>
+           <div className="flex gap-2">
+             <button title="Notificaciones" className="w-10 h-10 rounded-xl bg-[#111] border border-white/10 text-white flex items-center justify-center relative active:scale-95 transition-transform">
                <span className="material-symbols-outlined text-[20px]">notifications</span>
-               <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 border-2 border-[#111] rounded-full"></span>
-             </button>
-             <button onClick={onLogout} title="Cerrar Sesión" className="w-10 h-10 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center border border-red-500/20">
-               <span className="material-symbols-outlined text-[20px]">logout</span>
+               <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.5)]"></span>
              </button>
            </div>
         </header>
 
-        <header className="mb-8 px-2 flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
-           <div>
-             <h1 className="text-3xl md:text-5xl font-light tracking-tight text-white mb-2">
-               Turno: <span className="font-medium text-white">Día</span>.
+        {/* Premium Desktop Header with Clock */}
+        <header className="px-6 md:px-16 pt-8 md:pt-16 pb-8 md:pb-12 sticky top-0 z-20 bg-gradient-to-b from-[#0A0A0A] via-[#0A0A0A]/95 to-transparent pointer-events-none md:bg-none flex justify-between items-start">
+           <div className="pointer-events-auto">
+             <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight text-white mb-2 leading-none flex items-center gap-4">
+               Conserjería Central.
              </h1>
              {currentTime && (
-               <p className="text-xl md:text-2xl font-mono text-gray-500">{currentTime}</p>
+               <p className="text-blue-400 text-xl md:text-2xl mt-4 block font-mono tracking-widest flex items-center gap-2 drop-shadow-[0_0_10px_rgba(96,165,250,0.5)]">
+                 <span className="material-symbols-outlined text-[24px]">schedule</span>
+                 {currentTime} <span className="text-sm font-sans tracking-tight uppercase text-gray-400 ml-2">Turno Día</span>
+               </p>
              )}
            </div>
 
-           <div className="hidden md:flex items-center gap-4">
+           <div className="hidden md:flex items-center gap-5 pointer-events-auto">
               <button 
                 title="Notificaciones"
-                className="relative w-12 h-12 rounded-full bg-[#111] border border-white/10 hover:border-white/20 flex items-center justify-center text-gray-400 hover:text-white transition-all active:scale-95"
+                className="relative w-12 h-12 rounded-xl bg-[#111] border border-white/5 hover:border-white/10 hover:bg-[#141414] flex items-center justify-center text-gray-400 hover:text-white transition-all active:scale-95 shadow-xl"
               >
-                <span className="material-symbols-outlined text-[24px]">notifications</span>
-                <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-red-500 border-2 border-[#111] rounded-full"></span>
+                <span className="material-symbols-outlined text-[20px]">notifications</span>
+                <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)]"></span>
               </button>
               
               <button 
                 onClick={onLogout}
-                title="Finalizar Turno / Cerrar Sesión"
-                className="px-6 h-12 rounded-full bg-red-500/10 border border-red-500/20 hover:bg-red-500 hover:text-white text-red-500 transition-all font-semibold uppercase tracking-wider text-[11px] flex items-center gap-2 active:scale-95"
+                title="Finalizar Turno"
+                className="h-12 px-6 rounded-xl bg-[#111] border border-white/5 flex items-center justify-center text-red-500/80 hover:bg-red-500/10 hover:text-red-500 transition-all active:scale-95 group font-bold tracking-widest uppercase text-[10px] gap-2"
               >
-                <span className="material-symbols-outlined text-[18px]">logout</span>
-                Finalizar Turno
+                <span className="material-symbols-outlined text-[18px]">logout</span> Finalizar Turno
               </button>
            </div>
         </header>
 
+        <div className="px-6 md:px-16 pb-32 md:pb-24 max-w-7xl w-full mx-auto relative z-10">
         {/* Asymmetrical Bento Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
           
           {/* SHIFT OVERVIEW (Hero Action Box) */}
-          <div className="lg:col-span-2 bg-[#111] rounded-[2.5rem] border border-white/5 relative overflow-hidden shadow-2xl flex flex-col min-h-[400px] p-8 md:p-10 transition-all duration-500 hover:border-white/10">
+          <div className="lg:col-span-2 bg-[#111] rounded-[2.5rem] border border-white/5 relative overflow-hidden shadow-2xl flex flex-col min-h-[400px] p-8 md:p-12 transition-all duration-500 hover:border-white/10 group">
              
              {/* Ambient Glow */}
-             <div className={`absolute -bottom-32 -right-32 bg-blue-500/10 blur-[100px] w-96 h-96 rounded-full pointer-events-none`}></div>
+             <div className={`absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 blur-[150px] rounded-full pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity duration-1000`}></div>
 
              <div className="relative z-10 flex flex-col h-full w-full">
-                <div className="flex items-center justify-between mb-8">
-                   <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-400">
-                     Estado Operativo del Condominio
+                <div className="flex items-center justify-between mb-12">
+                   <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">
+                     Estado Operativo Inmediato
                    </h2>
-                   <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/5">
-                     <span className="material-symbols-outlined text-gray-400 text-[20px]">dashboard</span>
+                   <div className="w-12 h-12 rounded-full bg-[#0A0A0A] border border-white/5 flex items-center justify-center text-blue-400 shadow-inner">
+                     <span className="material-symbols-outlined text-[24px]">troubleshoot</span>
                    </div>
                 </div>
 
                 {/* KPI Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-auto">
-                   <div className="bg-[#0A0A0A] p-4 rounded-2xl border border-white/5 flex flex-col">
-                      <span className="material-symbols-outlined text-blue-400 mb-4">inventory_2</span>
-                      <span className="text-3xl font-light text-white mb-1">12</span>
-                      <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Paquetes en Bodega</span>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-12">
+                   <div className="bg-[#0A0A0A] p-6 rounded-[1.5rem] border border-white/5 flex flex-col items-center text-center shadow-inner">
+                      <span className="text-4xl lg:text-5xl font-light text-white mb-2 tracking-tighter">12</span>
+                      <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Bodega</span>
+                      <span className="material-symbols-outlined text-blue-400 mt-3 text-[20px] opacity-80">inventory_2</span>
                    </div>
-                   <div className="bg-[#0A0A0A] p-4 rounded-2xl border border-white/5 flex flex-col">
-                      <span className="material-symbols-outlined text-purple-400 mb-4">group</span>
-                      <span className="text-3xl font-light text-white mb-1">4</span>
-                      <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Visitas Activas</span>
+                   <div className="bg-[#0A0A0A] p-6 rounded-[1.5rem] border border-white/5 flex flex-col items-center text-center shadow-inner">
+                      <span className="text-4xl lg:text-5xl font-light text-white mb-2 tracking-tighter">4</span>
+                      <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Visitas</span>
+                      <span className="material-symbols-outlined text-purple-400 mt-3 text-[20px] opacity-80">group</span>
                    </div>
-                   <div className="bg-[#0A0A0A] p-4 rounded-2xl border border-white/5 flex flex-col">
-                      <span className="material-symbols-outlined text-green-400 mb-4">directions_car</span>
-                      <span className="text-3xl font-light text-white mb-1">2</span>
-                      <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Estacionam. Libres</span>
+                   <div className="bg-[#0A0A0A] p-6 rounded-[1.5rem] border border-white/5 flex flex-col items-center text-center shadow-inner">
+                      <span className="text-4xl lg:text-5xl font-light text-white mb-2 tracking-tighter">2</span>
+                      <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Parking</span>
+                      <span className="material-symbols-outlined text-green-400 mt-3 text-[20px] opacity-80">directions_car</span>
                    </div>
-                   <div className="bg-[#0A0A0A] p-4 rounded-2xl border border-white/5 flex flex-col">
-                      <span className="material-symbols-outlined text-amber-400 mb-4">key</span>
-                      <span className="text-3xl font-light text-white mb-1">1</span>
-                      <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Llave Prestada</span>
+                   <div className="bg-[#0A0A0A] p-6 rounded-[1.5rem] border border-white/5 flex flex-col items-center text-center shadow-inner">
+                      <span className="text-4xl lg:text-5xl font-light text-white mb-2 tracking-tighter">1</span>
+                      <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Llaves</span>
+                      <span className="material-symbols-outlined text-amber-400 mt-3 text-[20px] opacity-80">key</span>
                    </div>
                 </div>
 
                 {/* Attention Required Banner */}
-                <div className="mt-8 bg-red-500/10 border border-red-500/20 rounded-2xl p-4 flex items-center justify-between">
+                <div className="mt-auto bg-red-500/10 border border-red-500/20 rounded-2xl p-4 md:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                    <div className="flex items-center gap-4">
-                     <span className="material-symbols-outlined text-red-400">warning</span>
+                     <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
+                       <span className="material-symbols-outlined text-red-500">warning</span>
+                     </div>
                      <div>
-                       <p className="text-sm font-medium text-white">Atención Requerida</p>
-                       <p className="text-xs text-red-200">2 paquetes de Depto 402 llevan más de 72 hrs sin retirar.</p>
+                       <p className="text-sm font-bold text-white tracking-tight">Atención Crítica</p>
+                       <p className="text-xs text-red-300 font-medium mt-0.5">2 paquetes del Depto 402 en bodega por más de 72 hrs.</p>
                      </div>
                    </div>
-                   <button className="text-xs font-semibold bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors">
-                     Notificar
+                   <button className="bg-red-500 text-white px-6 py-3 rounded-xl text-[11px] font-bold uppercase tracking-[0.1em] hover:bg-red-400 transition-colors shadow-[0_0_15px_rgba(239,68,68,0.3)] active:scale-95 shrink-0 whitespace-nowrap">
+                     Notificar Unidad
                    </button>
                 </div>
              </div>
           </div>
 
           {/* Quick Tools Column */}
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-6 md:gap-8">
             
             {/* Quick Record: Packages */}
             <div 
               onClick={() => navigate('PackageEntry')}
-              className="bg-[#111] rounded-[2rem] border border-white/5 p-6 md:p-8 flex items-center justify-between cursor-pointer hover:bg-[#151515] hover:border-blue-400/30 transition-all group scale-100 active:scale-[0.98] shadow-lg hover:shadow-[0_0_20px_rgba(96,165,250,0.1)]"
+              className="bg-[#111] rounded-[2.5rem] border border-white/5 p-8 flex items-center justify-between cursor-pointer hover:bg-[#141414] hover:border-blue-400/30 transition-all group active:scale-[0.98] shadow-lg hover:shadow-[0_0_30px_rgba(96,165,250,0.15)] relative overflow-hidden"
             >
-               <div className="group-hover:translate-x-1 transition-transform">
-                  <h3 className="text-lg font-bold text-white tracking-tight mb-1 group-hover:text-blue-400 transition-colors">Escanear Paquete</h3>
-                  <p className="text-xs text-gray-500 font-medium">Extraer datos con OCR</p>
+               <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+               <div className="group-hover:translate-x-2 transition-transform duration-300 relative z-10">
+                  <h3 className="text-xl md:text-2xl font-bold text-white tracking-tight mb-1 group-hover:text-blue-400 transition-colors">Ingresar Paquete</h3>
+                  <p className="text-xs text-gray-400 font-medium tracking-wide">Registro rápido de encomiendas</p>
                </div>
-               <div className="w-14 h-14 rounded-2xl bg-[#0A0A0A] border border-white/10 flex items-center justify-center group-hover:bg-blue-400 group-hover:text-black group-hover:border-blue-400 transition-all">
-                  <span className="material-symbols-outlined text-[28px]">qr_code_scanner</span>
+               <div className="w-16 h-16 rounded-2xl bg-[#0A0A0A] border border-white/5 flex items-center justify-center group-hover:bg-blue-400 group-hover:text-black group-hover:border-blue-400 transition-all duration-300 relative z-10">
+                  <span className="material-symbols-outlined text-[32px]">inventory_2</span>
                </div>
             </div>
 
             {/* Quick Record: Visitors */}
             <div 
               onClick={() => navigate('ManualVisitorRegistration')}
-              className="bg-[#111] rounded-[2rem] border border-white/5 p-6 md:p-8 flex items-center justify-between cursor-pointer hover:bg-[#151515] hover:border-purple-400/30 transition-all group scale-100 active:scale-[0.98] shadow-lg hover:shadow-[0_0_20px_rgba(192,132,252,0.1)]"
+              className="bg-[#111] rounded-[2.5rem] border border-white/5 p-8 flex items-center justify-between cursor-pointer hover:bg-[#141414] hover:border-purple-400/30 transition-all group active:scale-[0.98] shadow-lg hover:shadow-[0_0_30px_rgba(192,132,252,0.15)] relative overflow-hidden"
             >
-               <div className="group-hover:translate-x-1 transition-transform">
-                  <h3 className="text-lg font-bold text-white tracking-tight mb-1 group-hover:text-purple-400 transition-colors">Registrar Visita</h3>
-                  <p className="text-xs text-gray-500 font-medium">Ingreso manual o por lista</p>
+               <div className="absolute inset-0 bg-gradient-to-r from-purple-500/0 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+               <div className="group-hover:translate-x-2 transition-transform duration-300 relative z-10">
+                  <h3 className="text-xl md:text-2xl font-bold text-white tracking-tight mb-1 group-hover:text-purple-400 transition-colors">Ingresar Visita</h3>
+                  <p className="text-xs text-gray-400 font-medium tracking-wide">Validación de identidad</p>
                </div>
-               <div className="w-14 h-14 rounded-2xl bg-[#0A0A0A] border border-white/10 flex items-center justify-center text-gray-400 group-hover:bg-purple-400 group-hover:text-black group-hover:border-purple-400 transition-all">
-                  <span className="material-symbols-outlined text-[28px]">person_add</span>
+               <div className="w-16 h-16 rounded-2xl bg-[#0A0A0A] border border-white/5 flex items-center justify-center text-gray-400 group-hover:bg-purple-400 group-hover:text-black group-hover:border-purple-400 transition-all duration-300 relative z-10">
+                  <span className="material-symbols-outlined text-[32px]">person_add</span>
                </div>
             </div>
 
-            {/* Logbook Timeline Snippet */}
-            <div className="bg-[#111] rounded-[2rem] border border-white/5 p-6 md:p-8 flex-1 flex flex-col">
-               <h3 className="text-xs font-semibold uppercase tracking-[0.15em] text-gray-400 mb-6">Últimos Registros</h3>
-               <div className="space-y-5 flex-1 line-clamp-3 overflow-hidden">
-                  <div className="flex items-start gap-4">
-                     <span className="material-symbols-outlined text-blue-400 text-[18px]">inventory_2</span>
-                     <div>
-                        <p className="text-sm font-medium text-gray-200">Paquete Amazon</p>
-                        <p className="text-[10px] text-gray-500">Depto 402 - Hace 5 min</p>
-                     </div>
-                  </div>
-                  <div className="flex items-start gap-4">
-                     <span className="material-symbols-outlined text-purple-400 text-[18px]">badge</span>
-                     <div>
-                        <p className="text-sm font-medium text-gray-200">Visita: Camila T.</p>
-                        <p className="text-[10px] text-gray-500">Depto 1004 - Hace 45 min</p>
-                     </div>
-                  </div>
+            {/* Logbook / Bitacora Shortcut */}
+            <div 
+              onClick={() => navigate('BitacoraScreen')}
+              className="bg-[#111] rounded-[2.5rem] border border-white/5 p-8 flex-1 flex flex-col cursor-pointer transition-colors hover:bg-[#141414] hover:border-white/10 group"
+            >
+               <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-6 flex justify-between items-center group-hover:text-white transition-colors">
+                 Novedades <span className="material-symbols-outlined text-[16px]">open_in_new</span>
+               </h3>
+               <div className="space-y-4">
+                 <div className="flex items-center gap-3 bg-[#0A0A0A] p-3 rounded-xl border border-white/5">
+                   <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                   <p className="text-sm font-medium text-gray-300">Recepción Delivery 402</p>
+                 </div>
+                 <div className="flex items-center gap-3 bg-[#0A0A0A] p-3 rounded-xl border border-white/5">
+                   <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                   <p className="text-sm font-medium text-gray-300">Ronda perimetral OK</p>
+                 </div>
                </div>
-               <button onClick={() => navigate('BitacoraScreen')} className="mt-auto pt-4 text-gray-400 text-xs font-bold uppercase tracking-widest hover:text-white transition-colors text-right flex items-center justify-end gap-2 w-full group">
-                  <span className="group-hover:translate-x-1 transition-transform">Ver Bitácora Diaria</span> <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
-               </button>
+               <span className="mt-auto pt-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest text-right flex items-center justify-end gap-1 group-hover:text-white transition-colors">
+                 Abrir Libro Digital <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+               </span>
             </div>
 
           </div>
 
         </div>
+        </div>
 
       </main>
 
       {/* Sticky Mobile Navbar - Overrides Sidebar on small screens */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 h-20 bg-[#0A0A0A]/90 backdrop-blur-xl border-t border-white/5 z-50 px-6 py-4 pb-safe flex justify-between items-center text-gray-500">
-         <div onClick={() => {}} className="flex flex-col items-center gap-1 cursor-pointer group text-ediflow-primary">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-[#050505]/95 backdrop-blur-2xl border-t border-white/5 z-50 px-6 py-4 pb-safe flex justify-between items-center text-gray-500">
+         <div onClick={() => {}} className="flex flex-col items-center gap-1 cursor-pointer group text-[#00AEEF]">
             <span className="material-symbols-outlined text-[24px]">dashboard</span>
-            <span className="text-[10px] font-medium">Inicio</span>
+            <span className="text-[10px] font-bold">Inicio</span>
          </div>
          <div onClick={() => navigate('PackageEntry')} className="flex flex-col items-center gap-1 cursor-pointer group hover:text-white transition-colors">
             <span className="material-symbols-outlined text-[24px]">inventory_2</span>
-            <span className="text-[10px] font-medium">Bodega</span>
+            <span className="text-[10px] font-medium">Paquetes</span>
          </div>
-         <div onClick={() => navigate('BitacoraScreen')} className="flex flex-col items-center gap-1 cursor-pointer group hover:text-white transition-colors">
+         <div onClick={() => navigate('BitacoraScreen')} className="flex flex-col items-center gap-1 cursor-pointer group hover:text-white transition-colors relative">
+            <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-[2px] border-[#0A0A0A]"></div>
             <span className="material-symbols-outlined text-[24px]">menu_book</span>
-            <span className="text-[10px] font-medium">Novedades</span>
+            <span className="text-[10px] font-medium">Libro</span>
          </div>
-         <div onClick={() => setIsGlobalMenuOpen(true)} className="flex flex-col items-center gap-1 cursor-pointer group hover:text-white transition-colors">
-            <span className="material-symbols-outlined text-[24px]">apps</span>
-            <span className="text-[10px] font-medium">Módulos</span>
+         <div onClick={() => navigate('Emergency')} className="flex flex-col items-center gap-1 cursor-pointer group text-red-500 hover:text-red-400 transition-colors">
+            <span className="material-symbols-outlined text-[24px]">sos</span>
+            <span className="text-[10px] font-bold">Pánico</span>
          </div>
          <div onClick={() => {}} className="flex flex-col items-center gap-1 cursor-pointer group hover:text-white transition-colors">
-            <div className="w-6 h-6 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-[10px] ring-1 ring-blue-500/30">
+            <div className="w-6 h-6 rounded-lg bg-[#111] border border-white/10 text-white flex items-center justify-center font-bold text-[10px]">
               {currentUser?.name ? currentUser.name.charAt(0) : 'C'}
             </div>
             <span className="text-[10px] font-medium">Perfil</span>
@@ -276,15 +285,15 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ icon, label, active, expanded
   return (
     <div 
       onClick={onClick}
-      className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer transition-all duration-200 
-      ${active ? 'bg-ediflow-primary/10 text-ediflow-primary border border-ediflow-primary/20' 
-        : isDanger ? 'text-red-500 hover:bg-red-500/10 hover:border-red-500/30' 
+      className={`flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-all duration-200 
+      ${active ? 'bg-white/10 text-white border border-white/15 shadow-sm' 
+        : isDanger ? 'text-red-500 hover:bg-red-500/10 hover:border-red-500/30 font-bold' 
         : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'} 
       ${expanded ? 'w-full px-4' : 'justify-center w-12 h-12 mx-auto'}`}
       title={!expanded ? label : undefined}
     >
       <span className="material-symbols-outlined text-[20px] font-light">{icon}</span>
-      {expanded && <span className={`text-sm font-medium tracking-wide truncate ${isDanger ? 'text-red-500' : ''}`}>{label}</span>}
+      {expanded && <span className={`text-[13px] font-medium tracking-wide truncate ${isDanger ? 'text-red-500' : ''}`}>{label}</span>}
     </div>
   );
 };

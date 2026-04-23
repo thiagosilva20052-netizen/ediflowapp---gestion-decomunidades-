@@ -81,8 +81,8 @@ const BitacoraScreen: React.FC<Props> = ({ navigate, role }) => {
                   <BitacoraItem 
                       time="14:30" 
                       category="PAQUETE"
-                      title="Entrega de Encomienda" 
-                      desc="Vehículo de Chilexpress entregó paquete mediano para Depto 402 a nombre de Jane Doe. Firma del repartidor registrada y notificación SMS enviada."
+                      title="Ingreso de Encomienda" 
+                      desc="Vehículo de Chilexpress entregó paquete para Depto 402. Notificación push enviada al residente."
                       icon="inventory_2"
                       color="text-blue-400"
                       bg="bg-blue-500/10"
@@ -195,7 +195,7 @@ const BitacoraItem = ({ time, category, title, desc, icon, color, bg, borderColo
                 <div className="flex -space-x-2">
                   <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=50" className="w-6 h-6 rounded-full border border-[#111]" alt="Conserje" />
                 </div>
-                <span className="text-[10px] font-medium text-gray-500">Registrado por <span className="text-gray-300">Juan Pérez</span></span>
+                <span className="text-[10px] font-medium text-gray-500">Registrado por <span className="text-gray-300">Carlos Mendoza (Conserjería)</span></span>
               </div>
               <button className="text-[10px] font-bold text-gray-500 uppercase tracking-widest hover:text-white transition-colors flex items-center gap-1">
                 Ver Detalles <span className="material-symbols-outlined text-[14px]">chevron_right</span>

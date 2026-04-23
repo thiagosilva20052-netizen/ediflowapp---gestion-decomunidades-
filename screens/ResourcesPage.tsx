@@ -6,204 +6,6 @@ interface Props {
   onNavigate?: (screen: any) => void;
 }
 
-// Mock Questions for the OS10 Trojan Horse Simulator
-const mockQuestions = [
-  {
-    id: 1,
-    text: "Si durante su ronda perimetral detecta a una persona escalando la reja norte de la comunidad, el protocolo inmediato es:",
-    options: [
-      { id: 'A', text: "Grabar con celular en silencio y observar sin intervenir." },
-      { id: 'B', text: "Activar alarma comunitaria silenciosa y llamar inmediatamente al Plan Cuadrante." },
-      { id: 'C', text: "Enfrentar físicamente al intruso para defender el recinto." }
-    ],
-    correct: 'B'
-  },
-  {
-    id: 2,
-    text: "Según la normativa vigente de Seguridad Privada, ¿cuál es la vigencia de la credencial OS10 para conserjes?",
-    options: [
-      { id: 'A', text: "1 año desde su emisión." },
-      { id: 'B', text: "3 años renovables." },
-      { id: 'C', text: "No tiene fecha de vencimiento." }
-    ],
-    correct: 'B'
-  },
-  {
-    id: 3,
-    text: "¿Cuál es la jurisdicción legal de un Conserje o Guardia de Seguridad Privada dentro del condominio?",
-    options: [
-      { id: 'A', text: "Únicamente en los espacios comunes y límites perimetrales del recinto." },
-      { id: 'B', text: "Puede ingresar a los departamentos si sospecha de un delito." },
-      { id: 'C', text: "Extiende su jurisdicción hasta 100 metros fuera de la comunidad." }
-    ],
-    correct: 'A'
-  }
-];
-
-const InlineOS10Simulator = () => {
-  const [step, setStep] = useState<'start' | 'questions' | 'lead_capture' | 'success'>('start');
-  const [currentQIndex, setCurrentQIndex] = useState(0);
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string>>({});
-  const [email, setEmail] = useState('');
-
-  const currentQ = mockQuestions[currentQIndex];
-
-  const handleSelect = (optionId: string) => {
-    setSelectedAnswers(prev => ({ ...prev, [currentQ.id]: optionId }));
-    
-    // Short delay before next question
-    setTimeout(() => {
-      if (currentQIndex < mockQuestions.length - 1) {
-        setCurrentQIndex(currentQIndex + 1);
-      } else {
-        setStep('lead_capture');
-      }
-    }, 400);
-  };
-
-  const handleCapture = (e: React.FormEvent) => {
-    e.preventDefault();
-    if(email) {
-      // In a real app, send to Zapier/Make.com CRM hook here
-      setStep('success');
-    }
-  };
-
-  const reset = () => {
-    setStep('start');
-    setCurrentQIndex(0);
-    setSelectedAnswers({});
-    setEmail('');
-  };
-
-  return (
-    <div className="w-full bg-[#111] border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col relative h-[500px]">
-      {/* OS10 Software Header */}
-      <div className="bg-[#050505] p-4 border-b border-white/5 flex items-center justify-between z-10 shrink-0">
-        <span className="text-[10px] text-gray-500 font-mono tracking-widest uppercase">Módulo OS10 v2.0</span>
-        <div className="flex gap-1.5">
-          <div className="w-2 h-2 rounded-full bg-red-500/80"></div>
-          <div className="w-2 h-2 rounded-full bg-yellow-500/80"></div>
-          <div className="w-2 h-2 rounded-full bg-green-500/80"></div>
-        </div>
-      </div>
-
-      <div className="flex-1 bg-black p-6 md:p-8 flex flex-col relative">
-        {step === 'start' && (
-          <div className="flex-1 flex flex-col items-center justify-center text-center animate-fade-in">
-            <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-6">
-              <span className="material-symbols-outlined text-ediflow-primary text-3xl">local_police</span>
-            </div>
-            <h3 className="text-xl font-medium text-white mb-2">Simulador Oficial OS10</h3>
-            <p className="text-sm text-gray-400 font-light max-w-sm mb-8">
-              50 preguntas reales de Carabineros de Chile. La prueba dura aproximadamente 10 minutos. ¿Estás listo?
-            </p>
-            <button 
-              onClick={() => setStep('questions')}
-              className="bg-white hover:bg-gray-200 text-black px-8 py-3 rounded-xl font-medium text-sm transition-colors"
-            >
-              Iniciar Test
-            </button>
-          </div>
-        )}
-
-        {step === 'questions' && (
-          <div className="flex-1 flex flex-col animate-fade-in">
-            <div className="flex justify-between items-center mb-6">
-              <h4 className="text-xs text-ediflow-primary font-mono uppercase tracking-widest">
-                Pregunta {currentQIndex + 1} de {mockQuestions.length}
-              </h4>
-              <span className="text-xs text-gray-500 font-mono">09:58</span>
-            </div>
-            
-            <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden mb-8">
-               <div 
-                  className="h-full bg-ediflow-primary transition-all duration-500" 
-                  style={{ width: `${((currentQIndex) / mockQuestions.length) * 100}%` }}
-               ></div>
-            </div>
-
-            <p className="text-white md:text-lg font-medium leading-relaxed mb-8">
-              {currentQ.text}
-            </p>
-
-            <div className="space-y-3 mt-auto">
-              {currentQ.options.map((opt) => {
-                const isSelected = selectedAnswers[currentQ.id] === opt.id;
-                return (
-                  <button
-                    key={opt.id}
-                    onClick={() => handleSelect(opt.id)}
-                    className={`w-full text-left p-4 rounded-xl border text-sm transition-all flex items-start gap-4 ${
-                      isSelected 
-                        ? 'bg-ediflow-primary/10 border-ediflow-primary/50 text-white' 
-                        : 'bg-[#111] border-white/5 text-gray-400 hover:bg-white/5 hover:text-gray-200'
-                    }`}
-                  >
-                    <div className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 border mt-0.5 ${
-                      isSelected ? 'bg-ediflow-primary border-ediflow-primary text-black' : 'border-white/20'
-                    }`}>
-                      <span className="text-xs font-bold">{opt.id}</span>
-                    </div>
-                    <span className="leading-relaxed">{opt.text}</span>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
-        {step === 'lead_capture' && (
-          <div className="flex-1 flex flex-col items-center justify-center text-center animate-fade-in">
-            <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-6 border border-white/10">
-              <span className="material-symbols-outlined text-green-400 text-3xl">task_alt</span>
-            </div>
-            <h3 className="text-2xl font-medium text-white mb-3">¡Test Finalizado!</h3>
-            <p className="text-sm text-gray-400 font-light max-w-sm mb-8 leading-relaxed">
-              Tus resultados han sido calculados. Ingresa tu correo corporativo para enviarte al instante tu <strong className="text-white font-normal">puntuación final y el desglose de errores</strong>.
-            </p>
-
-            <form onSubmit={handleCapture} className="w-full max-w-sm flex flex-col gap-3">
-              <input 
-                type="email" 
-                placeholder="administrador@edificio.cl" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-[#050505] border border-white/10 text-white px-5 h-12 rounded-xl outline-none text-sm placeholder:text-gray-600 focus:border-ediflow-primary/50 focus:ring-1 focus:ring-ediflow-primary/50 transition-all text-center"
-                required
-              />
-              <button 
-                type="submit"
-                className="w-full h-12 bg-white hover:bg-gray-200 text-black font-medium rounded-xl transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] text-sm"
-              >
-                Ver Mis Resultados Ahora
-              </button>
-            </form>
-            <p className="mt-4 text-[10px] text-gray-600">Al continuar, aceptas recibir nuestros recursos gratuitos periódicos.</p>
-          </div>
-        )}
-
-        {step === 'success' && (
-          <div className="flex-1 flex flex-col items-center justify-center text-center animate-fade-in">
-             <span className="material-symbols-outlined text-6xl text-ediflow-primary mb-4">mail</span>
-             <h3 className="text-xl font-medium text-white mb-2">¡Resultados Enviados!</h3>
-             <p className="text-sm text-gray-400 font-light max-w-sm mb-8">
-               Revisa tu bandeja de entrada en unos minutos. Si te sirvió este test, imagina tener el 100% de la plataforma automatizando tu edificio.
-             </p>
-             <button 
-                onClick={reset}
-                className="text-sm text-gray-500 hover:text-white transition-colors underline decoration-white/20 underline-offset-4"
-             >
-               Volver al Test
-             </button>
-          </div>
-        )}
-
-      </div>
-    </div>
-  );
-};
-
 const ResourcesPage: React.FC<Props> = ({ onLoginClick, onNavigate }) => {
   const [scrollOpacity, setScrollOpacity] = useState(0);
 
@@ -342,14 +144,26 @@ const ResourcesPage: React.FC<Props> = ({ onLoginClick, onNavigate }) => {
               </div>
            </div>
 
-           {/* Right: Inline Simulator Trojan Horse */}
-           <div className="flex-1 w-full max-w-md lg:max-w-none relative z-10">
-              {/* Subtle ambient glow behind the mock */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-ediflow-primary/5 blur-[100px] pointer-events-none rounded-full"></div>
+           {/* Right: CTA to Public Simulator */}
+           <div className="flex-1 w-full max-w-md lg:max-w-none relative z-10 flex items-center justify-center">
+              {/* Subtle ambient glow behind */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-ediflow-primary/10 blur-[100px] pointer-events-none rounded-full"></div>
               
-              {/* The interactive Mock */}
-              <div className="relative">
-                <InlineOS10Simulator />
+              <div className="bg-[#1A1A1A] border border-white/10 rounded-3xl p-8 md:p-12 text-center w-full shadow-2xl relative">
+                  <div className="w-20 h-20 bg-ediflow-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <span className="material-symbols-outlined text-ediflow-primary text-4xl">local_police</span>
+                  </div>
+                  <h3 className="text-2xl font-medium text-white mb-4">Simulador Test OS10</h3>
+                  <p className="text-gray-400 font-light mb-8 max-w-sm mx-auto">
+                    El simulador oficial gratuito para preparar a tu conserjería en 10 minutos. Sin registros.
+                  </p>
+                  <button 
+                    onClick={() => onNavigate && onNavigate('OS10Simulator')}
+                    className="w-full bg-ediflow-primary hover:bg-white text-black px-8 py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2 group shadow-[0_0_20px_rgba(0,174,239,0.2)] hover:shadow-[0_0_30px_rgba(255,255,255,0.3)]"
+                  >
+                    Abrir Herramienta Gratuita
+                    <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">launch</span>
+                  </button>
               </div>
            </div>
         </div>

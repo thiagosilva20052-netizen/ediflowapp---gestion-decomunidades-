@@ -23,8 +23,10 @@ import Reservations from './screens/Reservations';
 import LandingPage from './screens/LandingPage';
 import SolutionsPage from './screens/SolutionsPage';
 import ResourcesPage from './screens/ResourcesPage';
+import OS10SimulatorPublic from './screens/OS10SimulatorPublic';
 import PricingPage from './screens/PricingPage';
 import BookDemoPage from './screens/BookDemoPage';
+import BuildingSettings from './screens/BuildingSettings';
 import PrivacyPage from './screens/PrivacyPage';
 import TermsPage from './screens/TermsPage';
 import { useAppContext } from './src/context/AppContext';
@@ -53,14 +55,17 @@ export type ScreenName =
   | 'Maintenance'
   | 'Emergency'
   | 'ResidentDirectory'
+  | 'BuildingSettings'
   | 'Landing'
   | 'Solutions'
   | 'Resources'
+  | 'OS10Simulator'
   | 'Pricing'
   | 'BookDemo'
   | 'Privacy'
   | 'Terms'
-  | 'Login';
+  | 'Login'
+  | 'Register';
 
 const App: React.FC = () => {
   const { currentUser, setCurrentUser, isGlobalMenuOpen, setIsGlobalMenuOpen } = useAppContext();
@@ -98,13 +103,19 @@ const App: React.FC = () => {
   const renderScreen = () => {
     if (!currentUser) {
       if (currentScreen === 'Login') {
-        return <LoginScreen onLogin={handleLogin} onBack={() => setCurrentScreen('Landing')} />;
+        return <LoginScreen onLogin={handleLogin} onBack={() => setCurrentScreen('Landing')} initialMode="login" />;
+      }
+      if (currentScreen === 'Register') {
+        return <LoginScreen onLogin={handleLogin} onBack={() => setCurrentScreen('Landing')} initialMode="register" />;
       }
       if (currentScreen === 'Solutions') {
         return <SolutionsPage onLoginClick={() => setCurrentScreen('Login')} onNavigate={setCurrentScreen} />;
       }
       if (currentScreen === 'Resources') {
         return <ResourcesPage onLoginClick={() => setCurrentScreen('Login')} onNavigate={setCurrentScreen} />;
+      }
+      if (currentScreen === 'OS10Simulator') {
+        return <OS10SimulatorPublic onNavigate={setCurrentScreen} />;
       }
       if (currentScreen === 'Pricing') {
         return <PricingPage onLoginClick={() => setCurrentScreen('Login')} onNavigate={setCurrentScreen} />;
@@ -122,7 +133,7 @@ const App: React.FC = () => {
     }
 
     const roleAccess: Record<UserRole, ScreenName[]> = {
-      admin: ['AdminDashboard', 'ManageExpenses', 'CommunityWall', 'MessagesScreen', 'PaymentsScreen', 'BitacoraScreen', 'UserProfile', 'StaffManagement', 'ResidentDirectory', 'Reservations', 'Maintenance', 'Emergency', 'NovedadEntry'],
+      admin: ['AdminDashboard', 'ManageExpenses', 'CommunityWall', 'MessagesScreen', 'PaymentsScreen', 'BitacoraScreen', 'UserProfile', 'StaffManagement', 'ResidentDirectory', 'Reservations', 'Maintenance', 'Emergency', 'NovedadEntry', 'BuildingSettings'],
       concierge: ['ConciergeDashboard', 'PackageEntry', 'AccessControl', 'MessagesScreen', 'BitacoraScreen', 'UserProfile', 'ManualVisitorRegistration', 'RegisterPayment', 'ResidentDirectory', 'Reservations', 'Maintenance', 'Emergency', 'NovedadEntry'],
       resident: ['ResidentServices', 'CommunityWall', 'MessagesScreen', 'PaymentsScreen', 'UserProfile', 'QRCodeScreen', 'Reservations', 'Maintenance', 'Emergency']
     };
@@ -153,6 +164,7 @@ const App: React.FC = () => {
       case 'NovedadEntry': return <NovedadEntry navigate={handleNavigate} from={previousScreen} />;
       case 'ResidentDirectory': return <ResidentDirectory navigate={handleNavigate} role={currentUser.role} />;
       case 'Emergency': return <Emergency navigate={handleNavigate} from={previousScreen} role={currentUser.role} />;
+      case 'BuildingSettings': return <BuildingSettings navigate={handleNavigate} />;
       case 'Reservations': return <Reservations navigate={handleNavigate} role={currentUser.role} from={previousScreen} />;
       case 'Maintenance':
         return <Maintenance navigate={handleNavigate} role={currentUser.role} from={previousScreen} />;

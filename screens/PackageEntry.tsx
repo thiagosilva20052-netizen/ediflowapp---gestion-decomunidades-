@@ -7,13 +7,11 @@ interface Props {
 }
 
 const PackageEntry: React.FC<Props> = ({ navigate, from }) => {
-  const [trackingCode, setTrackingCode] = useState('');
   const [department, setDepartment] = useState('');
+  const [trackingCode, setTrackingCode] = useState('');
   const [selectedCarrier, setSelectedCarrier] = useState('chilexpress');
   const [notes, setNotes] = useState('');
-  const [photo, setPhoto] = useState<string | null>(null);
   
-  const [isScanning, setIsScanning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -72,25 +70,11 @@ const PackageEntry: React.FC<Props> = ({ navigate, from }) => {
     }
   };
 
-  const handleSimulateScan = () => {
-    setIsScanning(true);
-    setTimeout(() => {
-      setTrackingCode(Math.floor(Math.random() * 10000000000).toString());
-      setIsScanning(false);
-    }, 1000);
-  };
 
-  const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setPhoto(imageUrl);
-    }
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!trackingCode || !department) return;
+    if (!department) return;
     
     setIsSubmitting(true);
     // Simulate API call
@@ -141,37 +125,8 @@ const PackageEntry: React.FC<Props> = ({ navigate, from }) => {
       <main className="flex-1 overflow-y-auto no-scrollbar px-6 md:px-16 pt-8 pb-32 max-w-7xl mx-auto w-full">
         <form onSubmit={handleSubmit} className="space-y-6 max-w-5xl mx-auto">
           
-          {/* Tracking Row (The Core Actions Bento) */}
+          {/* Main Info Bento */}
           <div className="bg-[#111] p-6 md:p-8 rounded-[2rem] border border-white/5 shadow-2xl grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 hover:border-white/10 transition-all group">
-            {/* Tracking Code */}
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">
-                Código de Seguimiento <span className="text-ediflow-primary ml-1">*</span>
-              </label>
-              <div className="flex w-full items-center bg-[#0A0A0A] rounded-xl overflow-hidden border border-white/5 focus-within:border-ediflow-primary/50 focus-within:ring-1 focus-within:ring-ediflow-primary/50 transition-all h-14">
-                <input 
-                  type="text" 
-                  value={trackingCode}
-                  onChange={(e) => setTrackingCode(e.target.value)}
-                  placeholder="Escanea o escribe código..."
-                  className="flex-1 bg-transparent border-none text-white font-mono text-sm px-4 focus:ring-0 placeholder-gray-600 font-medium tracking-wide"
-                  required
-                />
-                <button 
-                  type="button"
-                  onClick={handleSimulateScan}
-                  disabled={isScanning}
-                  className="w-14 h-full flex items-center justify-center text-gray-500 hover:text-white hover:bg-[#141414] active:scale-95 transition-all border-l border-white/5 shrink-0"
-                  title="Escanear Código"
-                >
-                  {isScanning ? (
-                    <span className="material-symbols-outlined text-lg animate-spin text-ediflow-primary">sync</span>
-                  ) : (
-                    <span className="material-symbols-outlined text-[20px]">qr_code_scanner</span>
-                  )}
-                </button>
-              </div>
-            </div>
 
             {/* Department Selector */}
             <div className="space-y-2">
@@ -185,7 +140,7 @@ const PackageEntry: React.FC<Props> = ({ navigate, from }) => {
                       className="w-full h-14 bg-[#0A0A0A] text-white border border-white/5 rounded-xl px-4 appearance-none focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 focus:bg-[#141414] cursor-pointer transition-all text-sm font-medium tracking-tight"
                       required
                     >
-                        <option value="" disabled className="text-gray-600">Seleccionar deudo...</option>
+                        <option value="" disabled className="text-gray-600">Seleccionar depto...</option>
                         <option value="101">101 - Torre A</option>
                         <option value="102">102 - Torre A</option>
                         <option value="201">201 - Torre A</option>
@@ -198,6 +153,20 @@ const PackageEntry: React.FC<Props> = ({ navigate, from }) => {
                         <span className="material-symbols-outlined text-[20px]">unfold_more</span>
                     </div>
                 </div>
+            </div>
+
+            {/* Tracking Code (Optional Text Input) */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">
+                Código de Seguimiento (Opcional)
+              </label>
+              <input 
+                 type="text" 
+                 value={trackingCode}
+                 onChange={(e) => setTrackingCode(e.target.value)}
+                 placeholder="Ej. 123456789"
+                 className="w-full h-14 bg-[#0A0A0A] rounded-xl overflow-hidden border border-white/5 focus:border-ediflow-primary/50 focus:ring-1 focus:ring-ediflow-primary/50 transition-all text-white font-mono text-sm px-4 placeholder-gray-600 font-medium tracking-wide"
+              />
             </div>
           </div>
 
@@ -229,48 +198,12 @@ const PackageEntry: React.FC<Props> = ({ navigate, from }) => {
                </div>
           </div>
 
-          {/* Media & Context Bento */}
-          <div className="bg-[#111] p-6 md:p-8 rounded-[2rem] border border-white/5 shadow-2xl grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 hover:border-white/10 transition-all group">
-            {/* Photo Evidence */}
-            <div className="space-y-2">
-                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1 block">Evidencia Visual (Opcional)</label>
-                 <div className="flex gap-4 items-center h-[160px]">
-                     <div 
-                        onClick={() => fileInputRef.current?.click()}
-                        className="w-full h-full rounded-xl bg-[#0A0A0A] border border-dashed border-white/10 hover:border-white/30 hover:bg-[#141414] transition-all flex flex-col items-center justify-center gap-3 cursor-pointer group active:scale-[0.98] overflow-hidden relative"
-                     >
-                         {photo ? (
-                           <>
-                             <img src={photo} alt="Evidencia" className="w-full h-full object-cover" />
-                             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                               <span className="material-symbols-outlined text-white text-[24px]">edit</span>
-                               <span className="text-[9px] font-bold text-white uppercase tracking-[0.2em] mt-2">Reemplazar Imagen</span>
-                             </div>
-                           </>
-                         ) : (
-                           <>
-                             <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 group-hover:scale-110 group-hover:bg-white/10 group-hover:text-white flex items-center justify-center text-gray-500 transition-all">
-                                <span className="material-symbols-outlined text-[20px]">add_a_photo</span>
-                             </div>
-                             <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest group-hover:text-gray-400">Capturar Estado</span>
-                           </>
-                         )}
-                     </div>
-                     <input 
-                        type="file" 
-                        ref={fileInputRef} 
-                        className="hidden" 
-                        accept="image/*"
-                        capture="environment"
-                        onChange={handlePhotoUpload}
-                     />
-                 </div>
-            </div>
-
+          {/* Context Bento */}
+          <div className="bg-[#111] p-6 md:p-8 rounded-[2rem] border border-white/5 shadow-2xl hover:border-white/10 transition-all group">
             {/* Voice Enabled Notes */}
-            <div className="space-y-2 flex flex-col h-[180px]">
+            <div className="space-y-2 flex flex-col min-h-[140px]">
                 <div className="flex justify-between items-center px-1 mb-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1 block">Registrar Novedad</label>
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1 block">Observaciones adicionales</label>
                   
                   {/* Voice Button Integration */}
                   <button
@@ -293,8 +226,8 @@ const PackageEntry: React.FC<Props> = ({ navigate, from }) => {
                   <textarea 
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Ej. Entregado con empaque húmedo. El conserje verificó el estado al recibir."
-                    className={`w-full h-full bg-[#0A0A0A] border rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none transition-all resize-none text-sm font-medium ${
+                    placeholder="Ej. Entregado a conserje de turno."
+                    className={`w-full h-full min-h-[100px] bg-[#0A0A0A] border rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none transition-all resize-none text-sm font-medium ${
                       isRecording 
                           ? 'border-red-500/50 focus:ring-1 focus:ring-red-500/50 bg-[#141414]' 
                           : 'border-white/5 focus:border-ediflow-primary/50 focus:ring-1 focus:ring-ediflow-primary/50 focus:bg-[#141414]'
@@ -316,7 +249,7 @@ const PackageEntry: React.FC<Props> = ({ navigate, from }) => {
           <div className="pt-6 pb-12 flex flex-col items-center">
              <button 
               type="submit"
-              disabled={!trackingCode || !department || isSubmitting}
+              disabled={!department || isSubmitting}
               className="group w-full md:w-auto md:min-w-[400px] h-14 bg-ediflow-primary hover:bg-white active:scale-[0.98] text-black rounded-xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(0,174,239,0.2)] hover:shadow-[0_0_30px_rgba(255,255,255,0.3)] transition-all disabled:opacity-50 disabled:grayscale disabled:hover:bg-ediflow-primary disabled:active:scale-100 disabled:cursor-not-allowed border border-transparent"
             >
                 {isSubmitting ? (

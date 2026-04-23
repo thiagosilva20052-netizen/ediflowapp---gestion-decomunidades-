@@ -1,13 +1,29 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Logo } from '../components/Logo';
 import { User, UserRole } from '../src/types';
 
 interface Props {
   onLogin: (user: User) => void;
   onBack?: () => void;
+  initialMode?: 'login' | 'register';
 }
 
-const LoginScreen: React.FC<Props> = ({ onLogin, onBack }) => {
+const LoginScreen: React.FC<Props> = ({ onLogin, onBack, initialMode = 'login' }) => {
+  const [mode, setMode] = useState<'login' | 'register'>(initialMode);
+  
+  // Registration steps: 1: Email/Pass, 2: Building Info, 3: Pain Point
+  const [registerStep, setRegisterStep] = useState(1);
+  
+  // Form states
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [buildingName, setBuildingName] = useState('');
+  const [units, setUnits] = useState('40');
+  const [painPoint, setPainPoint] = useState('');
+
+  // Password validation
+  const isPasswordValid = password.length >= 8;
+
   // Mock users for prototyping
   const mockUsers: Record<UserRole, User> = {
     admin: {
@@ -34,77 +50,292 @@ const LoginScreen: React.FC<Props> = ({ onLogin, onBack }) => {
     }
   };
 
-  const handleLogin = (role: UserRole) => {
-    // Simulate API delay
+  const handleLoginSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Simulate smart role detection based on email
+    // For demo purposes, we will detect 'admin', 'conserje', or 'residente' in the email.
+    let role: UserRole = 'resident';
+    if (email.toLowerCase().includes('admin')) role = 'admin';
+    if (email.toLowerCase().includes('conserje')) role = 'concierge';
+
     setTimeout(() => {
       onLogin(mockUsers[role]);
     }, 500);
   };
 
-  return (
-    <div className="flex flex-col min-h-screen bg-black p-6 justify-center relative overflow-hidden">
-      {/* Background decorations */}
-      <div className="absolute top-[-10%] left-[-10%] w-64 h-64 bg-ediflow-primary/10 rounded-full blur-3xl"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-64 h-64 bg-blue-500/10 rounded-full blur-3xl"></div>
+  const handleRegisterNext = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (registerStep < 3) {
+      setRegisterStep(registerStep + 1);
+    } else {
+      // Finish registration and auto-login as Admin
+      setTimeout(() => {
+        onLogin(mockUsers.admin);
+      }, 500);
+    }
+  };
 
-      <div className="relative z-10 flex flex-col items-center mb-12">
+  // Demo direct login buttons for fast testing
+  const renderDemoLogins = () => (
+    <div className="mt-8 pt-6 border-t border-white/10">
+      <p className="text-xs text-center text-gray-500 mb-4 uppercase tracking-widest">Atajos de Prueba (Role Detection)</p>
+      <div className="flex gap-2 justify-center">
+        <button type="button" onClick={() => setEmail('admin@ediflow.cl')} className="px-3 py-1.5 rounded bg-white/5 hover:bg-white/10 text-[10px] text-gray-400 font-medium transition-colors">Admin</button>
+        <button type="button" onClick={() => setEmail('conserje@ediflow.cl')} className="px-3 py-1.5 rounded bg-white/5 hover:bg-white/10 text-[10px] text-gray-400 font-medium transition-colors">Conserje</button>
+        <button type="button" onClick={() => setEmail('residente@ediflow.cl')} className="px-3 py-1.5 rounded bg-white/5 hover:bg-white/10 text-[10px] text-gray-400 font-medium transition-colors">Residente</button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="flex min-h-screen bg-black">
+      {/* Left Column: Form */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 sm:px-16 md:px-24 xl:px-32 relative z-10">
+        
         {onBack && (
           <button 
             onClick={onBack}
-            className="absolute -top-4 -left-4 w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+            className="absolute top-8 left-8 sm:left-12 w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
           >
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
         )}
-        <Logo variant="vertical" className="mb-4" />
-        <p className="text-gray-400 text-center">Gestión inteligente para tu comunidad</p>
+
+        <div className="mb-12">
+          <Logo variant="horizontal" color="#FFFFFF" className="scale-90 origin-left" />
+        </div>
+
+        <div className="bg-[#111] border border-white/10 p-8 sm:p-10 rounded-[2rem] shadow-2xl relative overflow-hidden">
+          {/* Subtle Glow inside Bento Box */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-ediflow-primary/5 rounded-full blur-3xl pointer-events-none"></div>
+
+          {mode === 'login' ? (
+            /* ==================== LOGIN FLOW ==================== */
+            <div className="relative z-10 transition-all duration-500">
+              <h1 className="text-3xl font-medium text-white tracking-tight mb-2">Bienvenido a tu Ediflow.</h1>
+              <p className="text-sm text-gray-400 font-light mb-8">Ingresa tus credenciales para acceder al sistema.</p>
+
+              <form onSubmit={handleLoginSubmit} className="space-y-5">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Correo Electrónico</label>
+                  <input 
+                    type="email" 
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-ediflow-primary/50 transition-colors"
+                    placeholder="ej. admin@edificio.cl"
+                  />
+                </div>
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <label className="block text-xs font-semibold text-gray-400 uppercase tracking-widest">Contraseña</label>
+                    <a href="#" className="text-xs text-ediflow-primary hover:text-white transition-colors">¿Olvidaste tu contraseña?</a>
+                  </div>
+                  <input 
+                    type="password" 
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-ediflow-primary/50 transition-colors"
+                    placeholder="••••••••"
+                  />
+                </div>
+
+                <button 
+                  type="submit"
+                  className="w-full bg-ediflow-primary text-black font-bold tracking-tight py-3.5 rounded-xl text-sm hover:bg-white transition-colors mt-2"
+                >
+                  Acceder al Sistema
+                </button>
+              </form>
+
+              <div className="mt-6 text-center">
+                <p className="text-sm text-gray-500">
+                  ¿Aún no tienes cuenta?{' '}
+                  <button onClick={() => setMode('register')} className="text-ediflow-primary font-medium hover:text-white transition-colors">
+                    Registra tu edificio
+                  </button>
+                </p>
+              </div>
+
+              {renderDemoLogins()}
+            </div>
+          ) : (
+            /* ==================== REGISTER FLOW ==================== */
+            <div className="relative z-10 transition-all duration-500">
+              <h1 className="text-3xl font-medium text-white tracking-tight mb-2">
+                El centro de comando de tu comunidad, <span className="text-ediflow-primary">listo en 60 segundos.</span>
+              </h1>
+              <p className="text-sm text-gray-400 font-light mb-8">
+                Configura tu edificio ahora. Tus conserjes y residentes tendrán acceso inmediato a este mismo portal seguro.
+              </p>
+
+              {/* Progress indicator */}
+              <div className="flex items-center gap-2 mb-8">
+                {[1, 2, 3].map((step) => (
+                  <div key={step} className={`h-1.5 flex-1 rounded-full transition-colors ${step <= registerStep ? 'bg-ediflow-primary' : 'bg-white/10'}`} />
+                ))}
+              </div>
+
+              <form onSubmit={handleRegisterNext} className="space-y-5">
+                {registerStep === 1 && (
+                  <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Correo Electrónico (Administrador)</label>
+                      <input 
+                        type="email" 
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-ediflow-primary/50 transition-colors"
+                        placeholder="tu@correo.com"
+                        autoFocus
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Crear Contraseña</label>
+                      <div className="relative">
+                        <input 
+                          type="password" 
+                          required
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className={`w-full bg-black/50 border rounded-xl px-4 py-3 text-white text-sm focus:outline-none transition-colors ${password.length > 0 ? (isPasswordValid ? 'border-green-500/50' : 'border-ediflow-primary/50') : 'border-white/10'}`}
+                          placeholder="Mínimo 8 caracteres"
+                        />
+                        {password.length > 0 && (
+                          <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center">
+                            {isPasswordValid ? (
+                              <span className="material-symbols-outlined text-green-400 text-[18px]">check_circle</span>
+                            ) : (
+                              <span className="material-symbols-outlined text-ediflow-primary text-[18px]">pending</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {registerStep === 2 && (
+                  <div className="space-y-5 animate-in fade-in slide-in-from-right-8 duration-500">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Nombre del Edificio o Comunidad</label>
+                      <input 
+                        type="text" 
+                        required
+                        value={buildingName}
+                        onChange={(e) => setBuildingName(e.target.value)}
+                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-ediflow-primary/50 transition-colors"
+                        placeholder="Ej. Edificio Los Jazmines"
+                        autoFocus
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Cantidad de Unidades (Deptos/Casas)</label>
+                      <input 
+                        type="number" 
+                        required
+                        min="1"
+                        value={units}
+                        onChange={(e) => setUnits(e.target.value)}
+                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-ediflow-primary/50 transition-colors"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {registerStep === 3 && (
+                  <div className="space-y-5 animate-in fade-in slide-in-from-right-8 duration-500">
+                    <label className="block text-sm font-medium text-white mb-4">
+                      Para configurar tu panel IA, ¿Cuál es tu mayor dolor de cabeza actual?
+                    </label>
+                    <div className="space-y-3">
+                      {[
+                        { id: 'packages', label: 'Sobrecarga en gestión de paquetes y encomiendas.' },
+                        { id: 'expenses', label: 'Morosidad y desorden en cobro de gastos comunes.' },
+                        { id: 'concierge', label: 'Falta de control e informalidad en conserjería (visitas/bitácora).' },
+                      ].map((option) => (
+                        <label 
+                          key={option.id}
+                          className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all ${painPoint === option.id ? 'bg-ediflow-primary/10 border-ediflow-primary' : 'bg-black/50 border-white/10 hover:border-white/30'}`}
+                        >
+                          <input 
+                            type="radio" 
+                            name="painPoint" 
+                            value={option.id}
+                            checked={painPoint === option.id}
+                            onChange={(e) => setPainPoint(e.target.value)}
+                            className="mt-0.5 accent-ediflow-primary"
+                            required
+                          />
+                          <span className="text-sm text-gray-200">{option.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="pt-4 flex gap-3">
+                  {registerStep > 1 && (
+                    <button 
+                      type="button"
+                      onClick={() => setRegisterStep(registerStep - 1)}
+                      className="px-4 py-3 rounded-xl border border-white/10 text-white font-medium hover:bg-white/5 transition-colors text-sm flex items-center justify-center"
+                    >
+                      Volver
+                    </button>
+                  )}
+                  <button 
+                    type="submit"
+                    className="flex-1 bg-ediflow-primary text-black font-bold tracking-tight py-3.5 rounded-xl text-sm hover:bg-white transition-colors"
+                  >
+                    {registerStep === 3 ? 'Crear mi Edificio' : 'Continuar'}
+                  </button>
+                </div>
+              </form>
+
+              <div className="mt-6 text-center">
+                <p className="text-sm text-gray-500">
+                  ¿Ya tienes tu comunidad registrada?{' '}
+                  <button onClick={() => { setMode('login'); setRegisterStep(1); }} className="text-ediflow-primary font-medium hover:text-white transition-colors">
+                    Iniciar Sesión
+                  </button>
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="relative z-10 space-y-4 w-full max-w-sm mx-auto">
-        <div className="bg-[#0A0A0A] p-6 rounded-[24px] border border-white/5 shadow-2xl">
-          <h2 className="text-white font-medium mb-6 text-center text-lg">Selecciona un perfil de prueba</h2>
-          
-          <div className="space-y-3">
-            <button 
-              onClick={() => handleLogin('admin')}
-              className="w-full bg-black hover:bg-white/5 active:scale-[0.98] transition-all p-4 rounded-xl flex items-center gap-4 border border-white/5 group"
-            >
-              <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors border border-purple-500/20">
-                <span className="material-symbols-outlined text-[20px]">admin_panel_settings</span>
+      {/* Right Column: Abstract Triad 3D Representation */}
+      <div className="hidden lg:flex w-1/2 bg-[#050505] relative items-center justify-center overflow-hidden border-l border-white/5">
+        {/* Glow Effects corresponding to Triad colors: Cyan (Admin), Amber (Concierge), Emerald (Resident) */}
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#00AEEF]/20 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '4s' }}></div>
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-emerald-500/10 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '6s' }}></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-amber-500/10 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '5s' }}></div>
+        
+        {/* Abstract 3D/Isometric representation layer */}
+        <div className="relative z-10 text-center">
+           <div className="w-[400px] h-[400px] rounded-full border border-white/5 relative flex items-center justify-center bg-black/20 backdrop-blur-sm">
+              <div className="w-[300px] h-[300px] rounded-full border border-white/10 absolute animate-[spin_20s_linear_infinite]" />
+              <div className="w-[200px] h-[200px] rounded-full border border-white/10 absolute animate-[spin_15s_linear_infinite_reverse]" />
+              {/* Nodes */}
+              <div className="absolute top-10 right-20 w-4 h-4 bg-[#00AEEF] rounded-full shadow-[0_0_20px_rgba(0,174,239,0.8)]" />
+              <div className="absolute bottom-20 left-10 w-4 h-4 bg-emerald-400 rounded-full shadow-[0_0_20px_rgba(52,211,153,0.8)]" />
+              <div className="absolute top-1/2 right-12 w-4 h-4 bg-amber-400 rounded-full shadow-[0_0_20px_rgba(251,191,36,0.8)]" />
+              
+              <div className="flex flex-col items-center justify-center">
+                 <span className="material-symbols-outlined text-white/80 text-5xl mb-4 font-light">domain</span>
+                 <p className="text-white/80 font-medium tracking-widest uppercase text-xs">Ecosistema Ediflow</p>
+                 <p className="text-gray-500/80 font-light text-[10px] mt-2">100% Interconectado</p>
               </div>
-              <div className="text-left">
-                <p className="text-white font-medium text-sm">Administrador</p>
-                <p className="text-xs text-gray-500 font-light mt-0.5">Gestión del edificio</p>
-              </div>
-            </button>
-
-            <button 
-              onClick={() => handleLogin('concierge')}
-              className="w-full bg-black hover:bg-white/5 active:scale-[0.98] transition-all p-4 rounded-xl flex items-center gap-4 border border-white/5 group"
-            >
-              <div className="w-10 h-10 rounded-lg bg-[#00AEEF]/10 flex items-center justify-center text-[#00AEEF] group-hover:bg-[#00AEEF] group-hover:text-black transition-colors border border-[#00AEEF]/20">
-                <span className="material-symbols-outlined text-[20px]">support_agent</span>
-              </div>
-              <div className="text-left">
-                <p className="text-white font-medium text-sm">Conserje</p>
-                <p className="text-xs text-gray-500 font-light mt-0.5">Control y registro</p>
-              </div>
-            </button>
-
-            <button 
-              onClick={() => handleLogin('resident')}
-              className="w-full bg-black hover:bg-white/5 active:scale-[0.98] transition-all p-4 rounded-xl flex items-center gap-4 border border-white/5 group"
-            >
-              <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 group-hover:bg-blue-500 group-hover:text-white transition-colors border border-blue-500/20">
-                <span className="material-symbols-outlined text-[20px]">person</span>
-              </div>
-              <div className="text-left">
-                <p className="text-white font-medium text-sm">Residente</p>
-                <p className="text-xs text-gray-500 font-light mt-0.5">Servicios y pagos</p>
-              </div>
-            </button>
-          </div>
+           </div>
         </div>
+
+        {/* Ambient overlay lines */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
       </div>
     </div>
   );

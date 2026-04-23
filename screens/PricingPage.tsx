@@ -9,6 +9,23 @@ interface Props {
 const PricingPage: React.FC<Props> = ({ onLoginClick, onNavigate }) => {
   const [scrollOpacity, setScrollOpacity] = useState(0);
   const [isAnnual, setIsAnnual] = useState(false);
+  const [unitsCount, setUnitsCount] = useState<number>(40);
+
+  // Dynamic price calculation
+  const getMonthlyPrice = () => {
+    const billableUnits = Math.max(40, unitsCount);
+    return billableUnits * 2000;
+  };
+
+  const getAnnualPrice = () => {
+    // 2 months free = 10 months of billing per year
+    const billableUnits = Math.max(40, unitsCount);
+    return billableUnits * 2000 * 10;
+  };
+
+  const formatPrice = (price: number) => {
+    return price.toLocaleString('es-CL');
+  };
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -23,7 +40,7 @@ const PricingPage: React.FC<Props> = ({ onLoginClick, onNavigate }) => {
   }, []);
 
   return (
-    <div className="bg-[#0A0A0A] text-white font-sans selection:bg-white/20 selection:text-white min-h-screen flex flex-col">
+    <div className="bg-[#0A0A0A] text-white font-sans selection:bg-ediflow-primary/20 selection:text-white min-h-screen flex flex-col overflow-x-hidden">
       {/* Sticky Navigation Bar */}
       <header className={`fixed top-0 inset-x-0 w-full z-50 transition-all duration-500 ease-in-out ${scrollOpacity > 0.05 ? 'bg-[#0A0A0A]/80 backdrop-blur-md border-b border-white/5 py-4' : 'bg-transparent py-6'}`}>
         <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-16 flex items-center justify-between">
@@ -65,28 +82,28 @@ const PricingPage: React.FC<Props> = ({ onLoginClick, onNavigate }) => {
               Iniciar Sesión
             </button>
             <button 
-              onClick={() => onNavigate && onNavigate('BookDemo')}
+              onClick={() => onNavigate && onNavigate('Register')}
               className="bg-white text-black px-6 py-2.5 rounded-xl text-sm font-bold tracking-tight hover:bg-gray-200 active:scale-95 transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] flex items-center gap-2"
             >
-              Agendar Demo
+              Comenzar Prueba
             </button>
           </div>
         </div>
       </header>
 
       {/* Main Pricing Section */}
-      <section className="pt-40 pb-20 px-6 lg:px-16 flex-1 flex flex-col items-center relative z-10">
+      <section className="pt-40 pb-20 px-6 lg:px-16 flex-1 flex flex-col items-center relative z-10 w-full overflow-hidden">
         
         {/* Subdued Glow Background */}
-        <div className="absolute top-40 inset-x-0 mx-auto w-[800px] h-[300px] bg-ediflow-primary/5 blur-[120px] rounded-[100%] pointer-events-none z-0"></div>
+        <div className="absolute top-40 inset-x-0 mx-auto w-full max-w-[800px] h-[300px] bg-ediflow-primary/10 blur-[120px] rounded-[100%] pointer-events-none z-0 mix-blend-screen"></div>
 
         <div className="max-w-4xl mx-auto space-y-6 text-center relative z-10">
           <h1 className="text-4xl md:text-6xl font-light tracking-tight leading-tight">
-            Precios claros y escalables. <br/>
-            <span className="font-serif italic text-white/60">Sin impuestos a tu éxito.</span>
+            Planes transparentes. <br/>
+            <span className="font-serif italic text-white/60">Privacidad blindada.</span>
           </h1>
           <p className="text-base md:text-xl text-gray-400 font-light max-w-2xl mx-auto leading-relaxed mt-6">
-            Paga solo por el tamaño de tu comunidad. Cero cobros de implementación, cero contratos forzosos y la Inteligencia Artificial viene incluida desde el primer día.
+            Elige el plan ideal según el tamaño de tu comunidad. Todos los planes incluyen nuestro protocolo de privacidad estricto y protección de datos financieros para la total tranquilidad de tus residentes.
           </p>
 
           {/* Billing Toggle */}
@@ -104,152 +121,120 @@ const PricingPage: React.FC<Props> = ({ onLoginClick, onNavigate }) => {
           </div>
         </div>
 
-        {/* Pricing Cards */}
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 mt-16 relative z-10 w-full items-start">
-          
-          {/* Tier 1: Básico */}
-          <div className="bg-[#111] border border-white/5 rounded-3xl p-8 flex flex-col h-full hover:border-white/20 transition-all shadow-xl">
-             <div className="mb-8">
-               <h3 className="text-xl font-medium text-white mb-2">Básico</h3>
-               <p className="text-sm text-gray-400 font-light h-10">Ideal para empezar a digitalizar tu comunidad.</p>
-             </div>
-             <div className="mb-6 flex items-baseline gap-2">
-               <span className="text-4xl font-light text-white">${isAnnual ? '10.000' : '1.000'}</span>
-               <span className="text-sm text-gray-500">CLP / depto{isAnnual && '/año'}</span>
-             </div>
-             <p className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold mb-8 border-b border-white/5 pb-4">
-               Mínimo 40 unidades
-             </p>
-             <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-8">
-               <div className="flex gap-3">
-                 <span className="material-symbols-outlined text-green-400 text-lg">money_off</span>
-                 <div>
-                   <p className="text-sm font-medium text-white mb-1 leading-tight">0% de comisión por transacciones.</p>
-                   <p className="text-xs text-gray-400 font-light">Tú recaudas el 100% de tus gastos comunes.</p>
+        {/* Pricing Card (Bento Box Style) */}
+        <div className="max-w-3xl mx-auto mt-16 relative z-10 w-full mb-12 text-left">
+          <div className="bg-[#111] border border-white/10 relative rounded-[2rem] p-8 md:p-12 shadow-[0_40px_80px_rgba(0,0,0,0.5)] overflow-hidden">
+             
+             {/* Dynamic Setup & Price */}
+             <div className="flex flex-col mb-10 border-b border-white/10 pb-10">
+               <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+                 
+                 {/* Slider Area */}
+                 <div className="flex-1">
+                   <h3 className="text-2xl font-medium text-white mb-2">Tamaño de la Comunidad</h3>
+                   <p className="text-sm text-gray-400 font-light mb-6">Selecciona la cantidad de departamentos o casas.</p>
+                   
+                   <div className="flex items-center gap-4">
+                     <input 
+                        type="range" 
+                        min="1" 
+                        max="500" 
+                        value={unitsCount} 
+                        onChange={(e) => setUnitsCount(Number(e.target.value))}
+                        className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-ediflow-primary"
+                     />
+                     <div className="bg-[#222] border border-white/10 rounded-xl px-4 py-2 w-24 text-center">
+                        <span className="text-xl font-medium text-white">{unitsCount}</span>
+                     </div>
+                   </div>
+                   {unitsCount < 40 && (
+                      <p className="text-[10px] text-ediflow-primary font-bold uppercase tracking-widest mt-3">
+                        * Facturación base de 40 unidades aplicada.
+                      </p>
+                   )}
                  </div>
-               </div>
-             </div>
-             <ul className="space-y-4 mb-10 flex-1">
-               <li className="flex items-start gap-3">
-                 <span className="material-symbols-outlined text-[16px] text-white/30 mt-0.5">check</span>
-                 <span className="text-sm text-gray-300 font-light">Gestión contable básica</span>
-               </li>
-               <li className="flex items-start gap-3">
-                 <span className="material-symbols-outlined text-[16px] text-white/30 mt-0.5">check</span>
-                 <span className="text-sm text-gray-300 font-light">App para residentes</span>
-               </li>
-               <li className="flex items-start gap-3">
-                 <span className="material-symbols-outlined text-[16px] text-white/30 mt-0.5">check</span>
-                 <span className="text-sm text-gray-300 font-light">Pagos integrados con Khipu y MercadoPago</span>
-               </li>
-             </ul>
-             <button className="w-full bg-[#111] hover:bg-white/10 border border-white/20 text-white rounded-xl py-4 text-sm font-medium transition-all mt-auto active:scale-[0.98]">
-               Comenzar Gratis
-             </button>
-          </div>
 
-          {/* Tier 2: Pro (Highlighted) */}
-          <div className="bg-[#111] border border-ediflow-primary/50 relative rounded-3xl p-8 flex flex-col h-full shadow-[0_0_40px_rgba(0,174,239,0.1)] transform md:-translate-y-4">
-             {/* Badge */}
-             <div className="absolute -top-3.5 inset-x-0 flex justify-center">
-                <span className="bg-ediflow-primary text-black text-[10px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full shadow-lg">
-                  Más Elegido
-                </span>
-             </div>
-             <div className="mb-8">
-               <h3 className="text-xl font-medium text-white mb-2">Pro</h3>
-               <p className="text-sm text-gray-400 font-light h-10">Automatización total para administradores que escalan.</p>
-             </div>
-             <div className="mb-6 flex items-baseline gap-2">
-               <span className="text-4xl font-light text-white">${isAnnual ? '15.000' : '1.500'}</span>
-               <span className="text-sm text-gray-500">CLP / depto{isAnnual && '/año'}</span>
-             </div>
-             <p className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold mb-8 border-b border-white/10 pb-4">
-               Mínimo 40 unidades
-             </p>
-             <div className="bg-ediflow-primary/10 border border-ediflow-primary/20 rounded-xl p-4 mb-8">
-               <div className="flex gap-3">
-                 <span className="material-symbols-outlined text-ediflow-primary text-lg">psychology</span>
-                 <div>
-                   <p className="text-sm font-medium text-white mb-1 leading-tight">Toda la Inteligencia Artificial incluida.</p>
-                   <p className="text-xs text-ediflow-primary/70 font-light">No cobramos extras por usar nuestro motor OCR.</p>
+                 {/* Calculated Price */}
+                 <div className="flex flex-col items-start md:items-end md:pl-8 md:border-l md:border-white/10">
+                   <span className="text-sm text-gray-500 font-medium mb-1 uppercase tracking-widest">Total a Pagar</span>
+                   <div className="flex items-baseline gap-2 text-ediflow-primary">
+                     <span className="text-5xl md:text-6xl font-light tracking-tighter">${formatPrice(isAnnual ? getAnnualPrice() : getMonthlyPrice())}</span>
+                   </div>
+                   <span className="text-xs text-gray-400 mt-2 font-medium">CLP {isAnnual ? 'Facturado Anualmente' : '/ mes'}</span>
                  </div>
                </div>
              </div>
-             <ul className="space-y-4 mb-10 flex-1">
-               <li className="flex items-start gap-3">
-                 <span className="material-symbols-outlined text-[16px] text-ediflow-primary mt-0.5">check</span>
-                 <span className="text-sm text-white font-medium">Todo lo del plan Básico, más:</span>
-               </li>
-               <li className="flex items-start gap-3">
-                 <span className="material-symbols-outlined text-[16px] text-ediflow-primary mt-0.5">check</span>
-                 <span className="text-sm text-gray-300 font-light">OCR automático de Gastos Comunes en 3s</span>
-               </li>
-               <li className="flex items-start gap-3">
-                 <span className="material-symbols-outlined text-[16px] text-ediflow-primary mt-0.5">check</span>
-                 <span className="text-sm text-gray-300 font-light">Asistente de voz para conserjería</span>
-               </li>
-               <li className="flex items-start gap-3">
-                 <span className="material-symbols-outlined text-[16px] text-ediflow-primary mt-0.5">check</span>
-                 <span className="text-sm text-gray-300 font-light">Redacción de comunicados masivos con IA</span>
-               </li>
-             </ul>
-             <button 
-               onClick={() => onNavigate && onNavigate('BookDemo')}
-               className="group w-full bg-white text-black rounded-xl py-4 text-sm font-bold tracking-tight hover:bg-gray-100 active:scale-[0.98] transition-all mt-auto shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:shadow-[0_0_30px_rgba(255,255,255,0.25)] flex items-center justify-center gap-2"
-             >
-               Agendar Demo Pro
-               <span className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
-             </button>
-          </div>
 
-          {/* Tier 3: Full */}
-          <div className="bg-[#111] border border-white/5 rounded-3xl p-8 flex flex-col h-full hover:border-white/20 transition-all shadow-xl">
-             <div className="mb-8">
-               <h3 className="text-xl font-medium text-white mb-2">Full</h3>
-               <p className="text-sm text-gray-400 font-light h-10">Seguridad y control legal absoluto (Ley 21.442).</p>
-             </div>
-             <div className="mb-6 flex items-baseline gap-2">
-               <span className="text-4xl font-light text-white">${isAnnual ? '20.000' : '2.000'}</span>
-               <span className="text-sm text-gray-500">CLP / depto{isAnnual && '/año'}</span>
-             </div>
-             <p className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold mb-8 border-b border-white/5 pb-4">
-               Mínimo 40 unidades
-             </p>
-             <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-8">
-               <div className="flex gap-3">
-                 <span className="material-symbols-outlined text-white text-lg">lock_open</span>
-                 <div>
-                   <p className="text-sm font-medium text-white mb-1 leading-tight">Sin cobros de implementación.</p>
-                   <p className="text-xs text-gray-400 font-light">Ni contratos amarrados. Te vas cuando quieras.</p>
-                 </div>
+             {/* Features Bento */}
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+               <div>
+                 <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-6">Módulo Todo Incluido</h4>
+                 <ul className="space-y-4">
+                   <li className="flex items-start gap-4">
+                     <span className="material-symbols-outlined text-[18px] text-white/50 mt-0.5">check_circle</span>
+                     <div>
+                       <p className="text-sm text-white font-medium">Automatización Activa</p>
+                       <p className="text-xs text-gray-400 mt-0.5">Conciliación con bancos y OCR automático.</p>
+                     </div>
+                   </li>
+                   <li className="flex items-start gap-4">
+                     <span className="material-symbols-outlined text-[18px] text-white/50 mt-0.5">check_circle</span>
+                     <div>
+                       <p className="text-sm text-white font-medium">Conserjería Inteligente (IA)</p>
+                       <p className="text-xs text-gray-400 mt-0.5">Asistente de voz, bitácora y visitas.</p>
+                     </div>
+                   </li>
+                   <li className="flex items-start gap-4">
+                     <span className="material-symbols-outlined text-[18px] text-white/50 mt-0.5">check_circle</span>
+                     <div>
+                       <p className="text-sm text-white font-medium">App Residente & Pagos</p>
+                       <p className="text-xs text-gray-400 mt-0.5">Súper App con pasarela integrada (0% setup).</p>
+                     </div>
+                   </li>
+                 </ul>
+               </div>
+
+               <div className="bg-[#0A0A0A] border border-white/5 rounded-2xl p-6 h-full flex flex-col justify-center">
+                   <span className="material-symbols-outlined text-white/30 text-2xl mb-3">data_usage</span>
+                   <p className="text-sm font-bold text-white mb-1 tracking-tight">Política de Sobregiro Transparente</p>
+                   <p className="text-xs text-gray-400 font-light leading-relaxed">
+                     Sin cobros sorpresa. Si tu comunidad supera drásticamente los límites de almacenamiento cloud o cuotas de IA, notificaremos previamente al administrador para aprobar paquetes de expansión de bajo costo.
+                   </p>
                </div>
              </div>
-             <ul className="space-y-4 mb-10 flex-1">
-               <li className="flex items-start gap-3">
-                 <span className="material-symbols-outlined text-[16px] text-white/30 mt-0.5">check</span>
-                 <span className="text-sm text-white font-medium">Todo lo del plan Pro, más:</span>
-               </li>
-               <li className="flex items-start gap-3">
-                 <span className="material-symbols-outlined text-[16px] text-white/30 mt-0.5">check</span>
-                 <span className="text-sm text-gray-300 font-light">Simulador OS10 integrado para conserjes</span>
-               </li>
-               <li className="flex items-start gap-3">
-                 <span className="material-symbols-outlined text-[16px] text-white/30 mt-0.5">check</span>
-                 <span className="text-sm text-gray-300 font-light">Bot de Soporte IA 24/7 para residentes</span>
-               </li>
-               <li className="flex items-start gap-3">
-                 <span className="material-symbols-outlined text-[16px] text-white/30 mt-0.5">check</span>
-                 <span className="text-sm text-gray-300 font-light">Soporte técnico y legal prioritario</span>
-               </li>
-             </ul>
+
              <button 
-               onClick={() => onNavigate && onNavigate('BookDemo')}
-               className="w-full bg-[#111] hover:bg-white/10 border border-white/20 text-white rounded-xl py-4 text-sm font-medium transition-all mt-auto active:scale-[0.98]"
+               onClick={() => onNavigate && onNavigate('Register')}
+               className="group w-full bg-ediflow-primary text-black rounded-xl py-4 text-sm font-bold uppercase tracking-widest hover:bg-white active:scale-[0.98] transition-all shadow-[0_0_30px_rgba(0,174,239,0.3)] hover:shadow-[0_0_40px_rgba(255,255,255,0.4)] flex flex-col items-center justify-center gap-1 mx-auto"
              >
-               Hablar con Ventas
+               <div className="flex items-center gap-2">
+                 Comenzar Prueba Gratuita
+                 <span className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+               </div>
              </button>
+             <p className="text-center mt-4 text-[10px] text-gray-500 font-medium">
+                🔒 Tus datos están respaldados por nuestro Centro de Confianza. Consulta nuestros Convenios y Privacidad.
+             </p>
           </div>
+        </div>
+
+        {/* Trust Center Section */}
+        <div className="max-w-3xl mx-auto w-full mb-24 relative z-10 flex flex-col items-center">
+            <div className="bg-[#0A0A0A] border border-white/5 rounded-full px-6 py-2 flex items-center gap-3 mb-6">
+                <span className="material-symbols-outlined text-green-400 text-[18px]">gpp_good</span>
+                <span className="text-xs font-bold text-white uppercase tracking-widest">Centro de Confianza Ediflow</span>
+            </div>
+            <p className="text-sm text-gray-400 text-center max-w-lg mb-8 font-light">
+              La protección de los datos financieros y personales de tu comunidad no es opcional. Cumplimos con normativas estrictas de seguridad (SOC 2, ISO 27001) y garantizamos la encriptación end-to-end.
+            </p>
+            <div className="flex gap-4">
+               <button 
+                 onClick={() => onNavigate && onNavigate('Privacy')}
+                 className="px-6 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-medium text-white transition-colors"
+               >
+                 Términos y Privacidad
+               </button>
+            </div>
         </div>
 
         {/* Lo que odiamos de la industria */}
