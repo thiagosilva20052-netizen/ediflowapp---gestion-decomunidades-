@@ -29,6 +29,9 @@ import BookDemoPage from './screens/BookDemoPage';
 import BuildingSettings from './screens/BuildingSettings';
 import PrivacyPage from './screens/PrivacyPage';
 import TermsPage from './screens/TermsPage';
+import NoiseGuidePage from './screens/NoiseGuidePage';
+import ProrrationTemplatePage from './screens/ProrrationTemplatePage';
+import ChecklistLeyPage from './screens/ChecklistLeyPage';
 import { useAppContext } from './src/context/AppContext';
 import { User, UserRole } from './src/types';
 import { ModuleHub } from './components/ModuleHub';
@@ -65,10 +68,13 @@ export type ScreenName =
   | 'Privacy'
   | 'Terms'
   | 'Login'
-  | 'Register';
+  | 'Register'
+  | 'NoiseGuide'
+  | 'ProrrationTemplate'
+  | 'ChecklistLey';
 
 const App: React.FC = () => {
-  const { currentUser, setCurrentUser, isGlobalMenuOpen, setIsGlobalMenuOpen } = useAppContext();
+  const { currentUser, setCurrentUser, isGlobalMenuOpen, setIsGlobalMenuOpen, theme } = useAppContext();
   const [currentScreen, setCurrentScreen] = useState<ScreenName>('Landing');
   const [previousScreen, setPreviousScreen] = useState<ScreenName | null>(null);
 
@@ -78,15 +84,12 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    // Initialize theme from localStorage
-    const storedTheme = localStorage.getItem('theme');
-    // Default to dark if no preference is set, or if explicitly set to dark
-    if (storedTheme === 'light') {
-        document.documentElement.classList.remove('dark');
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
     } else {
-        document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('dark');
     }
-  }, []);
+  }, [theme]);
 
   const handleLogin = (user: User) => {
     setCurrentUser(user);
@@ -98,6 +101,7 @@ const App: React.FC = () => {
 
   const handleLogout = () => {
     setCurrentUser(null);
+    setCurrentScreen('Landing');
   };
 
   const renderScreen = () => {
@@ -129,6 +133,15 @@ const App: React.FC = () => {
       if (currentScreen === 'Terms') {
         return <TermsPage onLoginClick={() => setCurrentScreen('Login')} onNavigate={setCurrentScreen} />;
       }
+      if (currentScreen === 'NoiseGuide') {
+        return <NoiseGuidePage onNavigate={setCurrentScreen} />;
+      }
+      if (currentScreen === 'ProrrationTemplate') {
+        return <ProrrationTemplatePage onNavigate={setCurrentScreen} />;
+      }
+      if (currentScreen === 'ChecklistLey') {
+        return <ChecklistLeyPage onNavigate={setCurrentScreen} />;
+      }
       return <LandingPage onLoginClick={() => setCurrentScreen('Login')} onNavigate={setCurrentScreen} />;
     }
 
@@ -140,17 +153,17 @@ const App: React.FC = () => {
 
     if (!roleAccess[currentUser.role].includes(currentScreen)) {
       // Fallback to default screen for role
-      return currentUser.role === 'admin' ? <AdminDashboard navigate={handleNavigate} /> :
+      return currentUser.role === 'admin' ? <AdminDashboard navigate={handleNavigate} onLogout={handleLogout} /> :
              currentUser.role === 'concierge' ? <ConciergeDashboard navigate={handleNavigate} onLogout={handleLogout} /> :
-             <ResidentServices navigate={handleNavigate} />;
+             <ResidentServices navigate={handleNavigate} onLogout={handleLogout} />;
     }
 
     switch (currentScreen) {
       case 'ConciergeDashboard': return <ConciergeDashboard navigate={handleNavigate} onLogout={handleLogout} />;
       case 'PackageEntry': return <PackageEntry navigate={handleNavigate} from={previousScreen} />;
       case 'CommunityWall': return <CommunityWall navigate={handleNavigate} role={currentUser.role} />;
-      case 'ResidentServices': return <ResidentServices navigate={handleNavigate} />;
-      case 'AdminDashboard': return <AdminDashboard navigate={handleNavigate} />;
+      case 'ResidentServices': return <ResidentServices navigate={handleNavigate} onLogout={handleLogout} />;
+      case 'AdminDashboard': return <AdminDashboard navigate={handleNavigate} onLogout={handleLogout} />;
       case 'QRCodeScreen': return <QRCodeScreen navigate={handleNavigate} />;
       case 'AccessControl': return <AccessControl navigate={handleNavigate} />;
       case 'MessagesScreen': return <MessagesScreen navigate={handleNavigate} role={currentUser.role} />;
@@ -169,9 +182,9 @@ const App: React.FC = () => {
       case 'Maintenance':
         return <Maintenance navigate={handleNavigate} role={currentUser.role} from={previousScreen} />;
       default: 
-        return currentUser.role === 'admin' ? <AdminDashboard navigate={handleNavigate} /> :
+        return currentUser.role === 'admin' ? <AdminDashboard navigate={handleNavigate} onLogout={handleLogout} /> :
                currentUser.role === 'concierge' ? <ConciergeDashboard navigate={handleNavigate} onLogout={handleLogout} /> :
-               <ResidentServices navigate={handleNavigate} />;
+               <ResidentServices navigate={handleNavigate} onLogout={handleLogout} />;
     }
   };
 
@@ -199,7 +212,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-[#000000] text-gray-900 dark:text-gray-100 font-sans transition-colors duration-500">
+    <div className="min-h-screen bg-white text-gray-900 font-sans tracking-tight">
       <div className="flex h-screen overflow-hidden">
         {/* Screen Content */}
         <div className="flex-1 overflow-y-auto no-scrollbar relative">

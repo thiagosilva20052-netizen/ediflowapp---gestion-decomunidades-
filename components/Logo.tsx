@@ -50,7 +50,7 @@ export const Logo: React.FC<LogoProps> = ({ className = "", variant = 'vertical'
     return (
       <div className={`flex items-center gap-2 ${className}`}>
         <div className="w-8 h-8 shrink-0">{svgIcon}</div>
-        <div className="text-white text-xl tracking-wide flex items-center">
+        <div className="text-xl tracking-wide flex items-center" style={{ color: color }}>
           <span className="font-normal">Edi</span>
           <span className="font-bold">flow</span>
         </div>
@@ -62,7 +62,7 @@ export const Logo: React.FC<LogoProps> = ({ className = "", variant = 'vertical'
   return (
     <div className={`flex flex-col items-center justify-center ${className}`}>
       <div className="w-32 h-32">{svgIcon}</div>
-      <div className="text-white text-4xl mt-2 tracking-wide flex items-center">
+      <div className="text-4xl mt-2 tracking-wide flex items-center" style={{ color: color }}>
         <span className="font-normal">Edi</span>
         <span className="font-bold">flow</span>
       </div>
