@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ScreenName } from '../App';
+import { useAppContext } from '../src/context/AppContext';
 
 interface Props {
   navigate: (screen: ScreenName) => void;
@@ -79,19 +80,37 @@ const NovedadEntry: React.FC<Props> = ({ navigate, from }) => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const { currentUser, currentTenant } = useAppContext();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!description) return;
+    if (!description || !currentTenant || !currentUser) return;
     
     setIsSubmitting(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const { supabase } = await import('../src/lib/supabase-client');
+      // type: 'visita', 'encomienda', 'incidente', 'mantenimiento', 'turno'
+      // mapped from local 'category'
+      const { error } = await supabase.from('logs').insert({
+         tenant_id: currentTenant.id,
+         type: category === 'mantenimiento' ? 'mantenimiento' : category === 'limpieza' ? 'incidente' : category === 'emergencia' ? 'incidente' : category === 'administrativo' ? 'turno' : 'incidente',
+         title: `${category.toUpperCase()} - Prioridad ${priority.toUpperCase()}`,
+         description: `${location ? `[${location}] ` : ''}${description}`,
+         created_by: currentUser.id,
+         status: 'active'
+      });
+      if (error) throw error;
+      
       setShowSuccess(true);
       setTimeout(() => {
         navigate(from || 'ConciergeDashboard');
       }, 2000);
-    }, 1500);
+    } catch(err) {
+      console.error(err);
+      alert('Error guardando en bitacora');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (showSuccess) {

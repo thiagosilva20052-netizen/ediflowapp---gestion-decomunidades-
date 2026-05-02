@@ -25,41 +25,28 @@ const LoginScreen: React.FC<Props> = ({ onLogin, onBack, initialMode = 'login' }
   const isPasswordValid = password.length >= 8;
 
   // Mock users for prototyping
-  const mockUsers: Record<UserRole, User> = {
-    admin: {
-      id: '1',
-      name: 'Carlos Admin',
-      email: 'admin@ediflow.cl',
-      role: 'admin',
-      tenantId: 'tenant-1'
-    },
-    concierge: {
-      id: '2',
-      name: 'Juan Pérez',
-      email: 'conserje@ediflow.cl',
-      role: 'concierge',
-      tenantId: 'tenant-1'
-    },
-    resident: {
-      id: '3',
-      name: 'María González',
-      email: 'residente@ediflow.cl',
-      role: 'resident',
-      tenantId: 'tenant-1',
-      apartment: '402'
-    }
+  const mockUsers: Record<string, User> = {
+    'admin@ediflow.cl': { id: '1', name: 'Carlos Admin', email: 'admin@ediflow.cl', role: 'admin', tenantId: 'tenant-1' },
+    'conserje@ediflow.cl': { id: '2', name: 'Juan Pérez', email: 'conserje@ediflow.cl', role: 'concierge', tenantId: 'tenant-1' },
+    'residente@ediflow.cl': { id: '3', name: 'María González', email: 'residente@ediflow.cl', role: 'resident', tenantId: 'tenant-1', apartment: '402' },
+    
+    // Segundo tenant para probar multi-tenencia
+    'admin2@edificiob.cl': { id: '4', name: 'Ana Admin B', email: 'admin2@edificiob.cl', role: 'admin', tenantId: 'tenant-2' },
+    'conserje2@edificiob.cl': { id: '5', name: 'Pedro Conserje B', email: 'conserje2@edificiob.cl', role: 'concierge', tenantId: 'tenant-2' },
   };
 
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate smart role detection based on email
-    // For demo purposes, we will detect 'admin', 'conserje', or 'residente' in the email.
-    let role: UserRole = 'resident';
-    if (email.toLowerCase().includes('admin')) role = 'admin';
-    if (email.toLowerCase().includes('conserje')) role = 'concierge';
+    
+    const user = mockUsers[email.toLowerCase()];
+    
+    if (!user) {
+      alert('Credenciales inválidas. Usa los botones de atajo para probar.');
+      return;
+    }
 
     setTimeout(() => {
-      onLogin(mockUsers[role]);
+      onLogin(user);
     }, 500);
   };
 
@@ -70,7 +57,7 @@ const LoginScreen: React.FC<Props> = ({ onLogin, onBack, initialMode = 'login' }
     } else {
       // Finish registration and auto-login as Admin
       setTimeout(() => {
-        onLogin(mockUsers.admin);
+        onLogin(mockUsers['admin@ediflow.cl']);
       }, 500);
     }
   };

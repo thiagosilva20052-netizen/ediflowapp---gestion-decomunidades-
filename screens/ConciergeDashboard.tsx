@@ -9,9 +9,10 @@ interface Props {
 }
 
 export const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
-  const { currentUser, setIsGlobalMenuOpen } = useAppContext();
+  const { currentUser, setIsGlobalMenuOpen, currentTenant } = useAppContext();
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [currentTime, setCurrentTime] = useState("");
+  const [parcelsCount, setParcelsCount] = useState<number>(0);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -20,6 +21,25 @@ export const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!currentTenant) return;
+      try {
+        const { supabase } = await import('../src/lib/supabase-client');
+        const { count } = await supabase
+          .from('parcels')
+          .select('*', { count: 'exact', head: true })
+          .eq('tenant_id', currentTenant.id)
+          .in('status', ['received', 'notified']);
+          
+        if (count !== null) setParcelsCount(count);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchStats();
+  }, [currentTenant]);
 
   return (
     <div className="flex h-screen bg-[#0A0A0A] text-white font-sans overflow-hidden py-safe selection:bg-white/10">
@@ -138,7 +158,7 @@ export const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
                 {/* KPI Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-12">
                    <div className="bg-[#0A0A0A] p-6 rounded-[1.5rem] border border-white/5 flex flex-col items-center text-center shadow-inner">
-                      <span className="text-4xl lg:text-5xl font-light text-white mb-2 tracking-tighter">12</span>
+                      <span className="text-4xl lg:text-5xl font-light text-white mb-2 tracking-tighter">{parcelsCount}</span>
                       <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Bodega</span>
                       <span className="material-symbols-outlined text-blue-400 mt-3 text-[20px] opacity-80">inventory_2</span>
                    </div>

@@ -9,6 +9,8 @@ interface Props {
 const ProrrateoPage: React.FC<Props> = ({ navigate }) => {
   const [isCalculated, setIsCalculated] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [isEmitting, setIsEmitting] = useState(false);
+  const [hasEmitted, setHasEmitted] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
@@ -23,6 +25,15 @@ const ProrrateoPage: React.FC<Props> = ({ navigate }) => {
       setIsCalculated(true);
       showToast("Prorrateo calculado según Ley 21.442");
     }, 2500);
+  };
+
+  const handleEmit = () => {
+    setIsEmitting(true);
+    setTimeout(() => {
+      setIsEmitting(false);
+      setHasEmitted(true);
+      showToast("Mes Cerrado con Éxito. Boletas y notificaciones enviadas a todos los residentes.");
+    }, 2000);
   };
 
   // Mock data for the prorrateo
@@ -204,9 +215,22 @@ const ProrrateoPage: React.FC<Props> = ({ navigate }) => {
                     <h2 className="text-2xl font-bold tracking-tight text-white">Borrador de Colillas</h2>
                     <p className="text-xs text-gray-400 mt-1 uppercase tracking-widest">Revisa antes de emitir masivamente</p>
                  </div>
-                 <button className="bg-white text-black px-6 py-3 rounded-xl font-bold text-sm shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:bg-gray-100 transition-colors flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[18px]">send</span>
-                    Emitir Boletas (Abrir Cobranza)
+                 <button 
+                   onClick={handleEmit}
+                   disabled={isEmitting || hasEmitted}
+                   className={`px-6 py-3 rounded-xl font-bold text-sm shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-colors flex items-center gap-2 ${
+                     hasEmitted 
+                       ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 cursor-not-allowed'
+                       : 'bg-white text-black hover:bg-gray-100'
+                   }`}
+                 >
+                    {isEmitting ? (
+                      <><span className="material-symbols-outlined animate-spin text-[18px]">refresh</span> Enviando Notificaciones...</>
+                    ) : hasEmitted ? (
+                      <><span className="material-symbols-outlined text-[18px]">check_circle</span> Boletas Enviadas</>
+                    ) : (
+                      <><span className="material-symbols-outlined text-[18px]">send</span> Emitir Boletas (Abrir Cobranza)</>
+                    )}
                  </button>
                </div>
 

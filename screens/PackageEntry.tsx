@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ScreenName } from '../App';
+import { supabase } from '../src/lib/supabase-client';
+import { useAppContext } from '../src/context/AppContext';
 
 interface Props {
   navigate: (screen: ScreenName) => void;
@@ -7,6 +9,7 @@ interface Props {
 }
 
 const PackageEntry: React.FC<Props> = ({ navigate, from }) => {
+  const { currentTenant, currentUser } = useAppContext();
   const [department, setDepartment] = useState('');
   const [trackingCode, setTrackingCode] = useState('');
   const [selectedCarrier, setSelectedCarrier] = useState('chilexpress');
@@ -16,7 +19,6 @@ const PackageEntry: React.FC<Props> = ({ navigate, from }) => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
@@ -70,21 +72,37 @@ const PackageEntry: React.FC<Props> = ({ navigate, from }) => {
     }
   };
 
-
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!department) return;
+    if (!department || !currentTenant || !currentUser) return;
     
     setIsSubmitting(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false);
+    
+    try {
+      const { error } = await supabase.from('parcels').insert({
+        tenant_id: currentTenant.id,
+        department_number: department,
+        tracking_provider: selectedCarrier,
+        status: 'received',
+        received_by: currentUser.id,
+        photo_url: notes // Can use notes to hold extra info as MVP
+      });
+
+      if (error) {
+        throw error;
+      }
+
       setShowSuccess(true);
       setTimeout(() => {
         navigate(from || 'ConciergeDashboard');
       }, 2500);
-    }, 1500);
+
+    } catch (err) {
+      console.error('Error recording parcel:', err);
+      alert('Error al registrar paquete.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (showSuccess) {

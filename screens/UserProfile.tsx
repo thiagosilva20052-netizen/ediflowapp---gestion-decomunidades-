@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ScreenName } from '../App';
 import { UserRole } from '../src/types';
+import { useAppContext } from '../src/context/AppContext';
+import { validateRut, formatRut } from '../src/lib/validations';
+import { AnimatePresence, motion } from 'motion/react';
 
 interface Props {
   navigate: (screen: ScreenName) => void;
@@ -9,40 +12,51 @@ interface Props {
 }
 
 const UserProfile: React.FC<Props> = ({ navigate, onLogout, role }) => {
+  const { theme, setTheme, currentUser, setCurrentUser } = useAppContext();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
   
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isDark, setIsDark] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const isDark = theme === 'dark';
   
   // Initial state has an image, but logic handles null/empty
   const [avatar, setAvatar] = useState<string | null>("https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80");
   const [coverPhoto, setCoverPhoto] = useState<string | null>("https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80");
 
   const [userData, setUserData] = useState({
-    name: "Juan Pérez",
-    role: "Conserje Titular",
-    email: "juan.perez@ediflow.cl",
-    phone: "+56 9 8765 4321",
-    rut: "12.345.678-9",
-    unit: "Administración"
+    name: currentUser?.name || (role === 'admin' ? "Administrador Ediflow" : role === 'resident' ? "Residente Familiar" : "Juan Pérez"),
+    role: role === 'admin' ? "Administrador General" : role === 'resident' ? "Propietario" : "Conserje Titular",
+    email: currentUser?.email || (role === 'admin' ? "admin@ediflow.cl" : role === 'resident' ? "residente@ediflow.cl" : "juan.perez@ediflow.cl"),
+    phone: currentUser?.phone || "+56 9 8765 4321",
+    rut: currentUser?.rut || "12.345.678-9",
+    unit: currentUser?.apartment || (role === 'admin' ? "Oficina Central" : role === 'resident' ? "Departamento 402" : "Administración")
   });
 
   // Load saved data and theme from localStorage on mount
   useEffect(() => {
-    const savedData = localStorage.getItem('ediflow_user_profile');
-    if (savedData) {
+    const savedDataStr = localStorage.getItem(`ediflow_user_profile_${currentUser?.id || 'default'}`);
+    if (savedDataStr) {
         try {
-            setUserData(JSON.parse(savedData));
+            const savedData = JSON.parse(savedDataStr);
+            setUserData(prev => ({...prev, ...savedData}));
+            
+            // Sync with current user context
+            if (currentUser) {
+              setCurrentUser({
+                ...currentUser,
+                name: savedData.name || currentUser.name,
+                phone: savedData.phone || currentUser.phone,
+                rut: savedData.rut || currentUser.rut
+              });
+            }
         } catch (error) {
             console.error('Error loading profile data:', error);
         }
     }
+  }, [currentUser?.id]); // Re-run if user logs in
 
-    // Sync theme state with DOM
-    setIsDark(document.documentElement.classList.contains('dark'));
-  }, []);
 
   // Default placeholder based on user initials
   const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name)}&background=1c262c&color=EAB308&size=256&font-size=0.4`;
@@ -76,14 +90,31 @@ const UserProfile: React.FC<Props> = ({ navigate, onLogout, role }) => {
 
   const handleSave = async () => {
     if (isSaving) return;
+    setErrorMsg(null);
+
+    if (!validateRut(userData.rut)) {
+      setErrorMsg("El RUT ingresado no es válido.");
+      return;
+    }
+
     setIsSaving(true);
     
     // Simulate network request
     await new Promise(resolve => setTimeout(resolve, 1500));
 
-    // Save to localStorage
+    // Save to localStorage specific to this user
     try {
-        localStorage.setItem('ediflow_user_profile', JSON.stringify(userData));
+        localStorage.setItem(`ediflow_user_profile_${currentUser?.id || 'default'}`, JSON.stringify(userData));
+        
+        // Update context so changes reflect globally during session
+        if (currentUser) {
+          setCurrentUser({
+            ...currentUser,
+            name: userData.name,
+            phone: userData.phone,
+            rut: userData.rut
+          });
+        }
     } catch (error) {
         console.error('Error saving profile data:', error);
     }
@@ -103,15 +134,8 @@ const UserProfile: React.FC<Props> = ({ navigate, onLogout, role }) => {
   };
 
   const toggleTheme = () => {
-    const newMode = !isDark;
-    setIsDark(newMode);
-    if (newMode) {
-        document.documentElement.classList.add('dark');
-        localStorage.setItem('theme', 'dark');
-    } else {
-        document.documentElement.classList.remove('dark');
-        localStorage.setItem('theme', 'light');
-    }
+    const newMode = isDark ? 'light' : 'dark';
+    setTheme(newMode);
   };
 
   const handleDownloadData = () => {
@@ -279,6 +303,19 @@ const UserProfile: React.FC<Props> = ({ navigate, onLogout, role }) => {
 
             {/* Data Form */}
             <div className="space-y-5">
+                <AnimatePresence>
+                  {errorMsg && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="bg-red-500/10 border border-red-500/20 text-red-500 text-xs p-3 rounded-lg flex items-center gap-2 mb-4"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">error</span>
+                      {errorMsg}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
                 <div className="space-y-4">
                     <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Información Personal</h3>
                     
@@ -295,13 +332,14 @@ const UserProfile: React.FC<Props> = ({ navigate, onLogout, role }) => {
                         </div>
 
                         <div className={`dark:bg-[#141414] bg-white rounded-xl border dark:border-white/5 border-gray-200 px-4 py-2 relative transition-colors ${isEditing && !isSaving ? 'focus-within:border-ediflow-primary/50 ring-1 ring-transparent focus-within:ring-ediflow-primary/50' : ''} shadow-sm`}>
-                            <label className="text-[10px] text-gray-400 font-bold uppercase">RUT / Identificación</label>
+                            <label className="text-[10px] text-gray-400 font-bold uppercase">RUT / RUC (Personal)</label>
                             <input 
                                 type="text" 
                                 value={userData.rut}
+                                placeholder="Ej: 12.345.678-9 (Tu RUT personal)"
                                 readOnly={!isEditing || isSaving}
-                                onChange={(e) => setUserData({...userData, rut: e.target.value})}
-                                className={`w-full bg-transparent border-none p-0 dark:text-white text-gray-900 font-medium focus:ring-0 ${(!isEditing || isSaving) && 'opacity-70'}`}
+                                onChange={(e) => setUserData({...userData, rut: formatRut(e.target.value)})}
+                                className={`w-full bg-transparent border-none p-0 dark:text-white text-gray-900 font-medium focus:ring-0 ${(!isEditing || isSaving) && 'opacity-70'} placeholder:text-gray-500`}
                             />
                         </div>
                     </div>

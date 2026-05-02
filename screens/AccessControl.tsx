@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ScreenName } from '../App';
 import { Html5Qrcode } from 'html5-qrcode';
 import { Logo } from '../components/Logo';
+import { supabase } from '../src/lib/supabase-client';
+import { useAppContext } from '../src/context/AppContext';
 
 interface Props {
   navigate: (screen: ScreenName) => void;
@@ -10,15 +12,77 @@ interface Props {
 const AccessControl: React.FC<Props> = ({ navigate }) => {
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState<string | null>(null);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const [scanSuccessData, setScanSuccessData] = useState<any | null>(null);
+  
   const videoRef = useRef<HTMLVideoElement>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  
+  const { currentUser } = useAppContext();
+
+  const handleValidQr = async (decodedText: string) => {
+     try {
+       setScanResult(decodedText);
+       
+       // Lookup in Supabase
+       const { data: pass, error } = await supabase
+         .from('visitor_passes')
+         .select('*, profiles(name)')
+         .eq('qr_code_data', decodedText)
+         .single();
+
+       if (error || !pass) {
+          setScanError("Código QR no encontrado o inválido.");
+          setTimeout(() => { setIsScanning(false); setScanResult(null); setScanError(null); }, 3000);
+          return;
+       }
+
+       if (pass.status !== 'active') {
+          setScanError(`Este pase ya no es válido (Estado: ${pass.status}).`);
+          setTimeout(() => { setIsScanning(false); setScanResult(null); setScanError(null); }, 3000);
+          return;
+       }
+
+       if (new Date(pass.expires_at) < new Date()) {
+          setScanError("Este pase ha expirado.");
+          // Update to expired
+          await supabase.from('visitor_passes').update({ status: 'expired' }).eq('id', pass.id);
+          setTimeout(() => { setIsScanning(false); setScanResult(null); setScanError(null); }, 3000);
+          return;
+       }
+
+       // Valid pass! Update to used.
+       await supabase.from('visitor_passes').update({ 
+           status: 'used', 
+           scanned_at: new Date().toISOString(),
+           scanned_by: currentUser?.id 
+       }).eq('id', pass.id);
+
+       setScanSuccessData({
+          visitorName: pass.visitor_name,
+          residentName: pass.profiles?.name || 'Residente',
+          type: pass.pass_type
+       });
+
+       setTimeout(() => {
+          setIsScanning(false);
+          setScanResult(null);
+          setScanSuccessData(null);
+          // Opcional: Refresh history
+       }, 4000);
+
+     } catch(err) {
+       console.error("Error processing QR:", err);
+       setScanError("Error interno al procesar el código.");
+       setTimeout(() => { setIsScanning(false); setScanResult(null); setScanError(null); }, 3000);
+     }
+  };
 
   // Handle Camera Stream
   useEffect(() => {
     let html5QrCode: Html5Qrcode | null = null;
 
     if (isScanning) {
-      // Small delay to ensure the DOM element is rendered
       const timer = setTimeout(() => {
         html5QrCode = new Html5Qrcode("qr-reader");
         html5QrCode.start(
@@ -28,22 +92,12 @@ const AccessControl: React.FC<Props> = ({ navigate }) => {
             qrbox: { width: 250, height: 250 }
           },
           (decodedText) => {
-            setScanResult(decodedText);
             if (html5QrCode) {
-              try {
-                html5QrCode.stop().catch(console.error);
-              } catch (e) {
-                console.error(e);
-              }
+              try { html5QrCode.stop().catch(console.error); } catch (e) {}
             }
-            setTimeout(() => {
-              setIsScanning(false);
-              setScanResult(null);
-            }, 3000);
+            handleValidQr(decodedText);
           },
-          (errorMessage) => {
-            // Ignore parse errors
-          }
+          (errorMessage) => {}
         ).catch((err) => {
           console.error("Error accessing camera:", err);
           setCameraError("No se pudo acceder a la cámara. Verifique los permisos.");
@@ -53,11 +107,7 @@ const AccessControl: React.FC<Props> = ({ navigate }) => {
       return () => {
         clearTimeout(timer);
         if (html5QrCode) {
-          try {
-            html5QrCode.stop().catch(console.error);
-          } catch (err) {
-            console.error(err);
-          }
+          try { html5QrCode.stop().catch(console.error); } catch (err) {}
         }
       };
     }
@@ -109,15 +159,30 @@ const AccessControl: React.FC<Props> = ({ navigate }) => {
               </div>
 
               {/* Success Feedback Popup */}
-              {scanResult && (
+              {scanResult && !scanError && scanSuccessData && (
                  <div className="absolute bottom-32 z-20 animate-fade-in-up">
                     <div className="bg-green-500 text-white px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3">
                         <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
                             <span className="material-symbols-outlined">check</span>
                         </div>
                         <div>
-                            <p className="text-[10px] uppercase font-bold text-green-100">Lectura Exitosa</p>
-                            <p className="font-bold text-sm">{scanResult}</p>
+                            <p className="text-[10px] uppercase font-bold text-green-100">Acceso Autorizado</p>
+                            <p className="font-bold text-sm">{scanSuccessData.visitorName}</p>
+                            <p className="text-xs text-green-100">{scanSuccessData.type.toUpperCase()} para {scanSuccessData.residentName}</p>
+                        </div>
+                    </div>
+                 </div>
+              )}
+
+              {scanError && (
+                 <div className="absolute bottom-32 z-20 animate-fade-in-up">
+                    <div className="bg-red-500 text-white px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 border border-red-400">
+                        <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                            <span className="material-symbols-outlined">block</span>
+                        </div>
+                        <div>
+                            <p className="text-[10px] uppercase font-bold text-red-100">Acceso Denegado</p>
+                            <p className="font-bold text-xs">{scanError}</p>
                         </div>
                     </div>
                  </div>

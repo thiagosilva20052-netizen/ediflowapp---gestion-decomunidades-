@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Logo } from '../components/Logo';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { PremiumCard } from '../components/ui/premium-card';
 
 interface Props {
   onLoginClick: () => void;
@@ -10,19 +11,8 @@ interface Props {
 const PricingPage: React.FC<Props> = ({ onLoginClick, onNavigate }) => {
   const [scrollOpacity, setScrollOpacity] = useState(0);
   const [isAnnual, setIsAnnual] = useState(false);
-  const [unitsCount, setUnitsCount] = useState<number>(40);
-
-  // Dynamic price calculation
-  const getMonthlyPrice = () => {
-    const billableUnits = Math.max(40, unitsCount);
-    return billableUnits * 2000;
-  };
-
-  const getAnnualPrice = () => {
-    // 2 months free = 10 months of billing per year
-    const billableUnits = Math.max(40, unitsCount);
-    return billableUnits * 2000 * 10;
-  };
+  const [unitsCount, setUnitsCount] = useState<number>(41);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const formatPrice = (price: number) => {
     return price.toLocaleString('es-CL');
@@ -39,6 +29,35 @@ const PricingPage: React.FC<Props> = ({ onLoginClick, onNavigate }) => {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleSubscribe = async (unitsToBill: number) => {
+    setIsProcessing(true);
+    try {
+      const priceToCharge = isAnnual ? (unitsToBill * 2000 * 10) : (unitsToBill * 2000);
+      const response = await fetch('/api/checkout/preference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: `Suscripción Ediflow ${isAnnual ? 'Anual' : 'Mensual'} - ${unitsToBill} unidades`,
+          unit_price: priceToCharge,
+          quantity: 1,
+          user_id: 'user_anonymous', // Real implementation would pass actual user_id from Supabase
+        })
+      });
+
+      if (!response.ok) throw new Error('Error al crear preferencia');
+      
+      const data = await response.json();
+      if (data.init_point) {
+        window.location.href = data.init_point;
+      }
+    } catch (error) {
+      console.error('Error during checkout:', error);
+      alert('Hubo un error al procesar el pago. Intenta nuevamente más tarde.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   return (
     <div className="bg-white dark:bg-[#0A0A0A] text-gray-900 dark:text-white font-sans selection:bg-ediflow-primary/10 selection:text-gray-900 min-h-screen flex flex-col overflow-x-hidden transition-colors duration-300">
@@ -68,9 +87,7 @@ const PricingPage: React.FC<Props> = ({ onLoginClick, onNavigate }) => {
             >
               Recursos
             </div>
-            <div 
-              className="cursor-pointer text-sm font-bold text-gray-900 dark:text-white transition-colors"
-            >
+            <div className="cursor-pointer text-sm font-bold text-gray-900 dark:text-white transition-colors">
               Precios
             </div>
           </nav>
@@ -105,7 +122,7 @@ const PricingPage: React.FC<Props> = ({ onLoginClick, onNavigate }) => {
             <span className="font-serif italic text-ediflow-primary">Privacidad blindada.</span>
           </h1>
           <p className="text-base md:text-xl text-gray-600 dark:text-gray-400 font-light max-w-2xl mx-auto leading-relaxed mt-6">
-            Elige el plan ideal según el tamaño de tu comunidad. Todos los planes incluyen nuestro protocolo de privacidad estricto y protección de datos financieros de nivel empresarial.
+            Elige el plan ideal según el tamaño de tu comunidad. Todos los planes incluyen nuestro protocolo de privacidad estricto y protección de datos.
           </p>
 
           {/* Billing Toggle */}
@@ -123,109 +140,94 @@ const PricingPage: React.FC<Props> = ({ onLoginClick, onNavigate }) => {
           </div>
         </div>
 
-        {/* Pricing Card (Bento Box Style) */}
-        <div className="max-w-3xl mx-auto mt-16 relative z-10 w-full mb-12 text-left">
-          <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 relative rounded-[2.5rem] p-8 md:p-12 shadow-2xl overflow-hidden">
-             
-             {/* Dynamic Setup & Price */}
-             <div className="flex flex-col mb-10 border-b border-gray-100 dark:border-white/5 pb-10">
-               <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+        {/* Two Plans Layout */}
+        <div className="max-w-6xl mx-auto mt-16 relative z-10 w-full mb-12 flex flex-col md:flex-row items-stretch gap-8 text-left px-4">
+           
+           {/* Plan Base */}
+           <div className="w-full md:w-1/2 flex flex-col">
+             <PremiumCard 
+               title="Plan Base"
+               description="El punto de partida ideal para condominios pequeños. Disfruta de la experiencia completa."
+               price={`$${formatPrice(isAnnual ? 800000 : 80000)}`}
+               features={[
+                 "Para comunidades de hasta 40 unidades",
+                 "Cuentas ilimitadas para copropietarios",
+                 "Conciliación bancaria automatizada",
+                 "Procesamiento de facturas con IA",
+                 "Módulo de Conserjería incluido"
+               ]}
+               isPopular={false}
+               onSubscribe={() => handleSubscribe(40)}
+             />
+           </div>
+
+           {/* Plan Flex */}
+           <div className="w-full md:w-1/2 flex flex-col relative w-full">
+             <div className="relative bg-[#111] rounded-[2.5rem] p-8 md:p-12 border border-ediflow-primary/50 shadow-[0_0_50px_rgba(0,174,239,0.15)] overflow-hidden group flex flex-col h-full w-full">
+               
+               <div className="absolute top-0 right-0 w-64 h-64 bg-ediflow-primary/10 blur-[100px] rounded-full pointer-events-none transition-opacity group-hover:opacity-100 opacity-50"></div>
+               <span className="absolute top-0 left-1/2 -translate-x-1/2 bg-ediflow-primary text-black text-[10px] font-bold uppercase tracking-[0.2em] px-4 py-1.5 rounded-b-xl z-20 whitespace-nowrap">
+                 Flex (Más Elegido)
+               </span>
+
+               <div className="relative z-10 flex-1">
+                 <h3 className="text-3xl font-bold text-white tracking-tight mb-2">Plan Flex</h3>
+                 <p className="text-sm text-gray-400 font-medium mb-8 leading-relaxed max-w-sm">Para comunidades en crecimiento. Ingresa el número de departamentos.</p>
                  
                  {/* Slider Area */}
-                 <div className="flex-1">
-                   <h3 className="text-2xl font-bold mb-2 tracking-tight">Tamaño de la Comunidad</h3>
-                   <p className="text-sm text-gray-500 dark:text-gray-400 font-light mb-6">Selecciona la cantidad de departamentos o casas.</p>
-                   
-                   <div className="flex items-center gap-4">
-                     <input 
-                        type="range" 
-                        min="1" 
-                        max="500" 
-                        value={unitsCount} 
-                        onChange={(e) => setUnitsCount(Number(e.target.value))}
-                        className="w-full h-2 bg-gray-100 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-ediflow-primary"
-                     />
-                     <div className="bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-2 w-24 text-center shrink-0">
-                        <span className="text-xl font-bold">{unitsCount}</span>
-                     </div>
+                 <div className="mb-8">
+                   <div className="flex items-center justify-between mb-4">
+                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Unidades Base a cobrar:</span>
+                     <span className="text-sm font-bold text-ediflow-primary bg-ediflow-primary/10 border border-ediflow-primary/20 px-3 py-1 rounded-lg">
+                       {Math.max(41, unitsCount)}
+                     </span>
                    </div>
-                   {unitsCount < 40 && (
-                      <p className="text-[10px] text-ediflow-primary font-bold uppercase tracking-widest mt-3">
-                        * Facturación base de 40 unidades aplicada.
-                      </p>
-                   )}
+                   <input 
+                      type="range" 
+                      min="41" 
+                      max="500" 
+                      value={Math.max(41, unitsCount)} 
+                      onChange={(e) => setUnitsCount(Number(e.target.value))}
+                      className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-ediflow-primary"
+                   />
                  </div>
 
-                 {/* Calculated Price */}
-                 <div className="flex flex-col items-start md:items-end md:pl-8 md:border-l md:border-gray-100 dark:border-white/5">
-                   <span className="text-[10px] text-gray-400 dark:text-gray-500 font-bold mb-1 uppercase tracking-widest">Total Estimado</span>
-                   <div className="flex items-baseline gap-2">
-                     <span className="text-5xl md:text-6xl font-light tracking-tighter">${formatPrice(isAnnual ? getAnnualPrice() : getMonthlyPrice())}</span>
-                   </div>
-                   <span className="text-xs text-gray-400 dark:text-gray-500 mt-2 font-bold uppercase tracking-widest">{isAnnual ? 'Facturado Anualmente' : 'Mensual + IVA'}</span>
+                 <div className="mb-8 flex items-baseline gap-2">
+                   <span className="text-5xl font-light text-white tracking-tighter">
+                     ${formatPrice(isAnnual ? Math.max(41, unitsCount) * 2000 * 10 : Math.max(41, unitsCount) * 2000)}
+                   </span>
+                   <span className="text-sm text-gray-500 font-bold uppercase tracking-widest">/ mes</span>
                  </div>
-               </div>
-             </div>
 
-             {/* Features Bento */}
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-               <div>
-                 <h4 className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-6 px-1">Módulo Todo Incluido</h4>
-                 <ul className="space-y-4">
-                   <li className="flex items-start gap-4">
-                     <div className="w-5 h-5 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center shrink-0 border border-blue-100 dark:border-blue-800/30">
-                       <span className="material-symbols-outlined text-[12px] text-blue-600 dark:text-blue-400 font-bold">check</span>
-                     </div>
-                     <div>
-                       <p className="text-sm font-bold">Automatización Activa</p>
-                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Conciliación bancaria y OCR ilimitado.</p>
-                     </div>
-                   </li>
-                   <li className="flex items-start gap-4">
-                     <div className="w-5 h-5 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center shrink-0 border border-blue-100 dark:border-blue-800/30">
-                       <span className="material-symbols-outlined text-[12px] text-blue-600 dark:text-blue-400 font-bold">check</span>
-                     </div>
-                     <div>
-                       <p className="text-sm font-bold">Conserjería Inteligente</p>
-                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Control de acceso, bitácora y visitas.</p>
-                     </div>
-                   </li>
-                   <li className="flex items-start gap-4">
-                     <div className="w-5 h-5 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center shrink-0 border border-blue-100 dark:border-blue-800/30">
-                       <span className="material-symbols-outlined text-[12px] text-blue-600 dark:text-blue-400 font-bold">check</span>
-                     </div>
-                     <div>
-                       <p className="text-sm font-bold">App Residente & Pagos</p>
-                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Súper App con pasarela (0% comisión Ediflow).</p>
-                     </div>
-                   </li>
+                 <ul className="space-y-4 mb-10 text-sm">
+                   {[
+                     `Facturación exacta por ${Math.max(41, unitsCount)} unidades`,
+                     "Migración de datos inicial gratuita",
+                     "Asignación de Ejecutivo Éxito Cliente",
+                     "Soporte técnico prioritario 24/7",
+                     "Incluye todas las funcionalidades IA"
+                   ].map((feature, idx) => (
+                     <li key={idx} className="flex items-start gap-3">
+                       <span className={`material-symbols-outlined text-[20px] shrink-0 text-ediflow-primary`}>
+                         check_circle
+                       </span>
+                       <span className="text-gray-300 leading-snug">{feature}</span>
+                     </li>
+                   ))}
                  </ul>
                </div>
 
-               <div className="bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-2xl p-6 h-full flex flex-col justify-center">
-                   <span className="material-symbols-outlined text-blue-600 dark:text-blue-400 text-2xl mb-3">verified_user</span>
-                   <p className="text-sm font-bold mb-1 tracking-tight">Privacidad Certificada</p>
-                   <p className="text-xs text-gray-600 dark:text-gray-400 font-light leading-relaxed">
-                     Sin cobros sorpresa por "nube". Tu información financiera está encriptada y protegida bajo convenios de confidencialidad estricta para la tranquilidad de la comunidad.
-                   </p>
-               </div>
+               <button
+                 onClick={() => handleSubscribe(Math.max(41, unitsCount))}
+                 className={`relative z-10 w-full py-4 rounded-xl font-bold transition-all bg-ediflow-primary text-black hover:bg-white hover:shadow-[0_0_30px_rgba(255,255,255,0.3)] shadow-[0_0_20px_rgba(0,174,239,0.2)]`}
+               >
+                 Suscribirse Ahora
+               </button>
              </div>
-
-             <button 
-               onClick={() => onNavigate && onNavigate('Register')}
-               className="group w-full bg-gray-900 dark:bg-white dark:text-gray-900 text-white rounded-2xl py-5 text-sm font-bold uppercase tracking-widest hover:bg-ediflow-primary dark:hover:bg-ediflow-primary dark:hover:text-white active:scale-[0.98] transition-all shadow-xl flex flex-col items-center justify-center gap-1 mx-auto"
-             >
-               <div className="flex items-center gap-2">
-                 Comenzar 14 días gratis
-                 <span className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
-               </div>
-             </button>
-             <p className="text-center mt-6 text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-widest">
-                🔒 Tus datos están respaldados por nuestro Trust Center.
-             </p>
-          </div>
+           </div>
         </div>
-
+        {isProcessing && <p className="text-xs text-ediflow-primary font-bold text-center -mt-8 mb-12">Procesando pago seguro hacia Mercado Pago...</p>}
+        
         {/* Trust Center Section */}
         <div className="max-w-3xl mx-auto w-full mb-24 relative z-10 flex flex-col items-center">
             <div className="bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-full px-6 py-2 flex items-center gap-3 mb-6 shadow-sm">

@@ -7,6 +7,8 @@ export interface User {
   role: UserRole;
   tenantId: string; // Edificio/Condominio ID
   apartment?: string; // Solo para residentes
+  rut?: string;
+  phone?: string;
 }
 
 export interface Tenant {

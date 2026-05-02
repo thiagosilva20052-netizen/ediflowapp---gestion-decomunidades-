@@ -17,6 +17,10 @@ import ProrrateoPage from './screens/ProrrateoPage';
 import MapConfigPage from './screens/MapConfigPage';
 import RecaudacionPage from './screens/RecaudacionPage';
 import FinanceCommunicationsPage from './screens/FinanceCommunicationsPage';
+import MorosidadPage from './screens/MorosidadPage';
+import MultasPage from './screens/MultasPage';
+import ReportesFinancierosPage from './screens/ReportesFinancierosPage';
+import MedidoresPage from './screens/MedidoresPage';
 import ManualVisitorRegistration from './screens/ManualVisitorRegistration';
 import StaffManagement from './screens/StaffManagement';
 import RegisterPayment from './screens/RegisterPayment';
@@ -37,6 +41,8 @@ import TermsPage from './screens/TermsPage';
 import NoiseGuidePage from './screens/NoiseGuidePage';
 import ProrrationTemplatePage from './screens/ProrrationTemplatePage';
 import ChecklistLeyPage from './screens/ChecklistLeyPage';
+import { RegisterScreen } from './screens/RegisterScreen';
+import { OnboardingScreen } from './screens/OnboardingScreen';
 import { useAppContext } from './src/context/AppContext';
 import { User, UserRole } from './src/types';
 import { ModuleHub } from './components/ModuleHub';
@@ -81,12 +87,17 @@ export type ScreenName =
   | 'ProrrateoPage'
   | 'MapConfigPage'
   | 'RecaudacionPage'
-  | 'FinanceCommunicationsPage';
+  | 'FinanceCommunicationsPage'
+  | 'MorosidadPage'
+  | 'MultasPage'
+  | 'ReportesFinancierosPage'
+  | 'MedidoresPage';
 
 const App: React.FC = () => {
-  const { currentUser, setCurrentUser, isGlobalMenuOpen, setIsGlobalMenuOpen, theme } = useAppContext();
+  const { currentUser, setCurrentUser, isGlobalMenuOpen, setIsGlobalMenuOpen, theme, setCurrentTenant } = useAppContext();
   const [currentScreen, setCurrentScreen] = useState<ScreenName>('Landing');
   const [previousScreen, setPreviousScreen] = useState<ScreenName | null>(null);
+  const [registeredEmail, setRegisteredEmail] = useState<string>('');
 
   const handleNavigate = (screen: ScreenName) => {
     setPreviousScreen(currentScreen);
@@ -102,11 +113,37 @@ const App: React.FC = () => {
   }, [theme]);
 
   const handleLogin = (user: User) => {
-    setCurrentUser(user);
+    // Load saved profile data if exists
+    const savedDataStr = localStorage.getItem(`ediflow_user_profile_${user.id}`);
+    let enhancedUser = { ...user };
+    
+    if (savedDataStr) {
+      try {
+        const savedData = JSON.parse(savedDataStr);
+        enhancedUser = {
+          ...enhancedUser,
+          name: savedData.name || user.name,
+          phone: savedData.phone || user.phone,
+          rut: savedData.rut || user.rut
+        };
+      } catch (e) {
+        console.error('Error loading saved profile on login');
+      }
+    }
+
+    setCurrentUser(enhancedUser);
+    
+    // Simulate setting the tenant context
+    setCurrentTenant({
+      id: enhancedUser.tenantId,
+      name: enhancedUser.tenantId === 'tenant-1' ? 'Edificio Central' : 'Edificio Los Jardines',
+      address: enhancedUser.tenantId === 'tenant-1' ? 'Av. Providencia 1234' : 'Av. Las Condes 5550'
+    });
+
     // Route to default screen based on role
-    if (user.role === 'admin') setCurrentScreen('AdminDashboard');
-    else if (user.role === 'concierge') setCurrentScreen('ConciergeDashboard');
-    else if (user.role === 'resident') setCurrentScreen('ResidentServices');
+    if (enhancedUser.role === 'admin') setCurrentScreen('AdminDashboard');
+    else if (enhancedUser.role === 'concierge') setCurrentScreen('ConciergeDashboard');
+    else if (enhancedUser.role === 'resident') setCurrentScreen('ResidentServices');
   };
 
   const handleLogout = () => {
@@ -120,7 +157,10 @@ const App: React.FC = () => {
         return <LoginScreen onLogin={handleLogin} onBack={() => setCurrentScreen('Landing')} initialMode="login" />;
       }
       if (currentScreen === 'Register') {
-        return <LoginScreen onLogin={handleLogin} onBack={() => setCurrentScreen('Landing')} initialMode="register" />;
+        return <RegisterScreen onRegisterDetails={(details) => setRegisteredEmail(details.email)} navigate={setCurrentScreen} />;
+      }
+      if (currentScreen === 'Onboarding') {
+        return <OnboardingScreen onComplete={handleLogin} registeredEmail={registeredEmail} />;
       }
       if (currentScreen === 'Solutions') {
         return <SolutionsPage onLoginClick={() => setCurrentScreen('Login')} onNavigate={setCurrentScreen} />;
@@ -156,7 +196,7 @@ const App: React.FC = () => {
     }
 
     const roleAccess: Record<UserRole, ScreenName[]> = {
-      admin: ['AdminDashboard', 'ManageExpenses', 'EgresosPage', 'ProrrateoPage', 'RecaudacionPage', 'MapConfigPage', 'FinanceCommunicationsPage', 'CommunityWall', 'MessagesScreen', 'PaymentsScreen', 'BitacoraScreen', 'UserProfile', 'StaffManagement', 'ResidentDirectory', 'Reservations', 'Maintenance', 'Emergency', 'NovedadEntry', 'BuildingSettings'],
+      admin: ['AdminDashboard', 'ManageExpenses', 'EgresosPage', 'MedidoresPage', 'ProrrateoPage', 'RecaudacionPage', 'MapConfigPage', 'FinanceCommunicationsPage', 'MorosidadPage', 'MultasPage', 'ReportesFinancierosPage', 'CommunityWall', 'MessagesScreen', 'PaymentsScreen', 'BitacoraScreen', 'UserProfile', 'StaffManagement', 'ResidentDirectory', 'Reservations', 'Maintenance', 'Emergency', 'NovedadEntry', 'BuildingSettings'],
       concierge: ['ConciergeDashboard', 'PackageEntry', 'AccessControl', 'MessagesScreen', 'BitacoraScreen', 'UserProfile', 'ManualVisitorRegistration', 'RegisterPayment', 'ResidentDirectory', 'Reservations', 'Maintenance', 'Emergency', 'NovedadEntry'],
       resident: ['ResidentServices', 'CommunityWall', 'MessagesScreen', 'PaymentsScreen', 'UserProfile', 'QRCodeScreen', 'Reservations', 'Maintenance', 'Emergency']
     };
@@ -186,6 +226,10 @@ const App: React.FC = () => {
       case 'RecaudacionPage': return <RecaudacionPage navigate={handleNavigate} />;
       case 'MapConfigPage': return <MapConfigPage navigate={handleNavigate} />;
       case 'FinanceCommunicationsPage': return <FinanceCommunicationsPage navigate={handleNavigate} />;
+      case 'MorosidadPage': return <MorosidadPage navigate={handleNavigate} />;
+      case 'MultasPage': return <MultasPage navigate={handleNavigate} />;
+      case 'ReportesFinancierosPage': return <ReportesFinancierosPage navigate={handleNavigate} />;
+      case 'MedidoresPage': return <MedidoresPage navigate={handleNavigate} />;
       case 'ManualVisitorRegistration': return <ManualVisitorRegistration navigate={handleNavigate} from={previousScreen} />;
       case 'StaffManagement': return <StaffManagement navigate={handleNavigate} />;
       case 'RegisterPayment': return <RegisterPayment navigate={handleNavigate} from={previousScreen} />;

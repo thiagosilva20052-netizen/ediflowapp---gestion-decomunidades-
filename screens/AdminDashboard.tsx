@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ScreenName } from '../App';
 import { Logo } from '../components/Logo';
 import { useAppContext } from '../src/context/AppContext';
+import { supabase } from '../src/lib/supabase-client';
 
 interface Props {
   navigate: (screen: ScreenName) => void;
@@ -9,10 +10,25 @@ interface Props {
 }
 
 export const AdminDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
-  const { setIsGlobalMenuOpen } = useAppContext();
+  const { setIsGlobalMenuOpen, currentTenant } = useAppContext();
   const [isApproved, setIsApproved] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  const [maintenanceLogs, setMaintenanceLogs] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!currentTenant) return;
+    const fetchMaintenance = async () => {
+      const { data } = await supabase
+        .from('maintenance_logs')
+        .select('*')
+        .eq('tenant_id', currentTenant.id)
+        .order('scheduled_date', { ascending: true })
+        .limit(3);
+      if (data) setMaintenanceLogs(data);
+    };
+    fetchMaintenance();
+  }, [currentTenant]);
 
   const handleApprove = () => {
     setIsApproving(true);
@@ -41,7 +57,7 @@ export const AdminDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
         
         {/* User Identity at the top */}
         <div className="w-full pb-6 mb-6 border-b border-white/5 flex flex-col gap-2">
-           <div className={`flex items-center gap-3 py-2 px-1.5 rounded-xl border border-transparent hover:border-white/5 hover:bg-white/5 cursor-pointer transition-colors ${isSidebarExpanded ? 'w-full' : 'justify-center'}`}>
+           <div onClick={() => navigate('UserProfile')} className={`flex items-center gap-3 py-2 px-1.5 rounded-xl border border-transparent hover:border-white/5 hover:bg-white/5 cursor-pointer transition-colors ${isSidebarExpanded ? 'w-full' : 'justify-center'}`}>
               <div className="shrink-0 w-9 h-9 rounded-xl bg-[#00AEEF] text-black flex items-center justify-center font-bold text-sm shadow-[0_0_15px_rgba(0,174,239,0.3)]">
                 A
               </div>
@@ -251,6 +267,56 @@ export const AdminDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
             </div>
 
           </div>
+
+          <div className="mt-8 md:mt-12 bg-[#111] rounded-[2.5rem] border border-white/5 p-8 flex flex-col shadow-2xl relative overflow-hidden group hover:border-[#00AEEF]/20 transition-all">
+            <div className="flex items-center justify-between mb-8 relative z-10 w-full">
+               <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-[#00AEEF]/10 border border-[#00AEEF]/20 text-[#00AEEF] flex items-center justify-center shadow-inner">
+                     <span className="material-symbols-outlined text-[24px]">verified</span>
+                  </div>
+                  <div>
+                    <h2 className="text-xl md:text-2xl font-light text-white tracking-tight">Próximos Hitos</h2>
+                    <p className="text-sm text-gray-500 mt-1">Certificaciones y Mantenimiento Preventivo</p>
+                  </div>
+               </div>
+               <button 
+                  onClick={() => navigate('Maintenance')} 
+                  className="bg-[#0A0A0A] border border-white/10 hover:bg-white hover:text-black transition-colors rounded-xl px-4 py-2 text-[10px] uppercase font-bold tracking-widest hidden md:flex"
+               >
+                  Ver Todo
+               </button>
+            </div>
+            
+            <div className="flex flex-col gap-4 relative z-10 w-full">
+               {maintenanceLogs.length === 0 ? (
+                  <div className="text-center py-6 text-gray-500 text-sm bg-[#0A0A0A] rounded-2xl border border-white/5">
+                    No hay hitos programados próximos.
+                  </div>
+               ) : (
+                 maintenanceLogs.map(log => {
+                   const isOverdue = log.status === 'overdue' || new Date(log.scheduled_date) < new Date();
+                   return (
+                     <div key={log.id} className="flex items-center justify-between p-4 md:p-6 rounded-2xl border border-white/5 bg-[#0A0A0A] hover:bg-[#0f0f0f] transition-colors">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isOverdue ? 'bg-red-500/10 text-red-500' : 'bg-white/5 text-gray-400'}`}>
+                             <span className="material-symbols-outlined text-[20px]">{log.equipment_name.toLowerCase().includes('ascensor') ? 'elevator' : log.equipment_name.toLowerCase().includes('gas') ? 'fire_extinguisher' : 'engineering'}</span>
+                          </div>
+                          <div>
+                            <p className="text-white font-medium">{log.equipment_name}</p>
+                            <p className="text-xs text-gray-500 mt-0.5">{log.provider || 'Sin proveedor asignado'}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                           <p className={`text-sm font-bold ${isOverdue ? 'text-red-500' : 'text-white'}`}>{new Date(log.scheduled_date).toLocaleDateString()}</p>
+                           <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-1">{isOverdue ? 'Vencido' : 'Programado'}</p>
+                        </div>
+                     </div>
+                   );
+                 })
+               )}
+            </div>
+          </div>
+
         </div>
       </main>
 
@@ -272,7 +338,7 @@ export const AdminDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
             <span className="material-symbols-outlined text-[24px]">apps</span>
             <span className="text-[10px] font-medium">Módulos</span>
          </div>
-         <div onClick={() => {}} className="flex flex-col items-center gap-1 cursor-pointer group hover:text-white transition-colors">
+         <div onClick={() => navigate('UserProfile')} className="flex flex-col items-center gap-1 cursor-pointer group hover:text-white transition-colors">
             <div className="w-6 h-6 rounded-lg bg-[#111] border border-white/10 text-[#00AEEF] flex items-center justify-center font-bold text-[10px]">
               A
             </div>

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScreenName } from '../App';
 import { UserRole, CommonArea, Reservation } from '../src/types';
 import { useAppContext } from '../src/context/AppContext';
+import { supabase } from '../src/lib/supabase-client';
 
 interface Props {
   navigate: (screen: ScreenName) => void;
@@ -9,36 +10,16 @@ interface Props {
   from?: ScreenName | null;
 }
 
-const COMMON_AREAS: CommonArea[] = [
-  { id: '1', name: 'Quincho Azotea', icon: 'outdoor_grill', capacity: 15, price: 15000, description: 'Quincho full equipado con parrilla de acero, mesas rústicas y vista panorámica 360°.' },
-  { id: '2', name: 'Sala Multiuso', icon: 'groups', capacity: 30, price: 25000, description: 'Espacio climatizado de alta capacidad para eventos, cumpleaños y reuniones corporativas.' },
-  { id: '3', name: 'Gimnasio', icon: 'fitness_center', capacity: 8, price: 0, description: 'Equipamiento profesional de musculación, TRX y zona de máquinas cardiovasculares.' },
-  { id: '4', name: 'Piscina Temperada', icon: 'pool', capacity: 20, price: 0, description: 'Piscina exterior de 25m con carril de nado, reposeras y zona de hidroterapia.' },
-  { id: '5', name: 'Cancha de Pádel', icon: 'sports_tennis', capacity: 4, price: 5000, description: 'Cancha de pádel estándar WPT con paredes de cristal e iluminación LED nocturna.' },
-];
-
-const MOCK_RESERVATIONS: Reservation[] = [
-  { 
-    id: 'res-1', areaId: '1', areaName: 'Quincho Azotea', userId: 'user-1', userName: 'Carlos Mendoza', 
-    apartment: '402', date: '2024-04-15', startTime: '18:00', endTime: '22:00', guestsCount: 10, status: 'confirmed', createdAt: '2024-04-10T10:00:00Z' 
-  },
-  { 
-    id: 'res-2', areaId: '5', areaName: 'Cancha de Pádel', userId: 'user-2', userName: 'Ana Silva', 
-    apartment: '1105', date: '2024-04-14', startTime: '10:00', endTime: '11:30', guestsCount: 4, status: 'confirmed', createdAt: '2024-04-12T15:30:00Z' 
-  },
-  { 
-    id: 'res-3', areaId: '2', areaName: 'Sala Multiuso', userId: 'user-3', userName: 'Roberto Gómez', 
-    apartment: '201', date: '2024-04-20', startTime: '15:00', endTime: '19:00', guestsCount: 20, status: 'pending', createdAt: '2024-04-13T09:15:00Z' 
-  },
-];
-
 const Reservations: React.FC<Props> = ({ navigate, role, from }) => {
-  const { currentUser } = useAppContext();
+  const { currentUser, currentTenant } = useAppContext();
   const [view, setView] = useState<'browse' | 'form' | 'my-reservations' | 'all-reservations' | 'stats'>(
     role === 'resident' ? 'browse' : 'all-reservations'
   );
+  
+  const [amenities, setAmenities] = useState<CommonArea[]>([]);
+  const [reservations, setReservations] = useState<Reservation[]>([]);
   const [selectedArea, setSelectedArea] = useState<CommonArea | null>(null);
-  const [reservations, setReservations] = useState<Reservation[]>(MOCK_RESERVATIONS);
+  const [isLoading, setIsLoading] = useState(true);
   
   const [formData, setFormData] = useState({
     date: '',
@@ -46,6 +27,89 @@ const Reservations: React.FC<Props> = ({ navigate, role, from }) => {
     endTime: '',
     guestsCount: 1,
   });
+
+  useEffect(() => {
+    fetchData();
+  }, [currentUser, currentTenant]);
+
+  const fetchData = async () => {
+    if (!currentTenant) return;
+    try {
+      setIsLoading(true);
+      // Fetch Amenities
+      const { data: areasData, error: areasError } = await supabase
+        .from('amenities')
+        .select('*')
+        .eq('tenant_id', currentTenant.id);
+        
+      if (!areasError && areasData) {
+         if (areasData.length === 0) {
+            // Seed amenities for demo if empty
+            await seedAmenities(currentTenant.id);
+         } else {
+            setAmenities(areasData.map(a => ({
+               id: a.id,
+               name: a.name,
+               icon: a.icon,
+               capacity: a.capacity,
+               price: Number(a.price),
+               description: a.description
+            })));
+         }
+      }
+
+      // Fetch Reservations
+      const { data: resData, error: resError } = await supabase
+        .from('reservations')
+        .select('*, profiles(name), amenities(name)')
+        .eq('tenant_id', currentTenant.id)
+        .order('reservation_date', { ascending: false });
+
+      if (!resError && resData) {
+         setReservations(resData.map((r: any) => ({
+           id: r.id,
+           areaId: r.amenity_id,
+           areaName: r.amenities?.name || 'Area',
+           userId: r.user_id,
+           userName: r.profiles?.name || 'Residente',
+           apartment: '---', // Could join units if needed
+           date: r.reservation_date,
+           startTime: r.start_time,
+           endTime: r.end_time,
+           guestsCount: r.guests_count,
+           status: r.status,
+           createdAt: r.created_at
+         })));
+      }
+    } catch(err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const seedAmenities = async (tId: string) => {
+    const defaultAreas = [
+      { tenant_id: tId, name: 'Quincho Azotea', icon: 'outdoor_grill', capacity: 15, price: 15000, description: 'Quincho full equipado con parrilla de acero, mesas rústicas y vista panorámica 360°.' },
+      { tenant_id: tId, name: 'Sala Multiuso', icon: 'groups', capacity: 30, price: 25000, description: 'Espacio climatizado de alta capacidad para eventos, cumpleaños y reuniones corporativas.' },
+      { tenant_id: tId, name: 'Gimnasio', icon: 'fitness_center', capacity: 8, price: 0, description: 'Equipamiento profesional de musculación, TRX y zona de máquinas cardiovasculares.' },
+      { tenant_id: tId, name: 'Piscina Temperada', icon: 'pool', capacity: 20, price: 0, description: 'Piscina exterior de 25m con carril de nado, reposeras y zona de hidroterapia.' },
+      { tenant_id: tId, name: 'Cancha de Pádel', icon: 'sports_tennis', capacity: 4, price: 5000, description: 'Cancha de pádel estándar WPT con paredes de cristal e iluminación LED nocturna.' },
+    ];
+    await supabase.from('amenities').insert(defaultAreas);
+    // Refetch
+    const { data } = await supabase.from('amenities').select('*').eq('tenant_id', tId);
+    if(data) {
+       setAmenities(data.map(a => ({
+          id: a.id,
+          name: a.name,
+          icon: a.icon,
+          capacity: a.capacity,
+          price: Number(a.price),
+          description: a.description
+       })));
+    }
+  };
 
   const handleBack = () => {
     if (view === 'form') {
@@ -66,24 +130,48 @@ const Reservations: React.FC<Props> = ({ navigate, role, from }) => {
     setView('form');
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newRes: Reservation = {
-      id: `res-${Date.now()}`,
-      areaId: selectedArea!.id,
-      areaName: selectedArea!.name,
-      userId: currentUser?.id || 'anon',
-      userName: currentUser?.name || 'Residente',
-      apartment: currentUser?.apartment || 'N/A',
-      date: formData.date,
-      startTime: formData.startTime,
-      endTime: formData.endTime,
-      guestsCount: formData.guestsCount,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-    };
-    setReservations([newRes, ...reservations]);
-    setView('my-reservations');
+    if (!selectedArea || !currentUser || !currentTenant) return;
+    if (!formData.date) {
+      alert('Por favor selecciona una fecha de uso.');
+      return;
+    }
+
+    try {
+      // 1. Create reservation
+      const { data: newReservation, error: resError } = await supabase.from('reservations').insert({
+         tenant_id: currentTenant.id,
+         user_id: currentUser.id,
+         amenity_id: selectedArea.id,
+         reservation_date: formData.date,
+         start_time: formData.startTime,
+         end_time: formData.endTime,
+         guests_count: formData.guestsCount,
+         status: 'confirmed' // Or pending depending on business rules
+      }).select().single();
+
+      if (resError) throw resError;
+
+      // 2. Transact if price > 0
+      if (selectedArea.price && selectedArea.price > 0) {
+         await supabase.from('transactions').insert({
+            tenant_id: currentTenant.id,
+            user_id: currentUser.id,
+            amount: selectedArea.price,
+            status: 'pending',
+            method: 'mercadopago',
+            billing_month: 'Pago Reserva',
+         });
+      }
+
+      await fetchData(); // Refresh
+      setView('my-reservations');
+      setFormData({ date: '', startTime: '', endTime: '', guestsCount: 1 });
+    } catch(err) {
+      console.error('Error in handle book:', err);
+      alert('Error procesando su reserva.');
+    }
   };
 
   const getStatusColor = (status: Reservation['status']) => {
@@ -168,8 +256,13 @@ const Reservations: React.FC<Props> = ({ navigate, role, from }) => {
         {/* BROWSE AREAS (Premium Bento Grid) */}
         {view === 'browse' && (
           <div className="space-y-8 animate-fade-in-up">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-              {COMMON_AREAS.map((area) => (
+            {isLoading ? (
+               <div className="flex items-center justify-center py-20">
+                  <div className={`w-8 h-8 rounded-full border-2 border-${primaryAccent} border-t-transparent animate-spin`}></div>
+               </div>
+            ) : (
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+              {amenities.map((area) => (
                 <div key={area.id} className="bg-[#111] rounded-[2rem] border border-white/5 overflow-hidden group hover:border-[#00AEEF]/30 hover:bg-[#141414] transition-all relative flex flex-col shadow-xl">
                   {/* Subtle Top Glow */}
                   <div className={`absolute top-0 right-0 w-48 h-48 bg-[#00AEEF]/5 rounded-full blur-[60px] group-hover:bg-[#00AEEF]/10 transition-colors pointer-events-none`}></div>
@@ -214,7 +307,8 @@ const Reservations: React.FC<Props> = ({ navigate, role, from }) => {
                   </button>
                 </div>
               ))}
-            </div>
+             </div>
+            )}
           </div>
         )}
 
@@ -246,17 +340,36 @@ const Reservations: React.FC<Props> = ({ navigate, role, from }) => {
               <h3 className="text-sm font-semibold uppercase tracking-widest text-gray-400 mb-2">Detalles de la Reserva</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                 
-                <div className="space-y-2">
-                  <label className="text-[11px] font-bold uppercase tracking-widest text-gray-500 ml-1">Fecha de Uso</label>
-                  <input 
-                    type="date"
-                    value={formData.date}
-                    onChange={(e) => setFormData({...formData, date: e.target.value})}
-                    required
-                    className={`w-full bg-[#0A0A0A] border border-white/10 rounded-xl px-4 py-3.5 text-white text-sm focus:border-${primaryAccent} focus:ring-1 focus:ring-${primaryAccent} outline-none transition-all placeholder:text-gray-600`}
-                  />
+                <div className="space-y-4 md:col-span-2 border border-white/5 bg-[#0A0A0A]/50 p-6 rounded-[2rem]">
+                  <label className="text-[11px] font-bold uppercase tracking-widest text-gray-500 ml-1">Selecciona Fecha</label>
+                  <div className="flex gap-4 overflow-x-auto pb-4 pt-2 no-scrollbar px-1">
+                    {Array.from({ length: 14 }).map((_, i) => {
+                      const d = new Date();
+                      d.setDate(d.getDate() + i);
+                      const isSelected = formData.date === d.toISOString().split('T')[0];
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setFormData({...formData, date: d.toISOString().split('T')[0]})}
+                          className={`min-w-[80px] h-24 rounded-2xl flex flex-col items-center justify-center transition-all ${
+                            isSelected 
+                              ? `bg-${primaryAccent} text-black scale-110 shadow-[0_0_20px_rgba(0,174,239,0.3)] z-10` 
+                              : `bg-[#111] hover:bg-[#1A1A1A] text-gray-400 border border-white/5`
+                          }`}
+                        >
+                          <span className={`text-[10px] uppercase font-bold tracking-widest mb-1 ${isSelected ? 'text-black/60' : 'text-gray-600'}`}>
+                            {d.toLocaleDateString('es-CL', { weekday: 'short' })}
+                          </span>
+                          <span className="text-2xl font-light">
+                            {d.getDate()}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <label className="text-[11px] font-bold uppercase tracking-widest text-gray-500 ml-1">Cant. Invitados</label>
                   <input 
@@ -348,7 +461,7 @@ const Reservations: React.FC<Props> = ({ navigate, role, from }) => {
 
                   <div className="flex items-center gap-5 md:gap-6 pl-4">
                     <div className={`w-16 h-16 rounded-[1.5rem] bg-[#0A0A0A] border border-white/10 flex items-center justify-center text-gray-400 group-hover:text-${primaryAccent} group-hover:border-${primaryAccent}/30 transition-colors shadow-inner`}>
-                      <span className="material-symbols-outlined text-[28px]">{COMMON_AREAS.find(a => a.id === res.areaId)?.icon || 'event'}</span>
+                      <span className="material-symbols-outlined text-[28px]">{amenities.find(a => a.id === res.areaId)?.icon || 'event'}</span>
                     </div>
                     <div>
                       <div className="flex items-center gap-3 mb-1">
@@ -484,7 +597,7 @@ const Reservations: React.FC<Props> = ({ navigate, role, from }) => {
                 </h3>
               </div>
               <div className="space-y-6">
-                {COMMON_AREAS.map((area, idx) => (
+                {amenities.map((area, idx) => (
                   <div key={area.id} className="group">
                     <div className="flex justify-between items-center mb-3">
                       <div className="flex items-center gap-3">
@@ -493,12 +606,12 @@ const Reservations: React.FC<Props> = ({ navigate, role, from }) => {
                         </div>
                         <span className="font-medium text-gray-300 text-sm">{area.name}</span>
                       </div>
-                      <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest bg-white/5 px-2 py-0.5 rounded-md">{85 - (idx * 15)}%</span>
+                      <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest bg-white/5 px-2 py-0.5 rounded-md">{Math.max(10, 85 - (idx * 15))}%</span>
                     </div>
                     <div className="h-1.5 w-full bg-[#0A0A0A] rounded-full overflow-hidden border border-white/5">
                       <div 
                         className="h-full bg-gradient-to-r from-[#A855F7] to-[#8B5CF6] rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(168,85,247,0.5)]" 
-                        style={{ width: `${85 - (idx * 15)}%` }}
+                        style={{ width: `${Math.max(10, 85 - (idx * 15))}%` }}
                       ></div>
                     </div>
                   </div>

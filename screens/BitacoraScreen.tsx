@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScreenName } from '../App';
 import { UserRole } from '../src/types';
+import { useAppContext } from '../src/context/AppContext';
+import { supabase } from '../src/lib/supabase-client';
 
 interface Props {
   navigate: (screen: ScreenName) => void;
@@ -9,6 +11,44 @@ interface Props {
 
 const BitacoraScreen: React.FC<Props> = ({ navigate, role }) => {
   const [filter, setFilter] = useState('todos');
+  const { currentTenant } = useAppContext();
+  const [logs, setLogs] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!currentTenant) return;
+    const fetchLogs = async () => {
+      const { data } = await supabase
+        .from('logs')
+        .select('*, profiles(name)')
+        .eq('tenant_id', currentTenant.id)
+        .order('created_at', { ascending: false });
+      
+      if (data) setLogs(data);
+    };
+
+    fetchLogs();
+
+    // Subscribe to realtime logs
+    const logsChannel = supabase.channel('public:logs')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'logs', filter: `tenant_id=eq.${currentTenant.id}` }, payload => {
+        fetchLogs();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(logsChannel);
+    };
+  }, [currentTenant]);
+
+  const filteredLogs = logs.filter(log => {
+      if (filter === 'todos') return true;
+      if (filter === 'seguridad' && (log.type === 'incidente' || log.type === 'emergencia')) return true;
+      if (filter === 'mantenimiento' && log.type === 'mantenimiento') return true;
+      if (filter === 'paquetes' && log.type === 'encomienda') return true;
+      if (filter === 'visitas' && log.type === 'visita') return true;
+      if (filter === 'turno' && log.type === 'turno') return true;
+      return false;
+  });
 
   return (
     <div className="flex flex-col min-h-screen bg-[#0A0A0A] text-white font-sans overflow-hidden">
@@ -78,72 +118,55 @@ const BitacoraScreen: React.FC<Props> = ({ navigate, role }) => {
               </div>
 
               <div className="space-y-4">
-                  <BitacoraItem 
-                      time="14:30" 
-                      category="PAQUETE"
-                      title="Ingreso de Encomienda" 
-                      desc="Vehículo de Chilexpress entregó paquete para Depto 402. Notificación push enviada al residente."
-                      icon="inventory_2"
-                      color="text-blue-400"
-                      bg="bg-blue-500/10"
-                      borderColor="border-blue-500/20"
-                      priority="baja"
-                  />
-                  <BitacoraItem 
-                      time="13:15" 
-                      category="VISITA"
-                      title="Ingreso de Contratista" 
-                      desc="Accede equipo de VTR Internet (Juan Pablo Díaz) para instalación en Depto 1402. Identidad verificada con cédula y confirmación telefónica del residente."
-                      icon="badge"
-                      color="text-purple-400"
-                      bg="bg-purple-500/10"
-                      borderColor="border-purple-500/20"
-                      priority="baja"
-                  />
-                  <BitacoraItem 
-                      time="11:00" 
-                      category="MANTENCIÓN"
-                      title="Falla en Ascensor 2 (Torre B)" 
-                      desc="Se reporta ruido metálico inusual en motor de ascensor 2. Se detiene el equipo por precaución y se abre ticket urgente con empresa técnica Schindler."
-                      icon="engineering"
-                      color="text-amber-400"
-                      bg="bg-amber-500/10"
-                      borderColor="border-amber-500/20"
-                      priority="alta"
-                  />
-              </div>
-          </div>
+                  {filteredLogs.map(log => {
+                      // Determine visual props based on type and title
+                      let icon = 'info';
+                      let color = 'text-blue-400';
+                      let bg = 'bg-blue-500/10';
+                      let borderColor = 'border-blue-500/20';
+                      let priority = 'baja';
+                      
+                      const upperTitle = log.title.toUpperCase();
+                      if (upperTitle.includes('ALTA') || upperTitle.includes('URGENTE') || log.type === 'incidente' || log.type === 'emergencia') {
+                         priority = 'alta';
+                         color = 'text-red-400';
+                         bg = 'bg-red-500/10';
+                         borderColor = 'border-red-500/20';
+                         icon = 'warning';
+                      } else if (upperTitle.includes('MEDIA') || log.type === 'mantenimiento') {
+                         priority = 'media';
+                         color = 'text-amber-400';
+                         bg = 'bg-amber-500/10';
+                         borderColor = 'border-amber-500/20';
+                         icon = 'engineering';
+                      } else if (log.type === 'turno') {
+                         color = 'text-green-400';
+                         bg = 'bg-green-500/10';
+                         borderColor = 'border-green-500/20';
+                         icon = 'badge';
+                      }
 
-           {/* Date Group */}
-           <div>
-              <div className="flex items-center gap-4 mb-6 sticky top-[90px] md:top-0 bg-[#0A0A0A]/90 backdrop-blur-md py-4 z-10 w-full">
-                <h2 className="text-[10px] font-bold text-gray-600 uppercase tracking-[0.2em]">Ayer, 23 de Octubre</h2>
-                <div className="h-[1px] flex-1 bg-gradient-to-r from-white/5 to-transparent"></div>
-              </div>
-
-              <div className="space-y-4">
-                  <BitacoraItem 
-                      time="22:00" 
-                      category="SEGURIDAD"
-                      title="Ronda de Cierre Nocturno" 
-                      desc="Revisión final de zona de quinchos, piscina y perímetros del subterráneo -1 y -2. Todo en orden, luces apagadas y puertas cerradas."
-                      icon="shield"
-                      color="text-green-400"
-                      bg="bg-green-500/10"
-                      borderColor="border-green-500/20"
-                      priority="baja"
-                  />
-                  <BitacoraItem 
-                      time="18:45" 
-                      category="SEGURIDAD"
-                      title="Incidente de Ruidos Molestos" 
-                      desc="Aviso de ruidos molestos (música alta) en Depto 803. Se sube a piso 8 y se solicita bajar volumen según reglamento. Residente accede sin problemas."
-                      icon="volume_up"
-                      color="text-red-400"
-                      bg="bg-red-500/10"
-                      borderColor="border-red-500/20"
-                      priority="media"
-                  />
+                      return (
+                        <BitacoraItem 
+                            key={log.id}
+                            time={new Date(log.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                            date={new Date(log.created_at).toLocaleDateString()}
+                            category={log.type.toUpperCase()}
+                            title={log.title} 
+                            desc={log.description}
+                            icon={icon}
+                            color={color}
+                            bg={bg}
+                            borderColor={borderColor}
+                            priority={priority}
+                            createdBy={log.profiles?.name || 'Sistema'}
+                        />
+                      );
+                  })}
+                  
+                  {filteredLogs.length === 0 && (
+                     <div className="text-gray-500 text-center py-10">No hay registros para este filtro.</div>
+                  )}
               </div>
           </div>
 
@@ -153,7 +176,7 @@ const BitacoraScreen: React.FC<Props> = ({ navigate, role }) => {
   );
 };
 
-const BitacoraItem = ({ time, category, title, desc, icon, color, bg, borderColor, priority }: any) => (
+const BitacoraItem = ({ time, category, title, desc, icon, color, bg, borderColor, priority, createdBy }: any) => (
     <div className="bg-[#111] p-6 md:p-8 rounded-[2rem] border border-white/5 hover:border-white/15 hover:bg-[#141414] transition-colors group relative overflow-hidden flex flex-col md:flex-row gap-6">
         
         {/* Subtle left border accent depending on priority */}
@@ -193,9 +216,9 @@ const BitacoraItem = ({ time, category, title, desc, icon, color, bg, borderColo
             <div className="mt-6 pt-4 border-t border-white/5 flex justify-between items-center w-full">
               <div className="flex items-center gap-3">
                 <div className="flex -space-x-2">
-                  <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=50" className="w-6 h-6 rounded-full border border-[#111]" alt="Conserje" />
+                  <div className="w-6 h-6 rounded-full border border-[#111] bg-white/10 flex items-center justify-center text-[10px]">{createdBy?.[0] || 'A'}</div>
                 </div>
-                <span className="text-[10px] font-medium text-gray-500">Registrado por <span className="text-gray-300">Carlos Mendoza (Conserjería)</span></span>
+                <span className="text-[10px] font-medium text-gray-500">Registrado por <span className="text-gray-300">{createdBy}</span></span>
               </div>
               <button className="text-[10px] font-bold text-gray-500 uppercase tracking-widest hover:text-white transition-colors flex items-center gap-1">
                 Ver Detalles <span className="material-symbols-outlined text-[14px]">chevron_right</span>

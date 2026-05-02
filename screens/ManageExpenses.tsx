@@ -273,8 +273,11 @@ const ManageExpenses: React.FC<Props> = ({ navigate }) => {
                 </div>
 
                 {/* Termómetro de Morosidad */}
-                <div className="col-span-1 lg:col-span-4 bg-[#111] p-8 md:p-10 rounded-[2.5rem] border border-white/5 relative overflow-hidden flex flex-col justify-between shadow-lg hover:border-white/10 transition-colors group">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 blur-[40px] rounded-full group-hover:bg-red-500/10 transition-colors pointer-events-none"></div>
+                <button 
+                  onClick={() => navigate('MorosidadPage')}
+                  className="col-span-1 lg:col-span-4 bg-[#111] p-8 md:p-10 rounded-[2.5rem] border border-white/5 relative overflow-hidden flex flex-col justify-between shadow-lg hover:border-red-500/30 transition-all group text-left active:scale-[0.98]"
+                >
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 blur-[40px] rounded-full group-hover:bg-red-500/20 transition-colors pointer-events-none"></div>
                     <div>
                         <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest mb-2 flex items-center gap-2">
                             <span className="w-2 h-2 rounded-full bg-red-500"></span>
@@ -282,86 +285,131 @@ const ManageExpenses: React.FC<Props> = ({ navigate }) => {
                         </p>
                         <h3 className="text-4xl text-white font-light tracking-tight mt-1">$1.240.000</h3>
                     </div>
-                    <div className="mt-8 relative z-10">
+                    <div className="mt-8 relative z-10 w-full">
                         <div className="flex justify-between text-xs text-gray-400 mb-2 font-medium">
                             <span>Deuda Total (15%)</span>
                             <span className="text-red-400 font-bold">Crítico</span>
                         </div>
                         <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
-                            <div className="w-[15%] h-full bg-gradient-to-r from-red-600 to-red-400 rounded-full"></div>
+                            <div className="w-[15%] h-full bg-gradient-to-r from-red-600 to-red-400 rounded-full group-hover:w-[18%] transition-all duration-500"></div>
                         </div>
                         <div className="flex justify-between items-center mt-4">
                            <p className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold text-center mt-1">12 Deptos en mora</p>
-                           <button onClick={handleNotify} className="text-[10px] bg-red-500/10 text-red-500 border border-red-500/20 px-2 py-1 rounded hover:bg-red-500/20 transition-colors font-bold uppercase tracking-widest">
-                             Notificar
-                           </button>
+                           <span className="text-[10px] bg-red-500/10 text-red-500 border border-red-500/20 px-3 py-1.5 rounded-lg font-bold uppercase tracking-widest flex items-center gap-1 group-hover:bg-red-500 text-white transition-colors">
+                             Gestionar <span className="material-symbols-outlined text-[12px]">arrow_forward</span>
+                           </span>
                         </div>
                     </div>
-                </div>
+                </button>
             </div>
          </section>
 
          {/* Flujo de Trabajo (The 4 Steps) */}
          <section className="space-y-4">
             <div className="flex justify-between items-center pb-2 pl-2">
-               <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">El Flujo del Administrador (Pilar 80/20)</h2>
-               <button 
-                onClick={() => navigate('FinanceCommunicationsPage')}
-                className="text-[10px] font-bold text-gray-400 uppercase tracking-widest hover:text-white flex items-center gap-1 transition-colors"
-               >
-                  <span className="material-symbols-outlined text-[14px]">outgoing_mail</span> Settings de Correos
-               </button>
+               <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">El Flujo Mensual (Paso a Paso)</h2>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 relative">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 relative">
                 
                 {/* Connecting Line for lg screens */}
                 <div className="hidden lg:block absolute top-[4.5rem] left-[10%] right-[10%] h-[2px] bg-white/5 border-t border-dashed border-white/10 z-0 pointer-events-none"></div>
 
-                {/* Paso 1: Configurar Mapa */}
-                <button onClick={() => navigate('MapConfigPage')} className="relative z-10 flex flex-col text-left bg-[#111] p-6 lg:p-8 rounded-[2rem] border border-white/5 hover:border-gray-500/30 transition-all group shadow-lg cursor-pointer">
-                    <div className="w-6 h-6 rounded-full bg-[#1A1A1A] border border-white/10 text-gray-500 text-[10px] font-bold flex items-center justify-center absolute -top-3 left-8 z-20 group-hover:bg-gray-400 group-hover:text-black group-hover:border-transparent transition-all">1</div>
-                    <div className="w-14 h-14 rounded-2xl bg-gray-500/10 border border-gray-500/20 text-gray-400 flex items-center justify-center shrink-0 mb-6 group-hover:scale-110 group-hover:bg-gray-500/20 transition-all shadow-inner">
-                        <span className="material-symbols-outlined text-[28px]">map</span>
-                    </div>
-                    <div>
-                        <h3 className="text-white font-medium text-lg tracking-tight mb-2">Configurar "Mapa"</h3>
-                        <p className="text-[11px] text-gray-500 leading-relaxed font-medium">Unidades, copropietarios y tabla de alícuotas (%).</p>
-                    </div>
-                </button>
-
-                {/* Paso 2: La Billetera (Egresos) */}
-                <button onClick={() => navigate('EgresosPage')} className="relative z-10 flex flex-col text-left bg-[#111] p-6 lg:p-8 rounded-[2rem] border border-white/5 hover:border-emerald-500/30 transition-all active:scale-[0.98] group shadow-lg text-left h-full">
-                    <div className="w-6 h-6 rounded-full bg-[#1A1A1A] border border-white/10 text-gray-500 text-[10px] font-bold flex items-center justify-center absolute -top-3 left-8 z-20 group-hover:bg-emerald-400 group-hover:text-black group-hover:border-transparent transition-all shadow-[0_0_10px_rgba(16,185,129,0.2)]">2</div>
+                {/* Paso 1: Egresos */}
+                <button onClick={() => navigate('EgresosPage')} className="relative z-10 flex flex-col text-left bg-[#111] p-6 lg:p-6 xl:p-8 rounded-[2rem] border border-white/5 hover:border-emerald-500/30 transition-all active:scale-[0.98] group shadow-lg text-left h-full">
+                    <div className="w-6 h-6 rounded-full bg-[#1A1A1A] border border-white/10 text-gray-500 text-[10px] font-bold flex items-center justify-center absolute -top-3 left-8 z-20 group-hover:bg-emerald-400 group-hover:text-black group-hover:border-transparent transition-all shadow-[0_0_10px_rgba(16,185,129,0.2)]">1</div>
                     <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mb-6 group-hover:scale-110 group-hover:bg-emerald-500/20 transition-all shadow-inner">
                         <span className="material-symbols-outlined text-[28px]">receipt_long</span>
                     </div>
                     <div>
-                        <h3 className="text-white font-medium text-lg tracking-tight mb-2">Subir Egresos</h3>
-                        <p className="text-[11px] text-gray-500 leading-relaxed font-medium">IA procesa facturas (OCR) y categoriza automáticamente.</p>
+                        <h3 className="text-white font-medium text-lg tracking-tight mb-2">1. Egresos</h3>
+                        <p className="text-[11px] text-gray-500 leading-relaxed font-medium">Facturas y pagos del mes. Categorización auto.</p>
                     </div>
                 </button>
 
-                {/* Paso 3: Cierre de Mes (Prorrateo) */}
-                <button onClick={() => navigate('ProrrateoPage')} className="relative z-10 flex flex-col text-left bg-[#111] p-6 lg:p-8 rounded-[2rem] border border-white/5 hover:border-blue-500/30 transition-all active:scale-[0.98] group shadow-lg text-left h-full">
-                    <div className="w-6 h-6 rounded-full bg-[#1A1A1A] border border-white/10 text-gray-500 text-[10px] font-bold flex items-center justify-center absolute -top-3 left-8 z-20 group-hover:bg-blue-400 group-hover:text-black group-hover:border-transparent transition-all shadow-[0_0_10px_rgba(59,130,246,0.2)]">3</div>
+                {/* Paso 2: Medidores */}
+                <button onClick={() => navigate('MedidoresPage')} className="relative z-10 flex flex-col text-left bg-[#111] p-6 lg:p-6 xl:p-8 rounded-[2rem] border border-white/5 hover:border-cyan-500/30 transition-all active:scale-[0.98] group shadow-lg text-left h-full">
+                    <div className="w-6 h-6 rounded-full bg-[#1A1A1A] border border-white/10 text-gray-500 text-[10px] font-bold flex items-center justify-center absolute -top-3 left-8 z-20 group-hover:bg-cyan-400 group-hover:text-black group-hover:border-transparent transition-all shadow-[0_0_10px_rgba(34,211,238,0.2)]">2</div>
+                    <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0 mb-6 group-hover:scale-110 group-hover:bg-cyan-500/20 transition-all shadow-inner">
+                        <span className="material-symbols-outlined text-[28px]">water_drop</span>
+                    </div>
+                    <div>
+                        <h3 className="text-white font-medium text-lg tracking-tight mb-2">2. Medidores</h3>
+                        <p className="text-[11px] text-gray-500 leading-relaxed font-medium">Lectura mensual de agua y consumos ind.</p>
+                    </div>
+                </button>
+
+                {/* Paso 3: Multas y Cargos */}
+                <button onClick={() => navigate('MultasPage')} className="relative z-10 flex flex-col text-left bg-[#111] p-6 lg:p-6 xl:p-8 rounded-[2rem] border border-white/5 hover:border-orange-500/30 transition-all active:scale-[0.98] group shadow-lg text-left h-full">
+                    <div className="w-6 h-6 rounded-full bg-[#1A1A1A] border border-white/10 text-gray-500 text-[10px] font-bold flex items-center justify-center absolute -top-3 left-8 z-20 group-hover:bg-orange-400 group-hover:text-black group-hover:border-transparent transition-all shadow-[0_0_10px_rgba(249,115,22,0.2)]">3</div>
+                    <div className="w-14 h-14 rounded-2xl bg-orange-500/10 border border-orange-500/20 text-orange-400 flex items-center justify-center shrink-0 mb-6 group-hover:scale-110 group-hover:bg-orange-500/20 transition-all shadow-inner">
+                        <span className="material-symbols-outlined text-[28px]">gavel</span>
+                    </div>
+                    <div>
+                        <h3 className="text-white font-medium text-lg tracking-tight mb-2">3. Multas y Cargos</h3>
+                        <p className="text-[11px] text-gray-500 leading-relaxed font-medium">Asigna multas individuales antes de prorratear.</p>
+                    </div>
+                </button>
+
+                {/* Paso 4: Cierre de Mes (Prorrateo) */}
+                <button onClick={() => navigate('ProrrateoPage')} className="relative z-10 flex flex-col text-left bg-[#111] p-6 lg:p-6 xl:p-8 rounded-[2rem] border border-white/5 hover:border-blue-500/30 transition-all active:scale-[0.98] group shadow-lg text-left h-full">
+                    <div className="w-6 h-6 rounded-full bg-[#1A1A1A] border border-white/10 text-gray-500 text-[10px] font-bold flex items-center justify-center absolute -top-3 left-8 z-20 group-hover:bg-blue-400 group-hover:text-black group-hover:border-transparent transition-all shadow-[0_0_10px_rgba(59,130,246,0.2)]">4</div>
                     <div className="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 mb-6 group-hover:scale-110 group-hover:bg-blue-500/20 transition-all shadow-inner">
                         <span className="material-symbols-outlined text-[28px]">calculate</span>
                     </div>
                     <div>
-                        <h3 className="text-white font-medium text-lg tracking-tight mb-2">Cierre de Mes</h3>
-                        <p className="text-[11px] text-gray-500 leading-relaxed font-medium">Prorrateo 21.442, fondo de reserva y medidores.</p>
+                        <h3 className="text-white font-medium text-lg tracking-tight mb-2">4. Cierre Base</h3>
+                        <p className="text-[11px] text-gray-500 leading-relaxed font-medium">Calcula cobros, divide alícuotas y emite GC.</p>
                     </div>
                 </button>
 
-                {/* Paso 4: Recaudación */}
-                <button onClick={() => navigate('RecaudacionPage')} className="relative z-10 flex flex-col text-left bg-[#111] p-6 lg:p-8 rounded-[2rem] border border-white/5 hover:border-purple-500/30 transition-all active:scale-[0.98] group shadow-lg text-left h-full">
-                    <div className="w-6 h-6 rounded-full bg-[#1A1A1A] border border-white/10 text-gray-500 text-[10px] font-bold flex items-center justify-center absolute -top-3 left-8 z-20 group-hover:bg-purple-400 group-hover:text-black group-hover:border-transparent transition-all shadow-[0_0_10px_rgba(168,85,247,0.2)]">4</div>
+                {/* Paso 5: Recaudación */}
+                <button onClick={() => navigate('RecaudacionPage')} className="relative z-10 flex flex-col text-left bg-[#111] p-6 lg:p-6 xl:p-8 rounded-[2rem] border border-white/5 hover:border-purple-500/30 transition-all active:scale-[0.98] group shadow-lg text-left h-full">
+                    <div className="w-6 h-6 rounded-full bg-[#1A1A1A] border border-white/10 text-gray-500 text-[10px] font-bold flex items-center justify-center absolute -top-3 left-8 z-20 group-hover:bg-purple-400 group-hover:text-black group-hover:border-transparent transition-all shadow-[0_0_10px_rgba(168,85,247,0.2)]">5</div>
                     <div className="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center shrink-0 mb-6 group-hover:scale-110 group-hover:bg-purple-500/20 transition-all shadow-inner">
                         <span className="material-symbols-outlined text-[28px]">account_balance</span>
                     </div>
                     <div>
-                        <h3 className="text-white font-medium text-lg tracking-tight mb-2">Recaudación</h3>
-                        <p className="text-[11px] text-gray-500 leading-relaxed font-medium">Conciliación bancaria y emisión masiva de colillas.</p>
+                        <h3 className="text-white font-medium text-lg tracking-tight mb-2">5. Recaudación</h3>
+                        <p className="text-[11px] text-gray-500 leading-relaxed font-medium">Gestión de pagos bancarios y recibos automáticos.</p>
+                    </div>
+                </button>
+            </div>
+         </section>
+
+         {/* Gestión Complementaria (Configuraciones y Reportes) */}
+         <section className="space-y-4 pt-4">
+            <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] pl-2">Reportes y Configuración Base</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Reportes Financieros */}
+                <button onClick={() => navigate('ReportesFinancierosPage')} className="relative z-10 flex flex-col text-left bg-[#111] p-6 lg:p-8 rounded-[2rem] border border-white/5 hover:border-cyan-500/30 transition-all active:scale-[0.98] group shadow-lg text-left h-full">
+                    <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0 mb-6 group-hover:scale-110 group-hover:bg-cyan-500/20 transition-all shadow-inner">
+                        <span className="material-symbols-outlined text-[28px]">query_stats</span>
+                    </div>
+                    <div>
+                        <h3 className="text-white font-medium text-lg tracking-tight mb-2">Reportes (Comité)</h3>
+                        <p className="text-[11px] text-gray-500 leading-relaxed font-medium">Balance, fondo de reserva y exportación a Excel.</p>
+                    </div>
+                </button>
+
+                {/* Configurar Mapa */}
+                <button onClick={() => navigate('MapConfigPage')} className="relative z-10 flex flex-col text-left bg-[#111] p-6 lg:p-8 rounded-[2rem] border border-white/5 hover:border-gray-500/30 transition-all group shadow-lg cursor-pointer h-full">
+                    <div className="w-14 h-14 rounded-2xl bg-gray-500/10 border border-gray-500/20 text-gray-400 flex items-center justify-center shrink-0 mb-6 group-hover:scale-110 group-hover:bg-gray-500/20 transition-all shadow-inner">
+                        <span className="material-symbols-outlined text-[28px]">map</span>
+                    </div>
+                    <div>
+                        <h3 className="text-white font-medium text-lg tracking-tight mb-2">Configurar Mapa</h3>
+                        <p className="text-[11px] text-gray-500 leading-relaxed font-medium">Unidades, copropietarios y tabla de alícuotas (%).</p>
+                    </div>
+                </button>
+
+                {/* Comunicaciones Automáticas */}
+                <button onClick={() => navigate('FinanceCommunicationsPage')} className="relative z-10 flex flex-col text-left bg-[#111] p-6 lg:p-8 rounded-[2rem] border border-white/5 hover:border-yellow-500/30 transition-all active:scale-[0.98] group shadow-lg text-left h-full">
+                    <div className="w-14 h-14 rounded-2xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 flex items-center justify-center shrink-0 mb-6 group-hover:scale-110 group-hover:bg-yellow-500/20 transition-all shadow-inner">
+                        <span className="material-symbols-outlined text-[28px]">outgoing_mail</span>
+                    </div>
+                    <div>
+                        <h3 className="text-white font-medium text-lg tracking-tight mb-2">Correos de Cobranza</h3>
+                        <p className="text-[11px] text-gray-500 leading-relaxed font-medium">Plantillas automatizadas para notificar el GC y morosidades.</p>
                     </div>
                 </button>
             </div>

@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScreenName } from '../App';
 import { UserRole } from '../src/types';
 import { useAppContext } from '../src/context/AppContext';
 import { PassType, VisitorPass } from '../src/types';
+import { supabase } from '../src/lib/supabase-client';
+import QRCode from 'react-qr-code';
 
 interface Props {
   navigate: (screen: ScreenName) => void;
@@ -14,21 +16,54 @@ type ViewState = 'list' | 'create' | 'show_qr';
 const QRCodeScreen: React.FC<Props> = ({ navigate, role }) => {
   const { currentTenant, currentUser } = useAppContext();
   const [view, setView] = useState<ViewState>('list');
-  const [passes, setPasses] = useState<VisitorPass[]>([
-    { id: '1', name: 'Carlos Mendoza', type: 'visita', date: 'Hoy, 19:00', status: 'active', tenantId: 'tenant-1', userId: 'user-1' },
-    { id: '2', name: 'Reparación Internet', type: 'servicio', date: 'Ayer', status: 'used', tenantId: 'tenant-1', userId: 'user-1' },
-  ]);
+  const [passes, setPasses] = useState<VisitorPass[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Form State
   const [visitorName, setVisitorName] = useState('');
   const [passType, setPassType] = useState<PassType>('visita');
   const [currentPass, setCurrentPass] = useState<VisitorPass | null>(null);
 
+  useEffect(() => {
+    fetchPasses();
+  }, [currentUser]);
+
+  const fetchPasses = async () => {
+    if (!currentUser) return;
+    try {
+      const { data, error } = await supabase
+        .from('visitor_passes')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      
+      if (data) {
+        setPasses(data.map((p: any) => ({
+          id: p.qr_code_data, // we use qr_code_data as the key/id for the pass view
+          name: p.visitor_name,
+          type: p.pass_type as PassType,
+          date: new Date(p.created_at).toLocaleString('es-CL', { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' }),
+          status: p.status,
+          tenantId: p.tenant_id,
+          userId: p.user_id,
+          qrPayload: p.qr_code_data
+        })));
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleBack = () => {
     if (view === 'create' || view === 'show_qr') {
       setView('list');
       setVisitorName('');
       setPassType('visita');
+      fetchPasses();
     } else {
       if (role === 'admin') navigate('AdminDashboard');
       else if (role === 'concierge') navigate('ConciergeDashboard');
@@ -36,23 +71,47 @@ const QRCodeScreen: React.FC<Props> = ({ navigate, role }) => {
     }
   };
 
-  const handleGeneratePass = (e: React.FormEvent) => {
+  const handleGeneratePass = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!visitorName.trim()) return;
+    if (!visitorName.trim() || !currentUser || !currentTenant) return;
 
-    const newPass: VisitorPass = {
-      id: Math.random().toString(36).substring(2, 11),
-      name: visitorName,
-      type: passType,
-      date: 'Hoy, Válido por 24h',
-      status: 'active',
-      tenantId: currentTenant?.id || '',
-      userId: currentUser?.id || ''
-    };
+    // Generate unique payload for QR
+    const payload = crypto.randomUUID();
+    // Expiration: 24 hs from now
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24);
 
-    setPasses([newPass, ...passes]);
-    setCurrentPass(newPass);
-    setView('show_qr');
+    try {
+      const { data, error } = await supabase.from('visitor_passes').insert({
+        tenant_id: currentTenant.id,
+        user_id: currentUser.id,
+        visitor_name: visitorName,
+        pass_type: passType,
+        qr_code_data: payload,
+        expires_at: expiresAt.toISOString(),
+        status: 'active'
+      }).select().single();
+
+      if (error) throw error;
+
+      const newPass: VisitorPass = {
+        id: payload,
+        name: visitorName,
+        type: passType,
+        date: 'Hoy, Válido por 24h',
+        status: 'active',
+        tenantId: currentTenant.id,
+        userId: currentUser.id
+      };
+
+      setPasses([newPass, ...passes]);
+      setCurrentPass(newPass);
+      setView('show_qr');
+
+    } catch (err) {
+      console.error('Error generating pass:', err);
+      alert('Hubo un error al generar el pase.');
+    }
   };
 
   const getTypeStyles = (type: PassType) => {
@@ -284,7 +343,19 @@ const QRCodeScreen: React.FC<Props> = ({ navigate, role }) => {
                     <div className="bg-white p-4 rounded-3xl mb-12 shadow-[0_0_40px_rgba(255,255,255,0.1)] relative">
                         {/* Decorative scan line animation */}
                         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#00AEEF]/20 to-transparent opacity-0 animate-[scan_3s_ease-in-out_infinite]"></div>
-                        <span className="material-symbols-outlined text-[180px] text-black leading-none block">qr_code_2</span>
+                        <div className="flex justify-center items-center">
+                          {currentPass?.qrPayload ? (
+                            <QRCode
+                                value={currentPass.qrPayload}
+                                size={180}
+                                level="H"
+                                bgColor="#ffffff"
+                                fgColor="#000000"
+                            />
+                          ) : (
+                            <span className="material-symbols-outlined text-[180px] text-black leading-none block">qr_code_2</span>
+                          )}
+                        </div>
                     </div>
                 </div>
 

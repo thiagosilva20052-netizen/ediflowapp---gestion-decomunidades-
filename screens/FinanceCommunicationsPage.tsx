@@ -17,13 +17,22 @@ const FinanceCommunicationsPage: React.FC<Props> = ({ navigate }) => {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const templates = {
+  interface TemplateData {
+    id: string;
+    title: string;
+    trigger: string;
+    subject: string;
+    content: string;
+    color: string;
+  }
+
+  const [templates, setTemplates] = useState<Record<TemplateType, TemplateData>>({
     emision: {
       id: 'emision',
       title: 'Emisión de Gasto Común',
       trigger: 'Después del Prorrateo Mensual',
       subject: 'Tu Gasto Común de Marzo 2026 ya está disponible',
-      content: 'Hola {Nombre},\n\nEl detalle de tu Gasto Común correspondiente al mes de Marzo 2026 para la unidad {Unidad} ya está listo.\n\nTotal a pagar: {Monto}\nVencimiento: 05 de Abril, 2026\n\nRecuerda que ahora puedes revisar el respaldo de cada factura directamente en la app.',
+      content: 'Hola {Nombre},\n\nEl detalle de tu Gasto Común correspondiente al mes de Marzo 2026 para la unidad {Unidad} ya está listo.\n\nTotal a pagar: {Monto}\nVencimiento: 05 de Abril, 2026\n\n{ExplicacionAumento}\n\nRecuerda que ahora puedes revisar el respaldo de cada factura directamente en la app.',
       color: 'blue'
     },
     pago: {
@@ -50,9 +59,19 @@ const FinanceCommunicationsPage: React.FC<Props> = ({ navigate }) => {
       content: 'Estimada Comunidad,\n\nEn pro de la transparencia, les informamos que se ha registrado un nuevo gasto extraordinario por {Monto} correspondiente a {Proveedor}.\n\nPueden revisar la factura y el detalle técnico ingresando a la sección de Transparencia en su app Ediflow.',
       color: 'emerald'
     }
-  };
+  });
 
   const activeData = templates[activeTemplate];
+
+  const handleUpdate = (field: 'subject' | 'content', value: string) => {
+    setTemplates(prev => ({
+      ...prev,
+      [activeTemplate]: {
+        ...prev[activeTemplate],
+        [field]: value
+      }
+    }));
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-[#050505] text-white font-sans overflow-hidden relative">
@@ -104,7 +123,7 @@ const FinanceCommunicationsPage: React.FC<Props> = ({ navigate }) => {
            <div className="lg:col-span-4 space-y-4">
               <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] pl-2 mb-4">Eventos del Flujo</h2>
               
-              {Object.values(templates).map((tpl) => (
+              {(Object.values(templates) as TemplateData[]).map((tpl) => (
                 <button 
                   key={tpl.id}
                   onClick={() => setActiveTemplate(tpl.id as TemplateType)}
@@ -144,7 +163,7 @@ const FinanceCommunicationsPage: React.FC<Props> = ({ navigate }) => {
                         Configuración de la Plantilla
                      </h2>
                      <div className="flex items-center gap-2">
-                        <span className="bg-white/10 text-white text-[10px] uppercase font-bold tracking-widest px-3 py-1.5 rounded-sm">Variables Disponibles: {'{Nombre}'}, {'{Unidad}'}, {'{Monto}'}</span>
+                        <span className="bg-white/10 text-white text-[10px] uppercase font-bold tracking-widest px-3 py-1.5 rounded-sm">Variables Disponibles: {'{Nombre}'}, {'{Unidad}'}, {'{Monto}'}, {'{ExplicacionAumento}'}</span>
                      </div>
                   </div>
 
@@ -153,18 +172,34 @@ const FinanceCommunicationsPage: React.FC<Props> = ({ navigate }) => {
                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Asunto del Correo</label>
                         <input 
                           type="text" 
-                          defaultValue={activeData.subject}
+                          value={activeData.subject}
+                          onChange={(e) => handleUpdate('subject', e.target.value)}
                           className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/30 transition-colors"
                         />
                      </div>
                      <div className="space-y-2">
                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Cuerpo del Mensaje</label>
                         <textarea 
-                          defaultValue={activeData.content}
+                          value={activeData.content}
+                          onChange={(e) => handleUpdate('content', e.target.value)}
                           rows={6}
-                          className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl px-4 py-4 text-white focus:outline-none focus:border-white/30 transition-colors resize-none leading-relaxed"
+                          className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl px-4 py-4 text-white focus:outline-none focus:border-white/30 transition-colors resize-none leading-relaxed font-medium"
                         />
                      </div>
+                     {activeTemplate === 'emision' && (
+                       <div className="flex items-center justify-between p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 mt-4">
+                         <div className="flex items-start gap-4">
+                           <span className="material-symbols-outlined text-blue-400">smart_toy</span>
+                           <div>
+                             <h4 className="text-sm font-bold text-blue-400">Explicación de Alzas (IA)</h4>
+                             <p className="text-xs text-gray-400 mt-1">La IA analizará los egresos del mes y generará automáticamente un resumen explicando a los residentes por qué subió su gasto común.</p>
+                           </div>
+                         </div>
+                         <div className="w-12 h-6 bg-blue-500 rounded-full flex items-center px-1 cursor-pointer shrink-0">
+                           <div className="w-4 h-4 bg-white rounded-full translate-x-6"></div>
+                         </div>
+                       </div>
+                     )}
                   </div>
               </div>
 
@@ -180,7 +215,13 @@ const FinanceCommunicationsPage: React.FC<Props> = ({ navigate }) => {
                     <h1 className="text-2xl font-bold mb-6 tracking-tight">{activeData.subject}</h1>
                     
                     <div className="space-y-4 text-gray-800 leading-relaxed font-medium text-base mb-8 whitespace-pre-wrap">
-                       {activeData.content.replace('{Nombre}', 'Juan Pérez').replace('{Unidad}', 'Dpto 101').replace('{Monto}', '$125.000').replace('{Proveedor}', 'Otis S.A.')}
+                       {activeData.content
+                          .replace('{Nombre}', 'Juan Pérez')
+                          .replace('{Unidad}', 'Dpto 101')
+                          .replace('{Monto}', '$125.000')
+                          .replace('{Proveedor}', 'Otis S.A.')
+                          .replace('{ExplicacionAumento}', '🤖 Nota de Ediflow IA: Tu gasto común aumentó un 4% respecto al mes anterior. Esto se debe principalmente a un gasto extraordinario por "Reparación de Bomba de Agua" ($450.000) en los egresos de la comunidad.')
+                       }
                     </div>
 
                     {activeTemplate === 'emision' && (

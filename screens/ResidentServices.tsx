@@ -14,12 +14,60 @@ export const ResidentServices: React.FC<Props> = ({ navigate, onLogout }) => {
   const [isPaying, setIsPaying] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
 
+  const [unitPath, setUnitPath] = useState<string>('Depto ...');
+  const [totalDebt, setTotalDebt] = useState<number | null>(null);
+  const [pendingParcelsCount, setPendingParcelsCount] = useState<number>(0);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const { supabase } = await import('../src/lib/supabase-client');
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Fetch Unit
+        const { data: units } = await supabase
+          .from('units')
+          .select('id, unit_number')
+          .or(`owner_id.eq.${user.id},resident_id.eq.${user.id}`)
+          .limit(1);
+
+        if (units && units.length > 0) {
+           setUnitPath(units[0].unit_number);
+           
+           // Fetch pending parcels for this unit
+           const { count } = await supabase
+              .from('parcels')
+              .select('*', { count: 'exact', head: true })
+              .eq('department_number', units[0].unit_number)
+              .in('status', ['received', 'notified']);
+              
+           if (count !== null) setPendingParcelsCount(count);
+        }
+
+        const { data: txs } = await supabase
+          .from('transactions')
+          .select('amount, status')
+          .eq('user_id', user.id);
+
+        if (txs && txs.length > 0) {
+           const pendingTxs = txs.filter(t => t.status === 'pending');
+           const debt = pendingTxs.reduce((sum, tx) => sum + Number(tx.amount), 0);
+           setTotalDebt(debt);
+           setIsPaid(debt === 0);
+        } else {
+           setTotalDebt(0);
+           setIsPaid(true); // Estás al día si no hay deudas registradas
+        }
+      } catch (err) {
+         console.error('Error fetching data:', err);
+      }
+    };
+    fetchData();
+  }, []);
+
   const handleQuickPay = () => {
-    setIsPaying(true);
-    setTimeout(() => {
-      setIsPaid(true);
-      setIsPaying(false);
-    }, 800);
+    navigate('PaymentsScreen');
   };
 
   return (
@@ -49,7 +97,7 @@ export const ResidentServices: React.FC<Props> = ({ navigate, onLogout }) => {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate text-white">{currentUser?.name || "Residente"}</p>
                   <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold flex items-center gap-1 mt-0.5">
-                    Depto 402
+                    {unitPath}
                   </p>
                 </div>
               )}
@@ -87,7 +135,7 @@ export const ResidentServices: React.FC<Props> = ({ navigate, onLogout }) => {
              </h1>
              <p className="text-[#00AEEF] text-xs md:text-sm md:mt-4 mt-2 block font-bold uppercase tracking-widest flex items-center gap-2">
                <span className="material-symbols-outlined text-[16px] drop-shadow-[0_0_10px_rgba(0,174,239,0.5)]">verified_user</span>
-               Depto 402 — Al día.
+               {unitPath} — {isPaid ? 'Al día.' : 'Pendiente.'}
              </p>
           </div>
 
@@ -152,7 +200,7 @@ export const ResidentServices: React.FC<Props> = ({ navigate, onLogout }) => {
                  <div className="flex items-baseline gap-3 mb-4">
                      <span className="text-2xl md:text-3xl font-light text-gray-500">$</span>
                      <h3 className="text-6xl md:text-7xl lg:text-8xl font-light text-white tracking-tighter">
-                       {isPaid ? '0' : '154.200'}
+                       {totalDebt === null ? '...' : (isPaid ? '0' : totalDebt.toLocaleString('es-CL'))}
                      </h3>
                  </div>
                  {!isPaid && (
@@ -215,9 +263,13 @@ export const ResidentServices: React.FC<Props> = ({ navigate, onLogout }) => {
                 </div>
                 <div className="relative z-10">
                     <p className="text-5xl md:text-6xl font-light text-white tracking-tight mb-2 flex items-baseline gap-2">
-                        1 <span className="text-lg md:text-xl text-gray-500 font-normal">paquete</span>
+                        {pendingParcelsCount} <span className="text-lg md:text-xl text-gray-500 font-normal">{pendingParcelsCount === 1 ? 'paquete' : 'paquetes'}</span>
                     </p>
-                    <p className="text-xs text-gray-400 font-light mt-4 mb-2">Ingresado hoy 14:30 hrs.</p>
+                    {pendingParcelsCount > 0 ? (
+                      <p className="text-xs text-gray-400 font-light mt-4 mb-2">Pendientes de retiro en conserjería.</p>
+                    ) : (
+                      <p className="text-xs text-gray-400 font-light mt-4 mb-2">No tienes entregas pendientes.</p>
+                    )}
                 </div>
                 <span className="text-[10px] font-bold text-white uppercase tracking-widest mt-auto border border-white/10 bg-white/5 self-start px-4 py-2 rounded-full relative z-10 backdrop-blur-md flex items-center gap-2 group-hover:bg-white group-hover:text-black group-hover:border-white transition-colors">
                     Ver Detalles <span className="material-symbols-outlined text-[14px]">arrow_forward</span>

@@ -1,30 +1,5 @@
 import { LogEntry } from '../types';
-
-// Mock Supabase client for frontend architecture demonstration
-// In a real app, this would be imported from your actual supabase client file
-const supabase = {
-  from: (table: string) => ({
-    select: (columns: string) => ({
-      eq: (field: string, value: any) => ({
-        eq: (field2: string, value2: any) => ({
-          single: async () => {
-            // Mock response
-            if (table === 'residents') return { data: { id: 'res_123' }, error: null };
-            return { data: null, error: new Error('Not found') };
-          }
-        })
-      })
-    }),
-    insert: (data: any) => ({
-      select: () => ({
-        single: async () => {
-          // Mock response
-          return { data: { id: 'pkg_123', ...data }, error: null };
-        }
-      })
-    })
-  })
-};
+import { supabase } from '../lib/supabase-client';
 
 export const conserjeriaService = {
   /**
@@ -131,31 +106,31 @@ export const conserjeriaService = {
     notes?: string
   ): Promise<any> {
     try {
-      // 1. Buscar resident_id
-      const { data: resident, error: residentError } = await supabase
-        .from('residents')
-        .select('id')
+      // 1. Buscar unit
+      const { data: units, error: unitError } = await supabase
+        .from('units')
+        .select('id, resident_id')
         .eq('tenant_id', tenantId)
-        .eq('department_number', depto)
-        .single();
+        .eq('unit_number', depto);
 
-      if (residentError || !resident) {
-        throw new Error(`Residente no encontrado para el departamento ${depto}`);
+      if (unitError || !units || units.length === 0) {
+        throw new Error(`Unidad no encontrada para el departamento ${depto}`);
       }
 
-      // 2. Insertar registro de pago en la tabla real
+      // 2. Insertar registro de pago en transactions
+      const { data: userProfile } = await supabase.auth.getUser();
+
       const { data: newPayment, error: paymentError } = await supabase
-        .from('payments')
+        .from('transactions')
         .insert({
           tenant_id: tenantId,
-          resident_id: resident.id,
+          unit_id: units[0].id,
+          user_id: units[0].resident_id,
+          received_by: userProfile?.user?.id || null, // Audit trace
           amount,
-          method,
           status: 'success', // Pago manual en conserjería se asume exitoso/recibido
-          received_by: conciergeName,
-          check_number: checkNumber,
-          notes,
-          timestamp: new Date().toISOString()
+          method,
+          payment_date: new Date().toISOString()
         })
         .select()
         .single();
@@ -165,7 +140,7 @@ export const conserjeriaService = {
       // 3. (Opcional) Registrar también en la bitácora (novelties) para que quede el log
       await supabase.from('novelties').insert({
         tenant_id: tenantId,
-        resident_id: resident.id,
+        resident_id: units[0].resident_id,
         type: 'pago',
         desc: `Pago recibido por ${conciergeName} - $${amount} (${method})`,
         timestamp: new Date().toISOString()
