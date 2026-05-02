@@ -217,102 +217,162 @@ const ManageExpenses: React.FC<Props> = ({ navigate }) => {
       )}
 
       {/* Header */}
-      <header className="px-6 md:px-16 pt-8 md:pt-16 pb-6 lg:pb-8 flex items-center gap-4 sticky top-0 z-20 bg-gradient-to-b from-[#0A0A0A] via-[#0A0A0A] to-transparent pointer-events-none md:bg-none">
-        <button 
-          onClick={() => navigate('AdminDashboard')}
-          className="w-12 h-12 rounded-full bg-[#111] border border-white/10 flex items-center justify-center text-white hover:bg-white/10 hover:border-white/20 active:scale-95 transition-all pointer-events-auto shadow-lg"
-        >
-          <span className="material-symbols-outlined">arrow_back</span>
-        </button>
-        <div className="pointer-events-auto">
-          <h1 className="text-2xl md:text-4xl font-light tracking-tight text-white leading-none">Finanzas y Gastos</h1>
-          <p className="text-xs md:text-sm text-gray-500 mt-1.5 uppercase font-semibold tracking-widest">Periodo: Marzo 2026</p>
+// Imports unchanged...
+
+      <header className="px-6 md:px-16 pt-8 md:pt-16 pb-6 lg:pb-8 flex items-center justify-between sticky top-0 z-20 bg-gradient-to-b from-[#0A0A0A] via-[#0A0A0A] to-transparent pointer-events-none md:bg-none">
+        <div className="flex items-center gap-4">
+            <button 
+            onClick={() => navigate('AdminDashboard')}
+            className="w-12 h-12 rounded-full bg-[#111] border border-white/10 flex items-center justify-center text-white hover:bg-white/10 hover:border-white/20 active:scale-95 transition-all pointer-events-auto shadow-lg"
+            >
+            <span className="material-symbols-outlined">arrow_back</span>
+            </button>
+            <div className="pointer-events-auto">
+            <h1 className="text-2xl md:text-4xl font-light tracking-tight text-white leading-none">Finanzas Core <span className="font-serif italic font-normal text-ediflow-primary text-xl md:text-3xl">80/20</span></h1>
+            <p className="text-xs md:text-sm text-gray-500 mt-1.5 uppercase font-semibold tracking-widest">Estándar PropTech Chile</p>
+            </div>
+        </div>
+        <div className="pointer-events-auto hidden md:block">
+           <div className="bg-[#111] border border-white/10 px-4 py-2 rounded-full flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+              <span className="text-[10px] text-gray-300 uppercase tracking-widest font-bold">Motor IA Activo</span>
+           </div>
         </div>
       </header>
 
-      <main className="flex-1 px-6 md:px-16 pb-12 max-w-7xl mx-auto w-full space-y-8">
+      <main className="flex-1 px-6 md:px-16 pb-12 max-w-7xl mx-auto w-full space-y-12">
          
-         {/* Main KPI Widget (The Bento "Hero") */}
-         <div className="bg-[#111] p-8 md:p-10 rounded-[2.5rem] border border-white/5 shadow-2xl relative overflow-hidden group hover:border-white/10 transition-colors">
-            {/* Ambient Glow */}
-            <div className="absolute -top-32 -right-32 w-[500px] h-[500px] bg-ediflow-primary/5 blur-[120px] rounded-full pointer-events-none group-hover:opacity-100 opacity-50 transition-opacity"></div>
-            
-            <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-               <div>
-                  <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest mb-2 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-[#008080]"></span>
-                    Fondo Común Actual
-                  </p>
-                  <h2 className="text-5xl md:text-6xl font-light text-white tracking-tight">$4.500.000</h2>
-                  <div className="bg-[#008080]/10 border border-[#008080]/20 text-[#008080] px-3 py-1 bg-opacity-20 rounded-full inline-flex items-center gap-1.5 mt-4">
-                     <span className="material-symbols-outlined text-[14px]">trending_up</span>
-                     <span className="text-xs font-bold uppercase tracking-widest">75% Recaudado</span>
-                  </div>
-               </div>
-               
-               <div className="w-full md:w-auto p-5 rounded-2xl bg-[#0A0A0A] border border-white/5 text-right min-w-[200px]">
-                  <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest mb-1 shadow-sm">Por Recaudar</p>
-                  <h3 className="text-2xl font-medium text-white">$1.500.000</h3>
-               </div>
+         {/* Dashboard de Control (Top Metrics) */}
+         <section className="space-y-4">
+            <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] pl-2">Dashboard de Control</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {/* Caja Disponible */}
+                <div className="col-span-1 lg:col-span-8 bg-[#111] p-8 md:p-10 rounded-[2.5rem] border border-white/5 shadow-lg relative overflow-hidden group hover:border-white/10 transition-colors">
+                    <div className="absolute -top-32 -right-32 w-[500px] h-[500px] bg-[#008080]/5 blur-[120px] rounded-full pointer-events-none group-hover:opacity-100 opacity-50 transition-opacity"></div>
+                    
+                    <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 h-full">
+                        <div className="flex-1">
+                        <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest mb-3 flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-[#008080]"></span>
+                            Caja Disponible
+                        </p>
+                        <h2 className="text-5xl md:text-6xl font-light text-white tracking-tight">$4.850.000</h2>
+                        <div className="flex flex-wrap gap-2 mt-6">
+                            <div className="bg-[#008080]/10 border border-[#008080]/20 text-[#008080] px-3 py-1.5 rounded-full inline-flex items-center gap-1.5">
+                                <span className="material-symbols-outlined text-[14px]">account_balance</span>
+                                <span className="text-xs font-bold uppercase tracking-widest">$3.200.000 Cta. Corriente</span>
+                            </div>
+                            <div className="bg-ediflow-primary/10 border border-ediflow-primary/20 text-ediflow-primary px-3 py-1.5 rounded-full inline-flex items-center gap-1.5">
+                                <span className="material-symbols-outlined text-[14px]">savings</span>
+                                <span className="text-xs font-bold uppercase tracking-widest">$1.650.000 Fondo Reserva</span>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                    <span className="material-symbols-outlined absolute -right-10 -bottom-10 text-[180px] text-white/5 -rotate-12 pointer-events-none">account_balance_wallet</span>
+                </div>
+
+                {/* Termómetro de Morosidad */}
+                <div className="col-span-1 lg:col-span-4 bg-[#111] p-8 md:p-10 rounded-[2.5rem] border border-white/5 relative overflow-hidden flex flex-col justify-between shadow-lg hover:border-white/10 transition-colors group">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 blur-[40px] rounded-full group-hover:bg-red-500/10 transition-colors pointer-events-none"></div>
+                    <div>
+                        <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest mb-2 flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                            Termómetro Morosidad
+                        </p>
+                        <h3 className="text-4xl text-white font-light tracking-tight mt-1">$1.240.000</h3>
+                    </div>
+                    <div className="mt-8 relative z-10">
+                        <div className="flex justify-between text-xs text-gray-400 mb-2 font-medium">
+                            <span>Deuda Total (15%)</span>
+                            <span className="text-red-400 font-bold">Crítico</span>
+                        </div>
+                        <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
+                            <div className="w-[15%] h-full bg-gradient-to-r from-red-600 to-red-400 rounded-full"></div>
+                        </div>
+                        <div className="flex justify-between items-center mt-4">
+                           <p className="text-[10px] text-gray-500 uppercase tracking-widest font-semibold text-center mt-1">12 Deptos en mora</p>
+                           <button onClick={handleNotify} className="text-[10px] bg-red-500/10 text-red-500 border border-red-500/20 px-2 py-1 rounded hover:bg-red-500/20 transition-colors font-bold uppercase tracking-widest">
+                             Notificar
+                           </button>
+                        </div>
+                    </div>
+                </div>
             </div>
-            
-            <span className="material-symbols-outlined absolute -right-10 -bottom-10 text-[180px] text-white/5 -rotate-12 pointer-events-none">account_balance_wallet</span>
-         </div>
+         </section>
 
-         {/* Actions Grid (The "Work" area) */}
-         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Action 1: OCR */}
-            <button onClick={startOCRScan} className="flex flex-col text-left bg-[#111] p-6 md:p-8 rounded-[2.5rem] border border-white/5 hover:bg-[#141414] hover:border-blue-500/30 transition-all active:scale-[0.98] group relative overflow-hidden shadow-lg h-full">
-               <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-[40px] group-hover:bg-blue-500/10 transition-colors pointer-events-none"></div>
-               <div className="w-14 h-14 rounded-[1.25rem] bg-blue-500/5 border border-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 group-hover:bg-blue-500/10 transition-all mb-12 shadow-inner group-hover:shadow-[0_0_20px_rgba(59,130,246,0.2)]">
-                  <span className="material-symbols-outlined text-[28px] group-hover:scale-110 transition-transform">document_scanner</span>
-               </div>
-               <div className="relative z-10 mt-auto">
-                  <h3 className="text-white font-medium text-xl tracking-tight mb-2">Ingresar Gasto</h3>
-                  <p className="text-sm text-gray-500 leading-relaxed max-w-[200px]">Escanea facturas usando IA y ahorra horas manuales.</p>
-               </div>
-               <div className="absolute bottom-6 right-6 w-10 h-10 rounded-full border border-white/10 flex items-center justify-center bg-[#0A0A0A] group-hover:bg-white group-hover:border-transparent group-hover:text-black transition-all">
-                  <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
-               </div>
-            </button>
+         {/* Flujo de Trabajo (The 4 Steps) */}
+         <section className="space-y-4">
+            <div className="flex justify-between items-center pb-2 pl-2">
+               <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">El Flujo del Administrador (Pilar 80/20)</h2>
+               <button 
+                onClick={() => navigate('FinanceCommunicationsPage')}
+                className="text-[10px] font-bold text-gray-400 uppercase tracking-widest hover:text-white flex items-center gap-1 transition-colors"
+               >
+                  <span className="material-symbols-outlined text-[14px]">outgoing_mail</span> Settings de Correos
+               </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 relative">
+                
+                {/* Connecting Line for lg screens */}
+                <div className="hidden lg:block absolute top-[4.5rem] left-[10%] right-[10%] h-[2px] bg-white/5 border-t border-dashed border-white/10 z-0 pointer-events-none"></div>
 
-            {/* Action 2: Prorrateo */}
-            <button onClick={() => setShowProrrateoModal(true)} className="flex flex-col text-left bg-[#111] p-6 md:p-8 rounded-[2.5rem] border border-white/5 hover:bg-[#141414] hover:border-indigo-500/30 transition-all active:scale-[0.98] group relative overflow-hidden shadow-lg h-full">
-               <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-[40px] group-hover:bg-indigo-500/10 transition-colors pointer-events-none"></div>
-               <div className="w-14 h-14 rounded-[1.25rem] bg-indigo-500/5 border border-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 group-hover:bg-indigo-500/10 transition-all mb-12 shadow-inner group-hover:shadow-[0_0_20px_rgba(99,102,241,0.2)]">
-                  <span className="material-symbols-outlined text-[28px] group-hover:scale-110 transition-transform">calculate</span>
-               </div>
-               <div className="relative z-10 mt-auto">
-                  <h3 className="text-white font-medium text-xl tracking-tight mb-2">Cerrar Mes</h3>
-                  <p className="text-sm text-gray-500 leading-relaxed max-w-[200px]">Prorrateo automático con cálculo legal integrado.</p>
-               </div>
-               <div className="absolute bottom-6 right-6 w-10 h-10 rounded-full border border-white/10 flex items-center justify-center bg-[#0A0A0A] group-hover:bg-white group-hover:border-transparent group-hover:text-black transition-all">
-                  <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
-               </div>
-            </button>
+                {/* Paso 1: Configurar Mapa */}
+                <button onClick={() => navigate('MapConfigPage')} className="relative z-10 flex flex-col text-left bg-[#111] p-6 lg:p-8 rounded-[2rem] border border-white/5 hover:border-gray-500/30 transition-all group shadow-lg cursor-pointer">
+                    <div className="w-6 h-6 rounded-full bg-[#1A1A1A] border border-white/10 text-gray-500 text-[10px] font-bold flex items-center justify-center absolute -top-3 left-8 z-20 group-hover:bg-gray-400 group-hover:text-black group-hover:border-transparent transition-all">1</div>
+                    <div className="w-14 h-14 rounded-2xl bg-gray-500/10 border border-gray-500/20 text-gray-400 flex items-center justify-center shrink-0 mb-6 group-hover:scale-110 group-hover:bg-gray-500/20 transition-all shadow-inner">
+                        <span className="material-symbols-outlined text-[28px]">map</span>
+                    </div>
+                    <div>
+                        <h3 className="text-white font-medium text-lg tracking-tight mb-2">Configurar "Mapa"</h3>
+                        <p className="text-[11px] text-gray-500 leading-relaxed font-medium">Unidades, copropietarios y tabla de alícuotas (%).</p>
+                    </div>
+                </button>
 
-            {/* Action 3: Cobranza */}
-            <button onClick={handleNotify} className="flex flex-col text-left bg-[#111] p-6 md:p-8 rounded-[2.5rem] border border-white/5 hover:bg-[#141414] hover:border-amber-500/30 transition-all active:scale-[0.98] group relative overflow-hidden shadow-lg h-full">
-               <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-[40px] group-hover:bg-amber-500/10 transition-colors pointer-events-none"></div>
-               <div className="w-14 h-14 rounded-[1.25rem] bg-amber-500/5 border border-amber-500/20 text-amber-500 flex items-center justify-center shrink-0 group-hover:bg-amber-500/10 transition-all mb-12 shadow-inner group-hover:shadow-[0_0_20px_rgba(245,158,11,0.2)]">
-                  <span className="material-symbols-outlined text-[28px] group-hover:scale-110 transition-transform">notifications_active</span>
-               </div>
-               <div className="relative z-10 mt-auto">
-                  <h3 className="text-white font-medium text-xl tracking-tight mb-2">Cobranza</h3>
-                  <p className="text-sm text-gray-500 leading-relaxed max-w-[200px]">Notifica a los vecinos morosos con un solo clic.</p>
-               </div>
-               <div className="absolute bottom-6 right-6 w-10 h-10 rounded-full border border-white/10 flex items-center justify-center bg-[#0A0A0A] group-hover:bg-white group-hover:border-transparent group-hover:text-black transition-all">
-                  <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
-               </div>
-            </button>
-         </div>
+                {/* Paso 2: La Billetera (Egresos) */}
+                <button onClick={() => navigate('EgresosPage')} className="relative z-10 flex flex-col text-left bg-[#111] p-6 lg:p-8 rounded-[2rem] border border-white/5 hover:border-emerald-500/30 transition-all active:scale-[0.98] group shadow-lg text-left h-full">
+                    <div className="w-6 h-6 rounded-full bg-[#1A1A1A] border border-white/10 text-gray-500 text-[10px] font-bold flex items-center justify-center absolute -top-3 left-8 z-20 group-hover:bg-emerald-400 group-hover:text-black group-hover:border-transparent transition-all shadow-[0_0_10px_rgba(16,185,129,0.2)]">2</div>
+                    <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mb-6 group-hover:scale-110 group-hover:bg-emerald-500/20 transition-all shadow-inner">
+                        <span className="material-symbols-outlined text-[28px]">receipt_long</span>
+                    </div>
+                    <div>
+                        <h3 className="text-white font-medium text-lg tracking-tight mb-2">Subir Egresos</h3>
+                        <p className="text-[11px] text-gray-500 leading-relaxed font-medium">IA procesa facturas (OCR) y categoriza automáticamente.</p>
+                    </div>
+                </button>
 
-         {/* Feed List */}
-         <div className="pt-4">
+                {/* Paso 3: Cierre de Mes (Prorrateo) */}
+                <button onClick={() => navigate('ProrrateoPage')} className="relative z-10 flex flex-col text-left bg-[#111] p-6 lg:p-8 rounded-[2rem] border border-white/5 hover:border-blue-500/30 transition-all active:scale-[0.98] group shadow-lg text-left h-full">
+                    <div className="w-6 h-6 rounded-full bg-[#1A1A1A] border border-white/10 text-gray-500 text-[10px] font-bold flex items-center justify-center absolute -top-3 left-8 z-20 group-hover:bg-blue-400 group-hover:text-black group-hover:border-transparent transition-all shadow-[0_0_10px_rgba(59,130,246,0.2)]">3</div>
+                    <div className="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 mb-6 group-hover:scale-110 group-hover:bg-blue-500/20 transition-all shadow-inner">
+                        <span className="material-symbols-outlined text-[28px]">calculate</span>
+                    </div>
+                    <div>
+                        <h3 className="text-white font-medium text-lg tracking-tight mb-2">Cierre de Mes</h3>
+                        <p className="text-[11px] text-gray-500 leading-relaxed font-medium">Prorrateo 21.442, fondo de reserva y medidores.</p>
+                    </div>
+                </button>
+
+                {/* Paso 4: Recaudación */}
+                <button onClick={() => navigate('RecaudacionPage')} className="relative z-10 flex flex-col text-left bg-[#111] p-6 lg:p-8 rounded-[2rem] border border-white/5 hover:border-purple-500/30 transition-all active:scale-[0.98] group shadow-lg text-left h-full">
+                    <div className="w-6 h-6 rounded-full bg-[#1A1A1A] border border-white/10 text-gray-500 text-[10px] font-bold flex items-center justify-center absolute -top-3 left-8 z-20 group-hover:bg-purple-400 group-hover:text-black group-hover:border-transparent transition-all shadow-[0_0_10px_rgba(168,85,247,0.2)]">4</div>
+                    <div className="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center shrink-0 mb-6 group-hover:scale-110 group-hover:bg-purple-500/20 transition-all shadow-inner">
+                        <span className="material-symbols-outlined text-[28px]">account_balance</span>
+                    </div>
+                    <div>
+                        <h3 className="text-white font-medium text-lg tracking-tight mb-2">Recaudación</h3>
+                        <p className="text-[11px] text-gray-500 leading-relaxed font-medium">Conciliación bancaria y emisión masiva de colillas.</p>
+                    </div>
+                </button>
+            </div>
+         </section>
+
+         {/* Tareas Pendientes (Feed List) */}
+         <section className="pt-4">
             <div className="flex justify-between items-center mb-4 pl-2">
-               <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Atención Requerida</h2>
+               <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Tareas Pendientes</h2>
             </div>
-            <div className="bg-[#111] rounded-[2rem] border border-white/5 overflow-hidden shadow-2xl">
+            <div className="bg-[#111] rounded-[2.5rem] border border-white/5 overflow-hidden shadow-2xl">
                <AttentionItem 
                  icon="warning" 
                  color="text-red-400" 
@@ -344,7 +404,7 @@ const ManageExpenses: React.FC<Props> = ({ navigate }) => {
                  accent="bg-amber-500/50" 
                />
             </div>
-         </div>
+         </section>
       </main>
     </div>
   );

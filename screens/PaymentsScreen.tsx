@@ -70,7 +70,34 @@ const PaymentsScreen: React.FC<Props> = ({ navigate, role }) => {
                     ) : (
                         <>
                             <h2 className="text-5xl md:text-6xl font-light text-white mb-2 tracking-tight">$125.400</h2>
-                            <p className="text-xs text-red-400 font-bold uppercase tracking-widest mb-10">Vence el 05 de Mayo</p>
+                            <p className="text-xs text-red-400 font-bold uppercase tracking-widest mb-8">Vence el 05 de Mayo</p>
+                            
+                            {/* Detailed Breakdown */}
+                            <div className="w-full bg-[#141414] rounded-2xl border border-white/5 p-5 mb-8 text-left relative group-hover:border-white/10 transition-colors">
+                                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-white/5 pb-3 mb-3 flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-[14px]">receipt_long</span> Detalle del Cobro
+                                </h3>
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-gray-400">Gastos Administrativos</span>
+                                        <span className="text-white font-mono">$45.200</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-gray-400">Mantención (Edificio)</span>
+                                        <span className="text-white font-mono">$38.500</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-gray-400">Fondo de Reserva (5%)</span>
+                                        <span className="text-white font-mono">$4.185</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-emerald-400 flex items-center gap-1">
+                                            <span className="material-symbols-outlined text-[14px]">water_drop</span> Consumo Agua Caliente
+                                        </span>
+                                        <span className="text-white font-mono">$37.515</span>
+                                    </div>
+                                </div>
+                            </div>
                             
                             {/* 80% - Digital Transfer */}
                             <button 

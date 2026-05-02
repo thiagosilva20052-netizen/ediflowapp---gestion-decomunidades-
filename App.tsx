@@ -12,6 +12,11 @@ import BitacoraScreen from './screens/BitacoraScreen';
 import UserProfile from './screens/UserProfile';
 import LoginScreen from './screens/LoginScreen';
 import ManageExpenses from './screens/ManageExpenses';
+import EgresosPage from './screens/EgresosPage';
+import ProrrateoPage from './screens/ProrrateoPage';
+import MapConfigPage from './screens/MapConfigPage';
+import RecaudacionPage from './screens/RecaudacionPage';
+import FinanceCommunicationsPage from './screens/FinanceCommunicationsPage';
 import ManualVisitorRegistration from './screens/ManualVisitorRegistration';
 import StaffManagement from './screens/StaffManagement';
 import RegisterPayment from './screens/RegisterPayment';
@@ -71,7 +76,12 @@ export type ScreenName =
   | 'Register'
   | 'NoiseGuide'
   | 'ProrrationTemplate'
-  | 'ChecklistLey';
+  | 'ChecklistLey'
+  | 'EgresosPage'
+  | 'ProrrateoPage'
+  | 'MapConfigPage'
+  | 'RecaudacionPage'
+  | 'FinanceCommunicationsPage';
 
 const App: React.FC = () => {
   const { currentUser, setCurrentUser, isGlobalMenuOpen, setIsGlobalMenuOpen, theme } = useAppContext();
@@ -146,7 +156,7 @@ const App: React.FC = () => {
     }
 
     const roleAccess: Record<UserRole, ScreenName[]> = {
-      admin: ['AdminDashboard', 'ManageExpenses', 'CommunityWall', 'MessagesScreen', 'PaymentsScreen', 'BitacoraScreen', 'UserProfile', 'StaffManagement', 'ResidentDirectory', 'Reservations', 'Maintenance', 'Emergency', 'NovedadEntry', 'BuildingSettings'],
+      admin: ['AdminDashboard', 'ManageExpenses', 'EgresosPage', 'ProrrateoPage', 'RecaudacionPage', 'MapConfigPage', 'FinanceCommunicationsPage', 'CommunityWall', 'MessagesScreen', 'PaymentsScreen', 'BitacoraScreen', 'UserProfile', 'StaffManagement', 'ResidentDirectory', 'Reservations', 'Maintenance', 'Emergency', 'NovedadEntry', 'BuildingSettings'],
       concierge: ['ConciergeDashboard', 'PackageEntry', 'AccessControl', 'MessagesScreen', 'BitacoraScreen', 'UserProfile', 'ManualVisitorRegistration', 'RegisterPayment', 'ResidentDirectory', 'Reservations', 'Maintenance', 'Emergency', 'NovedadEntry'],
       resident: ['ResidentServices', 'CommunityWall', 'MessagesScreen', 'PaymentsScreen', 'UserProfile', 'QRCodeScreen', 'Reservations', 'Maintenance', 'Emergency']
     };
@@ -171,6 +181,11 @@ const App: React.FC = () => {
       case 'BitacoraScreen': return <BitacoraScreen navigate={handleNavigate} role={currentUser.role} />;
       case 'UserProfile': return <UserProfile navigate={handleNavigate} onLogout={handleLogout} role={currentUser.role} />;
       case 'ManageExpenses': return <ManageExpenses navigate={handleNavigate} />;
+      case 'EgresosPage': return <EgresosPage navigate={handleNavigate} />;
+      case 'ProrrateoPage': return <ProrrateoPage navigate={handleNavigate} />;
+      case 'RecaudacionPage': return <RecaudacionPage navigate={handleNavigate} />;
+      case 'MapConfigPage': return <MapConfigPage navigate={handleNavigate} />;
+      case 'FinanceCommunicationsPage': return <FinanceCommunicationsPage navigate={handleNavigate} />;
       case 'ManualVisitorRegistration': return <ManualVisitorRegistration navigate={handleNavigate} from={previousScreen} />;
       case 'StaffManagement': return <StaffManagement navigate={handleNavigate} />;
       case 'RegisterPayment': return <RegisterPayment navigate={handleNavigate} from={previousScreen} />;

@@ -16,6 +16,8 @@ interface Resident {
   bodega?: string;
   parking?: string;
   hasAccount: boolean;
+  aliquot?: number; // Datos financieros
+  unitType?: string; // Tipo de unidad (Departamento, Casa, Local)
 }
 
 const DUMMY_RESIDENTS: Resident[] = [
@@ -27,7 +29,9 @@ const DUMMY_RESIDENTS: Resident[] = [
     email: 'maria.g@ediflow.cl',
     bodega: 'B-12',
     parking: 'E-45',
-    hasAccount: true
+    hasAccount: true,
+    aliquot: 1.2000,
+    unitType: 'Departamento'
   },
   {
     id: '2',
@@ -36,7 +40,9 @@ const DUMMY_RESIDENTS: Resident[] = [
     phone: '+56 9 8765 4321',
     email: 'carlos.r@ediflow.cl',
     parking: 'E-12',
-    hasAccount: false
+    hasAccount: false,
+    aliquot: 0.9500,
+    unitType: 'Departamento'
   },
   {
     id: '3',
@@ -45,7 +51,9 @@ const DUMMY_RESIDENTS: Resident[] = [
     phone: '+56 9 5555 6666',
     email: 'ana.s@ediflow.cl',
     bodega: 'B-05',
-    hasAccount: true
+    hasAccount: true,
+    aliquot: 1.1000,
+    unitType: 'Departamento'
   }
 ];
 
@@ -61,7 +69,9 @@ const ResidentDirectory: React.FC<Props> = ({ navigate, role }) => {
     email: '',
     phone: '',
     bodega: '',
-    parking: ''
+    parking: '',
+    aliquot: '',
+    unitType: 'Departamento'
   });
 
   const showToast = (msg: string) => {
@@ -81,12 +91,14 @@ const ResidentDirectory: React.FC<Props> = ({ navigate, role }) => {
           phone: formData.phone || undefined,
           bodega: formData.bodega || undefined,
           parking: formData.parking || undefined,
+          aliquot: formData.aliquot ? parseFloat(formData.aliquot) : 0,
+          unitType: formData.unitType,
           hasAccount: true
       };
 
       setResidents(prev => [newResident, ...prev]);
       showToast("Unidad registrada exitosamente. Acceso enviado al correo.");
-      setFormData({ name: '', depto: '', email: '', phone: '', bodega: '', parking: '' });
+      setFormData({ name: '', depto: '', email: '', phone: '', bodega: '', parking: '', aliquot: '', unitType: 'Departamento' });
   };
 
   const filteredResidents = residents.filter(r => 
@@ -165,6 +177,7 @@ const ResidentDirectory: React.FC<Props> = ({ navigate, role }) => {
                  </div>
                  
                  <div className="bg-[#111] p-6 md:p-8 rounded-[2rem] border border-white/5 shadow-2xl group hover:border-white/10 transition-colors">
+                    <h3 className="text-xs font-bold text-white uppercase tracking-widest mb-6 border-b border-white/5 pb-4">Identificación Principal (Contacto)</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                           <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">
@@ -208,6 +221,52 @@ const ResidentDirectory: React.FC<Props> = ({ navigate, role }) => {
                         </div>
                     </div>
                  </div>
+
+                 {role === 'admin' && (
+                 <div className="bg-gradient-to-tr from-[#111] to-[#141414] p-6 md:p-8 rounded-[2rem] border border-blue-500/20 shadow-[0_0_30px_rgba(59,130,246,0.05)] group hover:border-blue-500/40 transition-colors relative overflow-hidden">
+                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-blue-500/10 blur-[40px] rounded-full pointer-events-none"></div>
+                    <h3 className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-6 border-b border-blue-500/10 pb-4 flex items-center gap-2">
+                       <span className="material-symbols-outlined text-[16px]">account_balance_wallet</span>
+                       Ficha Financiera (Mapa)
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">
+                            Tipo de Unidad
+                          </label>
+                          <select 
+                            value={formData.unitType}
+                            onChange={(e) => setFormData({...formData, unitType: e.target.value})}
+                            className="w-full h-14 bg-[#0A0A0A] border border-white/5 rounded-xl px-4 text-white focus:outline-none focus:border-blue-500/50 focus:bg-[#141414] transition-all text-sm appearance-none"
+                          >
+                            <option value="Departamento">Departamento</option>
+                            <option value="Casa">Casa</option>
+                            <option value="Oficina">Oficina</option>
+                            <option value="Local Comercial">Local Comercial</option>
+                            <option value="Bodega">Bodega</option>
+                            <option value="Estacionamiento">Estacionamiento</option>
+                          </select>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">
+                            Alícuota de Prorrateo (%)
+                          </label>
+                          <div className="relative">
+                            <input 
+                              type="number" 
+                              step="0.0001"
+                              value={formData.aliquot}
+                              onChange={(e) => setFormData({...formData, aliquot: e.target.value})}
+                              placeholder="Ej: 1.2000"
+                              className="w-full h-14 bg-[#0A0A0A] border border-white/5 rounded-xl px-4 text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 focus:bg-[#141414] transition-all font-mono text-sm"
+                            />
+                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-mono">%</span>
+                          </div>
+                          <p className="text-[10px] text-gray-500 px-1 mt-1">Porcentaje del gasto común que le corresponde pagar.</p>
+                        </div>
+                    </div>
+                 </div>
+                 )}
 
                  <div className="bg-[#111] p-6 md:p-8 rounded-[2rem] border border-white/5 shadow-2xl group hover:border-white/10 transition-colors">
                     <h3 className="text-xs font-bold text-white uppercase tracking-widest mb-6">Datos Operativos (Visibles Conserjería)</h3>
@@ -281,8 +340,9 @@ const ResidentDirectory: React.FC<Props> = ({ navigate, role }) => {
               <div className="w-full bg-[#111] border border-white/5 rounded-[2rem] overflow-hidden shadow-2xl">
                 <div className="hidden md:grid grid-cols-12 gap-4 px-8 py-5 border-b border-white/5 bg-[#0A0A0A]/50">
                    <div className="col-span-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Unidad</div>
-                   <div className="col-span-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Titular & Contacto</div>
-                   <div className="col-span-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Anexos Operativos</div>
+                   <div className="col-span-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Titular & Contacto</div>
+                   <div className="col-span-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest text-right">Alícuota</div>
+                   <div className="col-span-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Anexos Operativos</div>
                    <div className="col-span-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest text-right">Cuenta App</div>
                 </div>
 
@@ -291,13 +351,16 @@ const ResidentDirectory: React.FC<Props> = ({ navigate, role }) => {
                     <div key={resident.id} className="p-6 md:px-8 md:py-6 hover:bg-[#141414] transition-colors grid grid-cols-1 md:grid-cols-12 gap-4 items-center group">
                        
                        <div className="col-span-2 flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-                             <span className="text-xl font-light text-ediflow-primary tracking-tighter">{resident.depto}</span>
+                          <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex flex-col items-center justify-center">
+                             <span className="text-sm font-bold text-white tracking-tighter leading-none mb-1">{resident.depto}</span>
+                             <span className="text-[8px] text-gray-500 uppercase tracking-widest leading-none">
+                               {resident.unitType === 'Departamento' ? 'Depto' : resident.unitType}
+                             </span>
                           </div>
                           <span className="md:hidden text-[10px] font-bold uppercase tracking-widest text-gray-500">Unidad</span>
                        </div>
 
-                       <div className="col-span-4 flex flex-col mt-2 md:mt-0">
+                       <div className="col-span-3 flex flex-col mt-2 md:mt-0">
                           <span className="text-sm font-medium text-white">{resident.name}</span>
                           <span className="text-xs text-gray-500 mt-0.5">{resident.email}</span>
                           {resident.phone && (
@@ -307,7 +370,14 @@ const ResidentDirectory: React.FC<Props> = ({ navigate, role }) => {
                           )}
                        </div>
 
-                       <div className="col-span-3 flex flex-wrap gap-2 mt-2 md:mt-0">
+                       <div className="col-span-2 flex flex-col mt-2 md:mt-0 md:items-end justify-center">
+                           <span className="md:hidden text-[10px] font-bold uppercase tracking-widest text-gray-500 block mb-1">Alícuota</span>
+                           <span className="text-sm font-mono text-blue-400">
+                             {resident.aliquot ? `${resident.aliquot.toFixed(4)}%` : '--'}
+                           </span>
+                       </div>
+
+                       <div className="col-span-2 flex flex-wrap gap-2 mt-2 md:mt-0">
                          {resident.bodega && (
                             <span className="px-2.5 py-1 bg-[#0A0A0A] border border-white/5 rounded text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1">
                               Bod: {resident.bodega}
