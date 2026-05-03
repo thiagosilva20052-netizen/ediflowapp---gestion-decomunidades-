@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS public.units (
     owner_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
     proration_factor DECIMAL(5,4),
     contact_email VARCHAR(255),
+    contact_phone VARCHAR(50),
     is_unsubscribed BOOLEAN DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -257,9 +258,21 @@ CREATE POLICY "Tenants visibility" ON public.tenants
     );
 
 -- Profiles: Ves a la gente de tu edificio
-CREATE POLICY "Profiles visibility" ON public.profiles
+-- Profiles RLS Hardening (Privacy for billing emails)
+CREATE POLICY "Admins/Concierges view all, Residents view only themselves" ON public.profiles
     FOR SELECT USING (
-        tenant_id IN (SELECT tenant_id FROM public.profiles WHERE id = auth.uid())
+        auth.uid() = id OR 
+        auth.uid() IN (SELECT p.id FROM public.profiles p WHERE p.role IN ('admin', 'concierge'))
+    );
+
+CREATE POLICY "Admin/Concierge manage units" ON public.units
+    FOR ALL USING (
+        auth.uid() IN (SELECT p.id FROM public.profiles p WHERE p.role IN ('admin', 'concierge'))
+    );
+
+CREATE POLICY "Residents view own unit" ON public.units
+    FOR SELECT USING (
+        owner_id = auth.uid()
     );
 
 CREATE POLICY "Users can update own profile" ON public.profiles

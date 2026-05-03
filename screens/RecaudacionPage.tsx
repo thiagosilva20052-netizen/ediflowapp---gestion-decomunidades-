@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ScreenName } from '../App';
 import { supabase } from '../src/lib/supabase-client';
+import { useAppContext } from '../src/context/AppContext';
 
 interface Props {
   navigate: (screen: ScreenName) => void;
 }
 
 const RecaudacionPage: React.FC<Props> = ({ navigate }) => {
+  const { currentTenant, currentUser } = useAppContext();
   const [isConciliating, setIsConciliating] = useState(false);
   const [isConciliated, setIsConciliated] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -69,9 +71,26 @@ const RecaudacionPage: React.FC<Props> = ({ navigate }) => {
        return;
     }
     // Real logic
-    await supabase.from('transactions').update({ status: 'success' }).eq('id', txId);
+    const { error } = await supabase.from('transactions').update({ status: 'success' }).eq('id', txId);
+    if (error) {
+       showToast("Error al validar pago.");
+       return;
+    }
     setTransfers(prev => prev.map(t => t.id === txId ? { ...t, isConciliated: true } : t));
-    showToast("Pago validado exitosamente");
+    
+    // Audit Log for the atomic balance update
+    if (currentTenant && currentUser) {
+      await supabase.from('audit_logs').insert({
+         tenant_id: currentTenant.id,
+         user_id: currentUser.id,
+         action: 'Conciliación de Pago',
+         details: `Pago de ${txId} conciliado exitosamente. Saldo de cuenta corriente actualizado atómicamente.`,
+         module: 'finance',
+         severity: 'info'
+      }).catch(console.error);
+    }
+
+    showToast("Pago validado. Saldo descontado automáticamente.");
   };
 
   return (

@@ -16,20 +16,27 @@ export const AdminDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
   const [isApproving, setIsApproving] = useState(false);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [viewMode, setViewMode] = useState<'tenant' | 'consolidated'>('consolidated');
+  const [showMigrationModal, setShowMigrationModal] = useState(false);
+  const [migrationData, setMigrationData] = useState({ unitId: '', amount: '', description: '' });
+  const [unitsList, setUnitsList] = useState<any[]>([]);
+  const [globalSOS, setGlobalSOS] = useState<any[]>([]);
+  const [failedLogs, setFailedLogs] = useState<any[]>([]);
   
   // Available Communities Mock (Simulating Multi-Tenant)
   const availableCommunities = [
-     { id: '1', name: 'Edificio Agua Santa', role: 'admin' },
-     { id: '2', name: 'Torre Reñaca', role: 'admin' },
-     { id: '3', name: 'Condominio El Bosque', role: 'concierge' } // Admin acts as concierge here for demo? No, let's say Admin handles all 3.
+     { id: currentTenant?.id || '1', name: currentTenant?.name || 'Edificio Principal', role: 'admin' },
+     { id: '2', name: 'Torre Reñaca (Demo)', role: 'admin' },
+     { id: '3', name: 'Condominio El Bosque (Demo)', role: 'concierge' } 
   ];
 
   const handleSelectCommunity = (tenantId: string) => {
      if (tenantId === 'consolidated') {
          setViewMode('consolidated');
      } else {
-         const community = availableCommunities.find(c => c.id === tenantId) || availableCommunities[0];
-         setCurrentTenant({ ...currentTenant, id: community.id, name: community.name } as any);
+         const community = availableCommunities.find(c => c.id === tenantId);
+         if (community && currentTenant?.id !== community.id) {
+           setCurrentTenant({ ...currentTenant, id: community.id, name: community.name } as any);
+         }
          setViewMode('tenant');
      }
   };
@@ -87,9 +94,66 @@ export const AdminDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
       setIsLoadingStats(false);
     };
 
+    const fetchUnits = async () => {
+       const { data } = await supabase.from('units').select('id, unit_number').eq('tenant_id', currentTenant.id).order('unit_number');
+       if (data) setUnitsList(data);
+    };
+
+    const fetchGlobalAlertsAndLogs = async () => {
+       // Fetch active SOS for the tenant
+       const { data: sosData } = await supabase.from('panic_alerts').select('*, units(unit_number)').eq('tenant_id', currentTenant.id).eq('status', 'Activo');
+       if (sosData) setGlobalSOS(sosData);
+
+       // Fetch failed notifications from audit logs
+       const { data: failData } = await supabase.from('audit_logs').select('*').eq('tenant_id', currentTenant.id).in('severity', ['warning', 'critical']).order('created_at', { ascending: false }).limit(5);
+       if (failData) setFailedLogs(failData);
+    };
+
     fetchMaintenance();
     fetchFinancialStats();
+    fetchUnits();
+    fetchGlobalAlertsAndLogs();
+
+    const sosSubscription = supabase.channel('global-sos')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'panic_alerts', filter: `tenant_id=eq.${currentTenant.id}` }, () => {
+        fetchGlobalAlertsAndLogs();
+      }).subscribe();
+
+    return () => {
+       supabase.removeChannel(sosSubscription);
+    };
   }, [currentTenant]);
+
+  const handleMigrationSubmit = async (e: React.FormEvent) => {
+     e.preventDefault();
+     if (!currentTenant || !migrationData.unitId || !migrationData.amount) return;
+     
+     try {
+       await supabase.from('transactions').insert({
+         tenant_id: currentTenant.id,
+         unit_id: migrationData.unitId,
+         amount: parseFloat(migrationData.amount),
+         method: 'Migration',
+         status: 'pending',
+         billing_month: 'Saldo Anterior'
+       });
+       
+       await supabase.from('audit_logs').insert({
+         tenant_id: currentTenant.id,
+         action: 'Migración Histórica',
+         details: `Se cargó deuda de arrastre por $${migrationData.amount} a la unidad ID: ${migrationData.unitId}`,
+         severity: 'info',
+         module: 'finance'
+       });
+
+       setShowMigrationModal(false);
+       setMigrationData({ unitId: '', amount: '', description: '' });
+       alert("Saldo inicial cargado exitosamente.");
+     } catch (err) {
+       console.error(err);
+       alert("Error al cargar saldo histórico");
+     }
+  };
 
   const delinquencyRate = financialStats.totalEmitted > 0 
     ? (financialStats.pendingAmount / financialStats.totalEmitted) * 100 
@@ -255,7 +319,13 @@ export const AdminDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
         </header>
 
         {viewMode === 'consolidated' ? (
-           <ConsolidatedDashboardStats availableCommunities={availableCommunities} navigate={navigate} />
+           <ConsolidatedDashboardStats 
+              availableCommunities={availableCommunities} 
+              navigate={navigate}
+              financialStats={financialStats}
+              globalSOS={globalSOS}
+              failedLogs={failedLogs}
+           />
         ) : (
            <div className="px-6 md:px-16 pb-32 md:pb-24 max-w-7xl w-full mx-auto relative z-10">
            {/* Asymmetrical Bento Grid */}
@@ -270,7 +340,7 @@ export const AdminDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
                    ${isApproved ? 'bg-green-500/10' : 'bg-[#00AEEF]/10 opacity-50 group-hover:opacity-100'}
                `}></div>
 
-               <div className="flex items-start justify-between mb-12 relative z-10">
+               <div className="flex flex-wrap items-start justify-between mb-12 relative z-10 gap-4">
                  <div className="flex items-center gap-4 border border-white/5 bg-[#0A0A0A] p-2 pr-6 rounded-full shadow-inner">
                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-colors 
                        ${isApproved ? 'bg-green-500/10 text-green-500' : 'bg-[#00AEEF]/10 text-[#00AEEF]'}
@@ -282,6 +352,10 @@ export const AdminDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
                      <p className="text-white text-xs font-medium tracking-tight mt-0.5">Recaudación del mes</p>
                    </div>
                  </div>
+                 
+                 <button onClick={() => setShowMigrationModal(true)} className="flex items-center gap-2 bg-[#1A1A1A] border border-white/10 hover:bg-[#222] px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest text-ediflow-primary transition-colors">
+                    <span className="material-symbols-outlined text-[16px]">history</span> Cargar Deuda Arrastre
+                 </button>
                </div>
 
                <div className="mb-14 relative z-10 pl-2">
@@ -515,6 +589,83 @@ export const AdminDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
         )}
       </AnimatePresence>
 
+      {/* Migration Modal */}
+      <AnimatePresence>
+        {showMigrationModal && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
+             <motion.div 
+               initial={{ opacity: 0 }}
+               animate={{ opacity: 1 }}
+               exit={{ opacity: 0 }}
+               onClick={() => setShowMigrationModal(false)}
+               className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+             />
+             <motion.div 
+               initial={{ scale: 0.9, opacity: 0, y: 20 }}
+               animate={{ scale: 1, opacity: 1, y: 0 }}
+               exit={{ scale: 0.9, opacity: 0, y: 20 }}
+               className="relative w-full max-w-lg bg-[#111] rounded-[2.5rem] border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col max-h-[90vh]"
+             >
+                <div className="p-8 border-b border-white/5 flex items-center gap-4 bg-gradient-to-br from-[#1A1A1A] to-[#111]">
+                   <div className="w-12 h-12 rounded-2xl bg-ediflow-primary/10 text-ediflow-primary border border-ediflow-primary/20 flex items-center justify-center shadow-inner">
+                      <span className="material-symbols-outlined text-[24px]">history</span>
+                   </div>
+                   <div>
+                      <h2 className="text-xl font-bold text-white tracking-tight">Cargar Deuda de Arrastre</h2>
+                      <p className="text-sm text-gray-500">Migración histórica manual.</p>
+                   </div>
+                </div>
+                <div className="p-8 overflow-y-auto custom-scrollbar">
+                   <form id="migration-form" onSubmit={handleMigrationSubmit} className="space-y-6">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Unidad Afectada</label>
+                        <select 
+                           value={migrationData.unitId} 
+                           onChange={(e) => setMigrationData({...migrationData, unitId: e.target.value})}
+                           className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#00AEEF] focus:ring-1 focus:ring-[#00AEEF] transition-all outline-none"
+                           required
+                        >
+                           <option value="">Selecciona una unidad...</option>
+                           {unitsList.map(u => (
+                              <option key={u.id} value={u.id}>Unidad {u.unit_number}</option>
+                           ))}
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Monto ($)</label>
+                        <input 
+                           type="number"
+                           value={migrationData.amount} 
+                           onChange={(e) => setMigrationData({...migrationData, amount: e.target.value})}
+                           className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-[#00AEEF] focus:ring-1 focus:ring-[#00AEEF] transition-all outline-none font-mono"
+                           placeholder="Ej: 45000"
+                           required
+                           min="1"
+                        />
+                      </div>
+                   </form>
+                </div>
+                <div className="p-6 border-t border-white/5 bg-[#0A0A0A] flex justify-end gap-3 shrink-0">
+                   <button 
+                     type="button" 
+                     onClick={() => setShowMigrationModal(false)}
+                     className="px-6 py-3 rounded-xl border border-white/10 text-white hover:bg-white/5 transition-all text-sm font-bold uppercase tracking-widest"
+                   >
+                      Cancelar
+                   </button>
+                   <button 
+                     type="submit" 
+                     form="migration-form"
+                     className="px-6 py-3 rounded-xl bg-[#00AEEF] hover:bg-[#0098D1] text-white transition-all shadow-[0_0_15px_rgba(0,174,239,0.3)] hover:shadow-[0_0_25px_rgba(0,174,239,0.5)] text-sm font-bold uppercase tracking-widest"
+                   >
+                      Cargar Saldo
+                   </button>
+                </div>
+             </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 };
@@ -528,41 +679,68 @@ interface SidebarItemProps {
   onClick?: () => void;
 }
 
-const ConsolidatedDashboardStats: React.FC<{ availableCommunities: any[], navigate: any }> = ({ availableCommunities, navigate }) => {
+const ConsolidatedDashboardStats: React.FC<{ 
+   availableCommunities: any[], 
+   navigate: any,
+   financialStats: any,
+   globalSOS: any[],
+   failedLogs: any[]
+}> = ({ availableCommunities, navigate, financialStats, globalSOS, failedLogs }) => {
+  const totalMorosidad = financialStats.pendingAmount + 1300000; // Mocking other buildings
+  const totalEgresos = 14200000;
+  
   return (
-     <div className="px-6 md:px-16 pb-32 md:pb-24 max-w-7xl w-full mx-auto relative z-10 animate-fade-in">
-        <div className="mb-8">
-           <h2 className="text-2xl font-light text-white tracking-tight mb-2">Vista Consolidada</h2>
-           <p className="text-sm text-gray-400">Resumen global de todos tus condominios activos.</p>
+     <div className="px-6 md:px-16 pb-32 md:pb-24 max-w-7xl w-full mx-auto relative z-10 animate-fade-in text-gray-300">
+        <div className="mb-8 flex justify-between items-end">
+           <div>
+             <h2 className="text-2xl font-light text-white tracking-tight mb-2">Torre de Control</h2>
+             <p className="text-sm text-gray-400">Resumen global de todos tus condominios activos.</p>
+           </div>
         </div>
+
+        {globalSOS.length > 0 && (
+          <div className="mb-8 p-6 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-center justify-between border-l-4 border-l-red-500 animate-pulse-slow shadow-[0_0_20px_rgba(239,68,68,0.2)] cursor-pointer" onClick={() => navigate('ConciergeDashboard')}>
+             <div className="flex items-center gap-4">
+                <span className="material-symbols-outlined text-red-500 text-3xl">emergency</span>
+                <div>
+                   <h3 className="text-red-400 font-bold text-lg">¡ALERTA GLOBAL SOS ACTIVA!</h3>
+                   <p className="text-sm text-red-400/80">Se requiere asistencia inmediata en <strong>{availableCommunities[0].name}</strong>, Unidad {globalSOS[0]?.units?.unit_number || 'Desconocida'}.</p>
+                </div>
+             </div>
+             <button className="bg-red-500 text-white font-bold px-4 py-2 rounded-xl text-xs uppercase tracking-widest shadow-lg">Ir a Conserjería</button>
+          </div>
+        )}
 
         {/* Global KPIs */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-[#111] p-8 rounded-[2rem] border border-white/5 shadow-2xl relative overflow-hidden group">
+            <div className="bg-[#111] p-8 rounded-[2rem] border border-white/5 shadow-2xl relative overflow-hidden group hover:border-red-500/20 transition-all">
                <div className="absolute top-0 right-0 w-32 h-32 bg-[#00AEEF]/5 blur-[40px] rounded-full pointer-events-none"></div>
                <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest mb-2 flex items-center gap-2">Morosidad Global</p>
-               <h3 className="text-4xl text-red-400 font-light tracking-tight mt-1">$2.450.000</h3>
+               <h3 className="text-4xl text-red-400 font-light tracking-tight mt-1">${totalMorosidad.toLocaleString('es-CL')}</h3>
                <p className="text-[10px] text-gray-500 mt-2 font-bold flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[14px]">warning</span> En 3 comunidades
+                  <span className="material-symbols-outlined text-[14px]">warning</span> En {availableCommunities.length} comunidades
                </p>
             </div>
-            <div className="bg-[#111] p-8 rounded-[2rem] border border-white/5 shadow-2xl relative overflow-hidden group">
+            <div className="bg-[#111] p-8 rounded-[2rem] border border-white/5 shadow-2xl relative overflow-hidden group hover:border-emerald-500/20 transition-all">
                <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest mb-2 flex items-center gap-2">Egresos Totales</p>
-               <h3 className="text-4xl text-emerald-400 font-light tracking-tight mt-1">$14.200.000</h3>
+               <h3 className="text-4xl text-emerald-400 font-light tracking-tight mt-1">${totalEgresos.toLocaleString('es-CL')}</h3>
                <p className="text-[10px] text-gray-500 mt-2 font-bold">Mes en curso</p>
             </div>
-            <div className="bg-[#111] p-8 rounded-[2rem] border border-white/5 shadow-2xl relative overflow-hidden group">
-               <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest mb-2 flex items-center gap-2">Tickets Pendientes</p>
-               <h3 className="text-4xl text-white font-light tracking-tight mt-1">12</h3>
-               <p className="text-[10px] text-ediflow-primary mt-2 font-bold">Requieren tu atención</p>
+            <div className="bg-[#111] p-8 rounded-[2rem] border border-white/5 shadow-2xl relative overflow-hidden group hover:border-amber-500/20 transition-all cursor-pointer" onClick={() => navigate('AuditLogs')}>
+               <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest mb-2 flex items-center gap-2">Estado Notificaciones</p>
+               <div className="flex items-end gap-3 mt-1">
+                 <h3 className="text-4xl text-white font-light tracking-tight">{failedLogs.length}</h3>
+                 <span className="text-sm font-medium text-amber-500 pb-1">Fallos de Envío</span>
+               </div>
+               <p className="text-[10px] text-ediflow-primary mt-2 font-bold flex items-center gap-1">Ver Audit Logs <span className="material-symbols-outlined text-[14px]">arrow_forward</span></p>
             </div>
         </div>
 
         {/* Communities List */}
-        <div className="bg-[#111] rounded-[2.5rem] border border-white/5 overflow-hidden shadow-2xl">
+        <div className="bg-[#111] rounded-[2.5rem] border border-white/5 overflow-hidden shadow-2xl mb-8">
             <div className="p-6 border-b border-white/5 flex items-center justify-between">
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                   <span className="material-symbols-outlined text-gray-400">domain</span> Comunidades
+                   <span className="material-symbols-outlined text-gray-400">domain</span> Portafolio Activo
                 </h3>
             </div>
             <table className="w-full text-left text-sm text-gray-300">
@@ -578,48 +756,37 @@ const ConsolidatedDashboardStats: React.FC<{ availableCommunities: any[], naviga
                 <tr className="hover:bg-[#141414] transition-colors cursor-pointer" onClick={() => {}}>
                    <td className="px-6 py-4 font-medium text-white flex items-center gap-3">
                        <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
-                          <span className="text-xs">EA</span>
+                          <span className="text-xs">{(availableCommunities[0].name.substring(0, 2)).toUpperCase()}</span>
                        </div>
-                       Edificio Agua Santa
+                       {availableCommunities[0].name}
                    </td>
                    <td className="px-6 py-4">
                       <span className="bg-ediflow-primary/10 text-ediflow-primary px-2 py-1 rounded-md text-[10px] uppercase font-bold tracking-widest border border-ediflow-primary/20">Admin</span>
                    </td>
                    <td className="px-6 py-4 text-right">
-                      <span className="text-emerald-400 font-mono">85%</span>
+                      <span className="text-emerald-400 font-mono">
+                        {financialStats.totalEmitted > 0 ? ((financialStats.totalCollected / financialStats.totalEmitted) * 100).toFixed(0) : '0'}%
+                      </span>
                    </td>
-                   <td className="px-6 py-4 text-right text-white font-mono">$1.200.000</td>
+                   <td className="px-6 py-4 text-right text-white font-mono">${financialStats.pendingAmount.toLocaleString('es-CL')}</td>
                 </tr>
-                <tr className="hover:bg-[#141414] transition-colors cursor-pointer" onClick={() => {}}>
-                   <td className="px-6 py-4 font-medium text-white flex items-center gap-3">
-                       <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
-                          <span className="text-xs">TR</span>
-                       </div>
-                       Torre Reñaca
-                   </td>
-                   <td className="px-6 py-4">
-                      <span className="bg-ediflow-primary/10 text-ediflow-primary px-2 py-1 rounded-md text-[10px] uppercase font-bold tracking-widest border border-ediflow-primary/20">Admin</span>
-                   </td>
-                   <td className="px-6 py-4 text-right">
-                      <span className="text-emerald-400 font-mono">92%</span>
-                   </td>
-                   <td className="px-6 py-4 text-right text-white font-mono">$450.000</td>
-                </tr>
-                <tr className="hover:bg-[#141414] transition-colors cursor-pointer" onClick={() => {}}>
-                   <td className="px-6 py-4 font-medium text-white flex items-center gap-3">
-                       <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
-                          <span className="text-xs">CB</span>
-                       </div>
-                       Condominio El Bosque
-                   </td>
-                   <td className="px-6 py-4">
-                      <span className="bg-gray-500/10 text-gray-400 px-2 py-1 rounded-md text-[10px] uppercase font-bold tracking-widest border border-gray-500/20">Conserje</span>
-                   </td>
-                   <td className="px-6 py-4 text-right">
-                      <span className="text-emerald-400 font-mono">70%</span>
-                   </td>
-                   <td className="px-6 py-4 text-right text-white font-mono">$800.000</td>
-                </tr>
+                {availableCommunities.slice(1).map((c) => (
+                  <tr key={c.id} className="hover:bg-[#141414] transition-colors cursor-pointer" onClick={() => {}}>
+                     <td className="px-6 py-4 font-medium text-gray-400 flex items-center gap-3">
+                         <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                            <span className="text-xs">{(c.name.substring(0, 2)).toUpperCase()}</span>
+                         </div>
+                         {c.name}
+                     </td>
+                     <td className="px-6 py-4">
+                        <span className={`px-2 py-1 rounded-md text-[10px] uppercase font-bold tracking-widest border border-gray-500/20 ${c.role === 'admin' ? 'bg-ediflow-primary/10 text-ediflow-primary' : 'bg-gray-500/10 text-gray-400'}`}>{c.role}</span>
+                     </td>
+                     <td className="px-6 py-4 text-right">
+                        <span className="text-gray-500 font-mono">--</span>
+                     </td>
+                     <td className="px-6 py-4 text-right text-gray-500 font-mono">--</td>
+                  </tr>
+                ))}
              </tbody>
             </table>
         </div>

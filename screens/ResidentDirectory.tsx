@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import useSWR from 'swr';
 import { ScreenName } from '../App';
 import { UserRole } from '../src/types';
 
@@ -10,52 +11,54 @@ interface Props {
   role: UserRole;
 }
 
+const fetcher = async (tenantId: string) => {
+  const { data, error } = await supabase
+    .from('units')
+    .select(`
+      *,
+      profiles:owner_id (
+        id,
+        full_name,
+        email,
+        metadata,
+        role
+      )
+    `)
+    .eq('tenant_id', tenantId)
+    .order('unit_number', { ascending: true });
+
+  if (error) throw error;
+  return data;
+};
+
 const ResidentDirectory: React.FC<Props> = ({ navigate, role }) => {
-  const { currentTenant } = useAppContext();
+  const { currentTenant, currentUser } = useAppContext();
   const [searchQuery, setSearchQuery] = useState('');
-  const [units, setUnits] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isAddMode, setIsAddMode] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const { data: units = [], error, isLoading, mutate } = useSWR(
+    currentTenant ? `units-${currentTenant.id}` : null,
+    () => fetcher(currentTenant!.id),
+    { revalidateOnFocus: false }
+  );
 
   useEffect(() => {
     if (!currentTenant) return;
 
-    const fetchUnits = async () => {
-      setIsLoading(true);
-      const { data, error } = await supabase
-        .from('units')
-        .select(`
-          *,
-          profiles:owner_id (
-            id,
-            full_name,
-            email,
-            metadata,
-            role
-          )
-        `)
-        .eq('tenant_id', currentTenant.id)
-        .order('unit_number', { ascending: true });
-
-      if (data) {
-        setUnits(data);
-      }
-      setIsLoading(false);
-    };
-
-    fetchUnits();
-
     const channel = supabase.channel('public:units')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'units', filter: `tenant_id=eq.${currentTenant.id}` }, () => {
-        fetchUnits();
+        mutate();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles', filter: `tenant_id=eq.${currentTenant.id}` }, () => {
+        mutate();
       })
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [currentTenant]);
+  }, [currentTenant, mutate]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -74,26 +77,47 @@ const ResidentDirectory: React.FC<Props> = ({ navigate, role }) => {
       setIsAddMode(false);
   };
 
+  const handlePhoneChange = (val: string) => {
+    let formatted = val.replace(/[^\d+]/g, '');
+    if (formatted.length > 0 && !formatted.startsWith('+')) {
+      if (formatted.startsWith('56')) {
+         formatted = '+' + formatted;
+      } else if (formatted.startsWith('9')) {
+         formatted = '+56' + formatted;
+      } else {
+         formatted = '+569' + formatted;
+      }
+    }
+    setFormData({ ...formData, phone: formatted });
+  };
+
   const handleSaveResident = async (e: React.FormEvent) => {
       e.preventDefault();
       if (!currentTenant) return;
       
       try {
-        // En una implementación real, aquí se crearía el usuario en Auth y luego el Perfil.
-        // Por ahora simulamos la inserción en units vinculando a un perfil si existe o creando uno básico.
-        
-        // 1. (Simulado) Crear o Buscar Perfil
-        // ... (Generalmente esto se hace vía Función de Borde para asegurar integridad de Auth)
-        
         const { error } = await supabase.from('units').insert({
           tenant_id: currentTenant.id,
           unit_number: formData.depto,
           contact_email: formData.email ? formData.email : null,
+          contact_phone: formData.phone ? formData.phone : null,
           proration_factor: formData.aliquot ? parseFloat(formData.aliquot) : null
           // owner_id: ...
         });
 
         if (error) throw error;
+        
+        // Audit log para registro inmutable
+        if (currentUser) {
+           await supabase.from('audit_logs').insert({
+              tenant_id: currentTenant.id,
+              user_id: currentUser.id,
+              action: 'Creación de Unidad',
+              details: `Se registró la unidad ${formData.depto} con correo de contacto ${formData.email}`,
+              module: 'directory',
+              severity: 'info'
+           });
+        }
 
         if (formData.email) {
           fetch('/api/email/send-welcome', {
@@ -189,6 +213,17 @@ const ResidentDirectory: React.FC<Props> = ({ navigate, role }) => {
 
                         const { error } = await supabase.from('units').insert(payload);
                         if (error) throw error;
+
+                        if (currentUser) {
+                           await supabase.from('audit_logs').insert({
+                              tenant_id: currentTenant.id,
+                              user_id: currentUser.id,
+                              action: 'Importación de Unidades CSV',
+                              details: `Se importaron masivamente ${payload.length} unidades`,
+                              module: 'directory',
+                              severity: 'info'
+                           });
+                        }
 
                         showToast("Unidades y correos importados correctamente del CSV.");
 
@@ -337,9 +372,9 @@ const ResidentDirectory: React.FC<Props> = ({ navigate, role }) => {
                             Celular Contacto
                           </label>
                           <input 
-                            type="text" 
+                            type="tel" 
                             value={formData.phone}
-                            onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                            onChange={(e) => handlePhoneChange(e.target.value)}
                             placeholder="+56 9 •••• ••••"
                             className="w-full h-14 bg-[#0A0A0A] border border-white/5 rounded-xl px-4 text-white placeholder-gray-600 focus:outline-none focus:border-white/20 focus:bg-[#141414] transition-all text-sm font-medium"
                           />
@@ -398,63 +433,74 @@ const ResidentDirectory: React.FC<Props> = ({ navigate, role }) => {
               </div>
 
               {/* Grid view */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
                  {isLoading ? (
                     [1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                      <div key={i} className="bg-[#111] border border-white/5 rounded-3xl p-6 animate-pulse flex flex-col items-center">
-                         <div className="w-24 h-24 rounded-full bg-white/5 mb-4"></div>
+                      <div key={i} className="bg-[#111] border border-white/5 rounded-3xl p-4 md:p-6 animate-pulse flex flex-col items-center">
+                         <div className="w-16 h-16 md:w-24 md:h-24 rounded-full bg-white/5 mb-4"></div>
                          <div className="h-4 bg-white/5 w-1/2 rounded mb-2"></div>
                          <div className="h-3 bg-white/5 w-1/3 rounded"></div>
                       </div>
                     ))
                  ) : (
                     filteredUnits.map(unit => (
-                       <div key={unit.id} className="bg-[#111] border border-white/5 rounded-[2rem] p-6 flex flex-col items-center text-center shadow-lg hover:border-white/10 hover:shadow-xl transition-all group relative overflow-hidden">
+                       <div key={unit.id} className="bg-[#111] border border-white/5 rounded-[2rem] p-4 md:p-6 flex flex-col items-center text-center shadow-lg hover:border-white/10 hover:shadow-xl transition-all group relative overflow-hidden">
                           {/* Top Tag */}
-                          <div className="absolute top-4 right-4 bg-white/5 px-2 py-1 rounded text-[9px] font-bold uppercase tracking-widest text-gray-400">
+                          <div className="absolute top-3 right-3 md:top-4 md:right-4 bg-white/5 px-2 py-1 rounded text-[9px] font-bold uppercase tracking-widest text-gray-400">
                              Dpto {unit.unit_number}
                           </div>
 
                           {/* Avatar */}
-                          <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-[#1A1A1A] border-2 border-white/10 mb-4 overflow-hidden relative shadow-inner group-hover:scale-105 transition-transform duration-500">
+                          <div className="w-16 h-16 md:w-24 md:h-24 rounded-full bg-[#1A1A1A] border-2 border-white/10 mb-3 md:mb-4 overflow-hidden relative shadow-inner group-hover:scale-105 transition-transform duration-500 mt-4 md:mt-2">
                              {unit.profiles?.metadata?.avatar_url ? (
                                 <img src={unit.profiles.metadata.avatar_url} alt="Resident Avatar" className="w-full h-full object-cover" />
                              ) : (
                                 <div className="w-full h-full flex flex-col items-center justify-center text-gray-600 bg-gradient-to-tr from-[#0A0A0A] to-[#141414]">
-                                   <span className="material-symbols-outlined text-[32px] md:text-[40px] opacity-50">person</span>
+                                   <span className="material-symbols-outlined text-[24px] md:text-[40px] opacity-50">person</span>
                                 </div>
                              )}
                           </div>
 
                           {/* Details */}
-                          <h3 className="font-semibold text-white tracking-tight mb-1">{unit.profiles?.full_name || 'Sin asignación'}</h3>
-                          <p className="text-[10px] text-gray-500 font-mono tracking-widest uppercase mb-6 truncate max-w-full px-2">
-                             {unit.contact_email || unit.profiles?.email || 'Sin correo asociado'}
+                          <h3 className="font-semibold text-white tracking-tight mb-0.5 text-sm md:text-base leading-tight">{unit.profiles?.full_name || 'Sin asignación'}</h3>
+                          <p className="text-[9px] md:text-[10px] text-gray-500 font-mono tracking-widest uppercase mb-1 truncate max-w-full px-2">
+                             {unit.profiles?.role === 'resident' ? 'Residente' : (unit.profiles?.role || 'Vacante')}
                           </p>
+
+                          {role === 'admin' ? (
+                             <div className="mb-4 mt-2 w-full">
+                                <div className="bg-blue-900/10 border border-blue-500/20 rounded-lg p-2 flex flex-col items-center justify-center">
+                                   <span className="text-[8px] text-blue-400/80 uppercase tracking-widest font-bold">Responsable Cobro</span>
+                                   <span className="text-[9px] text-blue-300 font-mono truncate w-full mt-0.5">{unit.contact_email || 'Sin Contacto'}</span>
+                                </div>
+                             </div>
+                          ) : (
+                             <div className="mb-4"></div>
+                          )}
 
                           {/* Quick Call Action */}
                           <div className="w-full mt-auto">
-                              {unit.profiles?.metadata?.phone ? (
+                              {(unit.contact_phone || unit.profiles?.metadata?.phone) ? (
                                 <a 
-                                  href={`tel:${unit.profiles.metadata.phone}`}
-                                  className="w-full py-3 bg-white/5 hover:bg-ediflow-primary hover:text-black border border-white/5 rounded-xl flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest transition-all shadow-sm group/btn active:scale-95"
+                                  href={`tel:${unit.contact_phone || unit.profiles?.metadata?.phone}`}
+                                  className="w-full py-2.5 bg-white/5 hover:bg-ediflow-primary hover:text-black border border-white/5 rounded-xl flex items-center justify-center gap-1.5 text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all shadow-sm group/btn active:scale-95"
                                 >
-                                  <span className="material-symbols-outlined text-[18px]">call</span>
-                                  Llamada Rápida
+                                  <span className="material-symbols-outlined text-[16px]">call</span>
+                                  Llamar
                                 </a>
                               ) : (
-                                <button disabled className="w-full py-3 bg-black/50 border border-white/5 rounded-xl flex items-center justify-center gap-2 text-[10px] font-bold text-gray-600 uppercase tracking-widest opacity-50 cursor-not-allowed">
-                                  <span className="material-symbols-outlined text-[16px]">phone_disabled</span>
-                                  Sin Número
+                                <button disabled className="w-full py-2.5 bg-black/50 border border-white/5 rounded-xl flex items-center justify-center gap-1.5 text-[9px] md:text-[10px] font-bold text-gray-600 uppercase tracking-widest opacity-50 cursor-not-allowed">
+                                  <span className="material-symbols-outlined text-[14px]">phone_disabled</span>
+                                  No Disp.
                                 </button>
                               )}
                           </div>
                           
                           {/* Admin Only tools */}
                           {role === 'admin' && (
-                             <div className="absolute top-4 left-4">
+                             <div className="absolute top-3 left-3 md:top-4 md:left-4">
                                 <button className="w-6 h-6 flex items-center justify-center rounded hover:bg-white/10 text-gray-500 hover:text-white transition-colors">
-                                   <span className="material-symbols-outlined text-[16px]">edit</span>
+                                   <span className="material-symbols-outlined text-[14px]">edit</span>
                                 </button>
                              </div>
                           )}
@@ -463,11 +509,37 @@ const ResidentDirectory: React.FC<Props> = ({ navigate, role }) => {
                  )}
               </div>
               
-              {!isLoading && filteredUnits.length === 0 && (
+              {!isLoading && units.length > 0 && filteredUnits.length === 0 && (
                 <div className="text-center py-20 px-6">
                   <span className="material-symbols-outlined text-4xl text-gray-600 mb-3 opacity-50">quick_reference_all</span>
-                  <h3 className="text-lg font-light tracking-tight text-white">No hay registros</h3>
-                  <p className="text-xs text-gray-500 mt-1">Busque otro término o cree una unidad nueva.</p>
+                  <h3 className="text-lg font-light tracking-tight text-white">No hay coincidencias</h3>
+                  <p className="text-xs text-gray-500 mt-1">Busque otro término o número de departamento.</p>
+                </div>
+              )}
+
+              {!isLoading && units.length === 0 && (
+                <div className="w-full flex-1 flex flex-col items-center justify-center text-center py-24 px-6 border-2 border-dashed border-white/5 bg-[#0A0A0A] rounded-[2rem] mt-8">
+                  <div className="w-24 h-24 bg-ediflow-primary/10 rounded-full flex items-center justify-center mb-6">
+                     <span className="material-symbols-outlined text-[48px] text-ediflow-primary">group_add</span>
+                  </div>
+                  <h3 className="text-2xl font-bold tracking-tight text-white mb-2">Construye tu Comunidad</h3>
+                  <p className="text-gray-400 mb-8 max-w-md">El directorio está vacío. Para que el sos y las conserjerías funcionen, comienza agregando tu primera unidad o importa un archivo CSV.</p>
+                  
+                  {role === 'admin' ? (
+                     <div className="flex flex-col sm:flex-row gap-4">
+                        <button onClick={() => setIsAddMode(true)} className="px-8 py-4 bg-white text-black font-bold uppercase tracking-widest text-xs rounded-xl hover:bg-gray-100 transition-all flex items-center gap-2">
+                           <span className="material-symbols-outlined text-[18px]">add_circle</span> Crear Unidad Manual
+                        </button>
+                        {/* Hidden input trigged by label in the header ideally, or another direct button */}
+                        <label className="px-8 py-4 bg-[#111] text-white border border-white/10 font-bold uppercase tracking-widest text-xs rounded-xl hover:bg-white/5 transition-all flex items-center gap-2 cursor-pointer cursor-allowed">
+                           <span className="material-symbols-outlined text-[18px]">playlist_add</span> 
+                           Importar CSV
+                           <input type="file" accept=".csv" className="hidden" onChange={handleFileUpload} />
+                        </label>
+                     </div>
+                  ) : (
+                     <p className="text-sm font-medium text-gray-500 uppercase tracking-widest mt-4">Esperando configuración del Administrador</p>
+                  )}
                 </div>
               )}
             </>

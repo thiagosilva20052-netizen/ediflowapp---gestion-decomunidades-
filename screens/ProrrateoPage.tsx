@@ -20,6 +20,7 @@ interface ProrrateoRow {
   individualAmount: number;
   finesAmount: number;
   arrears: number;
+  interestAmount: number;
   total: number;
 }
 
@@ -186,6 +187,9 @@ const ProrrateoPage: React.FC<Props> = ({ navigate }) => {
         // Calculate arrears for this unit (O(1) lookup)
         const unitArrears = arrearsByUnit[unit.id] || 0;
         
+        // Interés Legal por Mora (Máximo Convencional ~2% mensual)
+        const interest = unitArrears > 0 ? unitArrears * 0.02 : 0;
+        
         return {
           unitId: unit.id,
           unitNumber: unit.unit_number,
@@ -198,7 +202,8 @@ const ProrrateoPage: React.FC<Props> = ({ navigate }) => {
           individualAmount: individual,
           finesAmount: unitFines,
           arrears: unitArrears,
-          total: base + individual + unitFines + unitArrears
+          interestAmount: interest,
+          total: base + individual + unitFines + unitArrears + interest
         };
       });
 
@@ -221,13 +226,13 @@ const ProrrateoPage: React.FC<Props> = ({ navigate }) => {
     try {
       const billingMonth = new Intl.DateTimeFormat('es-CL', { month: 'long', year: 'numeric' }).format(new Date());
       
-      // Batch insert transactions - ONLY CURRENT MONTH CHARGES (Base + Individual + Fines)
+      // Batch insert transactions - ONLY CURRENT MONTH CHARGES (Base + Individual + Fines + Intereses)
       // Arrears remain as separate pending transactions in the DB to avoid double counting
       const transactionsToInsert = prorrateoData.map(row => ({
         tenant_id: currentTenant.id,
         unit_id: row.unitId,
         user_id: row.ownerId,
-        amount: row.baseAmount + row.individualAmount + row.finesAmount,
+        amount: row.baseAmount + row.individualAmount + row.finesAmount + row.interestAmount,
         billing_month: billingMonth.charAt(0).toUpperCase() + billingMonth.slice(1),
         method: 'mercadopago',
         status: 'pending'
@@ -573,6 +578,7 @@ const ProrrateoPage: React.FC<Props> = ({ navigate }) => {
                           <th className="px-6 py-4 font-semibold tracking-widest text-right">Indiv. (Agua)</th>
                           <th className="px-6 py-4 font-semibold tracking-widest text-right text-orange-400">Cargos/Multas</th>
                           <th className="px-6 py-4 font-semibold tracking-widest text-right">Deuda Ant.</th>
+                          <th className="px-6 py-4 font-semibold tracking-widest text-right text-red-400">Intereses</th>
                           <th className="px-6 py-4 font-semibold tracking-widest text-right text-blue-400">Total a Cobrar</th>
                         </tr>
                       </thead>
@@ -603,6 +609,7 @@ const ProrrateoPage: React.FC<Props> = ({ navigate }) => {
                             <td className="px-6 py-4 text-right font-mono text-gray-400">${Math.round(row.individualAmount).toLocaleString('es-CL')}</td>
                             <td className="px-6 py-4 text-right font-mono text-orange-400">${Math.round(row.finesAmount).toLocaleString('es-CL')}</td>
                             <td className="px-6 py-4 text-right font-mono text-gray-400">${Math.round(row.arrears).toLocaleString('es-CL')}</td>
+                            <td className="px-6 py-4 text-right font-mono text-red-400">${Math.round(row.interestAmount).toLocaleString('es-CL')}</td>
                             <td className="px-6 py-4 text-right font-mono font-bold text-white text-base">${Math.round(row.total).toLocaleString('es-CL')}</td>
                           </tr>
                         ))}
@@ -771,6 +778,12 @@ const ProrrateoPage: React.FC<Props> = ({ navigate }) => {
                       <div className="flex justify-between items-center py-3 border-b border-white/5">
                         <span className="text-sm text-red-400">Deuda Ant. (Morosidad)</span>
                         <span className="text-sm font-mono text-red-400">${Math.round(selectedColilla.arrears).toLocaleString('es-CL')}</span>
+                      </div>
+                    )}
+                    {selectedColilla.interestAmount > 0 && (
+                      <div className="flex justify-between items-center py-3 border-b border-white/5">
+                        <span className="text-sm text-red-400">Intereses (Máximo Convencional 2%)</span>
+                        <span className="text-sm font-mono text-red-400">${Math.round(selectedColilla.interestAmount).toLocaleString('es-CL')}</span>
                       </div>
                     )}
                   </div>
