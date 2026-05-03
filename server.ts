@@ -37,79 +37,92 @@ async function startServer() {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
-  // MercadoPago - Crear Preferencia
-  app.post('/api/checkout/preference', async (req, res) => {
+  // MercadoPago - Crear Preferencia Suscripción Ediflow
+  app.post('/api/checkout/create-preference', async (req, res) => {
     try {
-      const { title, unit_price, quantity, user_id } = req.body;
+      const { tenantId } = req.body;
+      if (!tenantId) {
+        return res.status(400).json({ error: 'tenantId is required' });
+      }
+
+      // 1. Fetch exact units using Supabase Server
+      const { supabaseServer } = await import('./src/lib/supabase-server.js');
+      const { count, error: countError } = await (supabaseServer as any)
+        .from('units')
+        .select('*', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId);
+
+      if (countError) {
+        throw new Error(`Failed to count units: ${countError.message}`);
+      }
+
+      // 2. Dynamic pricing algorithm: min 40 units
+      const totalUnits = Math.max(count || 0, 40);
+      const calculatedPrice = totalUnits * 2000;
       
       const preference = new Preference(client);
       const result = await preference.create({
         body: {
           items: [
              {
-               id: 'item-ID-1234',
-               title: title || 'Suscripción Seguify Premium',
-               quantity: quantity || 1,
-               unit_price: unit_price || 9900,
+               id: 'ediflow-pro-monthly',
+               title: `Suscripción Mensual EdiFlow - ${totalUnits} Departamentos`,
+               quantity: 1,
+               unit_price: calculatedPrice,
                currency_id: 'CLP',
              }
           ],
           back_urls: {
-            success: 'http://localhost:3000/payments/success',
-            failure: 'http://localhost:3000/payments/failure',
-            pending: 'http://localhost:3000/payments/pending'
+            success: `${process.env.VITE_BASE_URL || 'http://localhost:3000'}/`,
+            failure: `${process.env.VITE_BASE_URL || 'http://localhost:3000'}/`,
+            pending: `${process.env.VITE_BASE_URL || 'http://localhost:3000'}/`
           },
           auto_return: 'approved',
-          external_reference: user_id || 'guest',
+          external_reference: tenantId, // Pass the tenantId to activate it on webhook
         }
       });
       
-      res.json({ id: result.id, init_point: result.init_point });
+      res.json({ id: result.id, init_point: result.init_point, totalUnits, calculatedPrice });
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: 'Failed to create preference' });
     }
   });
 
-  // MercadoPago - Webhook (Simulado/Preparado)
+  // MercadoPago - Webhook (Suscripción)
   app.post('/api/checkout/webhook', async (req, res) => {
+    // Return 200 OK immediately for serverless timeout optimization
+    res.status(200).send('OK');
+
     try {
       // Validar firma aquí en producción (X-Signature)
       const data = req.body;
-      console.log('Webhook MP Recibido:', data);
-      
+            
       // Update en Supabase
       if (data.type === 'payment' && data.data && data.data.id) {
         try {
           const { supabaseServer } = await import('./src/lib/supabase-server.js');
           
-          // You might check if external_reference is a transaction ID to update it.
-          // Or just update by user_id and 'pending' status.
-          // In this case, we can assume external_reference will carry 'user_id_tenant_id' or 'transaction_id' 
-          // However, for One-Click, let's assume we create a 'pending' transaction FIRST in the DB before calling MP or
-          // update any 'pending' transaction for that external_reference user.
-          
-          // Let's assume external reference is a user ID for now as per preference creation.
-          const userId = data.data.external_reference;
+          const tenantId = data.data.external_reference;
 
-          if (userId && userId !== 'guest') {
-             // To ensure idempotency: only update if status is 'pending'
+          if (tenantId && tenantId !== 'guest') {
+             // Activate subscription
              await (supabaseServer as any)
-               .from('transactions')
-               .update({ status: 'success', payment_id: String(data.data.id), payment_date: new Date().toISOString() })
-               .eq('external_reference', userId)
-               .eq('status', 'pending');
+               .from('tenants')
+               .update({ 
+                 subscription_status: 'active', 
+                 mercado_pago_id: String(data.data.id),
+                 last_payment_date: new Date().toISOString()
+               })
+               .eq('id', tenantId);
           }
 
         } catch (dbError) {
           console.error('Error actualizando Supabase:', dbError);
         }
       }
-
-      res.status(200).send('OK');
     } catch (error) {
       console.error('Webhook error:', error);
-      res.status(500).send('Webhook Processing Failed');
     }
   });
 
@@ -122,8 +135,7 @@ async function startServer() {
         return res.status(400).json({ error: 'Missing units array' });
       }
 
-      console.log(`[Resend Batch] Preparing billing emails for ${units.length} units in tenant ${tenantId}. Period: ${billingMonth}`);
-
+      
       // We dynamically import to avoid breaking normal flow if file not found locally
       const { getBillingEmailHtml } = await import('./src/lib/emailTemplates.js');
 
@@ -143,7 +155,6 @@ async function startServer() {
 
         for (let i = 0; i < emailsToSend.length; i += CHUNK_SIZE) {
           const chunk = emailsToSend.slice(i, i + CHUNK_SIZE);
-          console.log(`[Resend Batch] Sending chunk ${i / CHUNK_SIZE + 1} (${chunk.length} emails)...`);
           
           let retries = 0;
           let success = false;
@@ -151,17 +162,14 @@ async function startServer() {
           while (!success && retries < 3) {
             try {
               // const data = await resend.batch.send(chunk);
-              console.log(`[Resend Batch] Simulated API call for chunk ${i / CHUNK_SIZE + 1}.`);
-              
+                            
               // We could also loop through 'data' checking for specific failures per-email 
               // and update 'notification_logs' accordingly here if this wasn't simulated.
               success = true;
               successCount += chunk.length;
             } catch (chunkError: any) {
-              console.warn(`[Resend Batch] Chunk error:`, chunkError);
               if (chunkError?.statusCode === 429) {
                 retries++;
-                console.log(`[Resend Batch] Rate limited. Retrying (${retries}/3) in 2 seconds...`);
                 await new Promise(resolve => setTimeout(resolve, 2000));
               } else {
                 failedCount += chunk.length;
@@ -171,7 +179,6 @@ async function startServer() {
             }
           }
         }
-        console.log(`[Resend Batch] Finished. Success: ${successCount}. Failed: ${failedCount}`);
       }
 
       res.status(200).json({ success: true, attempted: emailsToSend.length });
@@ -190,8 +197,7 @@ async function startServer() {
         return res.status(400).json({ error: 'Missing required parameters' });
       }
 
-      console.log(`[Resend Welcome] Sending onboarding email to ${to} for Dpto ${unitNumber}`);
-      
+            
       // We dynamically import to avoid breaking normal flow if file not found locally
       const { getWelcomeEmailHtml } = await import('./src/lib/emailTemplates.js');
       const html = getWelcomeEmailHtml(unitNumber, setPasswordUrl, tenantName, tenantRut);
@@ -212,10 +218,12 @@ async function startServer() {
 
   // Resend - Webhook (Bounces, Complaints, Deliveries)
   app.post('/api/webhooks/resend', async (req, res) => {
+    // Return 200 OK immediately to avoid timeouts
+    res.status(200).send('OK');
+
     try {
       const payload = req.body;
-      console.log('📬 Webhook Resend Recibido:', payload.type);
-
+      
       if (payload.type === 'email.bounced' || payload.type === 'email.delivered' || payload.type === 'email.complained') {
         const emailId = payload.data?.email_id;
         const status = payload.type === 'email.bounced' ? 'bounced' : payload.type === 'email.delivered' ? 'delivered' : 'complained';
@@ -235,11 +243,8 @@ async function startServer() {
             .eq('status', 'enviando...');
         }
       }
-
-      res.status(200).send('OK');
     } catch (error) {
       console.error('Resend Webhook error:', error);
-      res.status(500).send('Webhook Failed');
     }
   });
 
@@ -247,8 +252,7 @@ async function startServer() {
   app.post('/api/notify/parcel', async (req, res) => {
     try {
       const { unitId, tenantId, title, body, packageType, unitNumber, tenantName, receivedAt } = req.body;
-      console.log(`[Parcel Notification] -> Unit: ${unitId} | Title: ${title}`);
-      
+            
       const { supabaseServer } = await import('./src/lib/supabase-server.js');
       const { data: unitData } = await (supabaseServer as any)
         .from('units')
@@ -289,8 +293,7 @@ async function startServer() {
              severity: 'warning'
            });
          } else {
-           console.log(`[Parcel Email Sent] Sent to ${unitData.contact_email}`);
-         }
+                    }
       }
       
       // Simulated Push
@@ -330,8 +333,7 @@ async function startServer() {
   app.post('/api/notify/sos', async (req, res) => {
     try {
       const { unitId, tenantId, unitNumber, tenantName, activatedAt } = req.body;
-      console.log(`[SOS Notification] -> Unit: ${unitId} | Tenant: ${tenantId}`);
-      
+            
       res.status(200).json({ success: true, message: 'SOS Notification queued.' });
 
       (async () => {
@@ -373,7 +375,6 @@ async function startServer() {
                  if (emailError) {
                     console.error('[SOS Email Failed]', emailError);
                  } else {
-                    console.log(`[SOS Email Sent] Sent to ${adminEmails.join(', ')}`);
                  }
               }
            }
@@ -391,8 +392,7 @@ async function startServer() {
   app.post('/api/notify/visit', async (req, res) => {
     try {
       const { unitId, tenantId, visitorName, unitNumber, tenantName, accessedAt } = req.body;
-      console.log(`[Visit Notification] -> Unit: ${unitId} | Visitor: ${visitorName}`);
-      
+            
       res.status(200).json({ success: true, message: 'Notification job queued.' });
 
       (async () => {
@@ -437,8 +437,7 @@ async function startServer() {
                    severity: 'warning'
                  });
               } else {
-                 console.log(`[Visit Email Sent] Sent to ${unitData.contact_email}`);
-              }
+                               }
            }
            
            // Simulated Push
@@ -476,8 +475,7 @@ async function startServer() {
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`🚀 Seguify Server running on http://localhost:${PORT}`);
-  });
+      });
 }
 
 startServer();

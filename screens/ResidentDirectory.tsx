@@ -534,7 +534,53 @@ const ResidentDirectory: React.FC<Props> = ({ navigate, role }) => {
                         <label className="px-8 py-4 bg-[#111] text-white border border-white/10 font-bold uppercase tracking-widest text-xs rounded-xl hover:bg-white/5 transition-all flex items-center gap-2 cursor-pointer cursor-allowed">
                            <span className="material-symbols-outlined text-[18px]">playlist_add</span> 
                            Importar CSV
-                           <input type="file" accept=".csv" className="hidden" onChange={handleFileUpload} />
+                           <input type="file" accept=".csv" className="hidden" onChange={async (e) => {
+                             if (!e.target.files || e.target.files.length === 0 || !currentTenant) return;
+                             
+                             const file = e.target.files[0];
+                             const reader = new FileReader();
+
+                             reader.onload = async (event) => {
+                               try {
+                                 const text = event.target?.result as string;
+                                 const lines = text.split('\n').filter(l => l.trim() !== '');
+                                 
+                                 const payload = [];
+                                 for (const line of lines) {
+                                   const [unitNum, factorStr, email] = line.split(',');
+                                   if (unitNum) {
+                                     payload.push({
+                                       tenant_id: currentTenant.id,
+                                       unit_number: unitNum.trim(),
+                                       proration_factor: factorStr ? parseFloat(factorStr.trim()) : null,
+                                       contact_email: email ? email.trim() : null
+                                     });
+                                   }
+                                 }
+
+                                 const { error } = await supabase.from('units').insert(payload);
+                                 if (error) throw error;
+
+                                 if (currentUser) {
+                                    await supabase.from('audit_logs').insert({
+                                       tenant_id: currentTenant.id,
+                                       user_id: currentUser.id,
+                                       action: 'Importación de Unidades CSV',
+                                       details: `Se importaron masivamente ${payload.length} unidades`,
+                                       module: 'directory',
+                                       severity: 'info'
+                                    });
+                                 }
+
+                                 showToast("Unidades y correos importados correctamente del CSV.");
+                                 mutate();
+                               } catch (err) {
+                                 console.error(err);
+                                 showToast("Error procesando Archivo CSV");
+                               }
+                             };
+                             reader.readAsText(file);
+                           }} />
                         </label>
                      </div>
                   ) : (

@@ -80,14 +80,15 @@ const RecaudacionPage: React.FC<Props> = ({ navigate }) => {
     
     // Audit Log for the atomic balance update
     if (currentTenant && currentUser) {
-      await supabase.from('audit_logs').insert({
+      const { error: logError } = await supabase.from('audit_logs').insert({
          tenant_id: currentTenant.id,
          user_id: currentUser.id,
          action: 'Conciliación de Pago',
          details: `Pago de ${txId} conciliado exitosamente. Saldo de cuenta corriente actualizado atómicamente.`,
          module: 'finance',
          severity: 'info'
-      }).catch(console.error);
+      });
+      if (logError) console.error(logError);
     }
 
     showToast("Pago validado. Saldo descontado automáticamente.");

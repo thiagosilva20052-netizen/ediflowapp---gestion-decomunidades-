@@ -44,6 +44,7 @@ import ChecklistLeyPage from './screens/ChecklistLeyPage';
 import { RegisterScreen } from './screens/RegisterScreen';
 import { OnboardingScreen } from './screens/OnboardingScreen';
 import { AuditLogsPage } from './screens/AuditLogsPage';
+import { BillingPage } from './screens/BillingPage';
 import { useAppContext } from './src/context/AppContext';
 import { User, UserRole } from './src/types';
 import { ModuleHub } from './components/ModuleHub';
@@ -94,10 +95,11 @@ export type ScreenName =
   | 'ReportesFinancierosPage'
   | 'MedidoresPage'
   | 'Onboarding'
-  | 'AuditLogs';
+  | 'AuditLogs'
+  | 'Billing';
 
 const App: React.FC = () => {
-  const { currentUser, setCurrentUser, isGlobalMenuOpen, setIsGlobalMenuOpen, theme, setCurrentTenant } = useAppContext();
+  const { currentUser, setCurrentUser, isGlobalMenuOpen, setIsGlobalMenuOpen, theme, setCurrentTenant, currentTenant } = useAppContext();
   const [currentScreen, setCurrentScreen] = useState<ScreenName>('Landing');
   const [previousScreen, setPreviousScreen] = useState<ScreenName | null>(null);
   const [registeredEmail, setRegisteredEmail] = useState<string>('');
@@ -114,6 +116,26 @@ const App: React.FC = () => {
       document.documentElement.classList.remove('dark');
     }
   }, [theme]);
+
+  // Subscription Guard Logic
+  useEffect(() => {
+    if (currentUser && currentTenant) {
+      // Mocking the expiration check inline for demonstration
+      // In production, this data comes freshly from Supabase tenants table
+      const trialStarted = currentTenant.trial_started_at ? new Date(currentTenant.trial_started_at) : new Date(Date.now() - 16 * 24 * 60 * 60 * 1000); // MOCK: Expired 16 days ago
+      const daysPassed = (Date.now() - trialStarted.getTime()) / (1000 * 3600 * 24);
+      
+      const isExpiredTrial = (currentTenant.subscription_status === 'trial' || !currentTenant.subscription_status) && daysPassed > 15;
+      const isPastDue = currentTenant.subscription_status === 'past_due';
+
+      // Solo blockeamos a admin y concierge
+      if ((isExpiredTrial || isPastDue) && ['admin', 'concierge'].includes(currentUser.role)) {
+        if (currentScreen !== 'Billing') {
+           setCurrentScreen('Billing');
+        }
+      }
+    }
+  }, [currentScreen, currentUser, currentTenant]);
 
   const handleLogin = (user: User) => {
     // Load saved profile data if exists
@@ -199,8 +221,8 @@ const App: React.FC = () => {
     }
 
     const roleAccess: Record<UserRole, ScreenName[]> = {
-      admin: ['AdminDashboard', 'ManageExpenses', 'EgresosPage', 'MedidoresPage', 'ProrrateoPage', 'RecaudacionPage', 'MapConfigPage', 'FinanceCommunicationsPage', 'MorosidadPage', 'MultasPage', 'ReportesFinancierosPage', 'CommunityWall', 'MessagesScreen', 'PaymentsScreen', 'BitacoraScreen', 'UserProfile', 'StaffManagement', 'ResidentDirectory', 'Reservations', 'Maintenance', 'Emergency', 'NovedadEntry', 'BuildingSettings', 'AuditLogs'],
-      concierge: ['ConciergeDashboard', 'PackageEntry', 'AccessControl', 'MessagesScreen', 'BitacoraScreen', 'UserProfile', 'ManualVisitorRegistration', 'RegisterPayment', 'ResidentDirectory', 'Reservations', 'Maintenance', 'Emergency', 'NovedadEntry'],
+      admin: ['AdminDashboard', 'ManageExpenses', 'EgresosPage', 'MedidoresPage', 'ProrrateoPage', 'RecaudacionPage', 'MapConfigPage', 'FinanceCommunicationsPage', 'MorosidadPage', 'MultasPage', 'ReportesFinancierosPage', 'CommunityWall', 'MessagesScreen', 'PaymentsScreen', 'BitacoraScreen', 'UserProfile', 'StaffManagement', 'ResidentDirectory', 'Reservations', 'Maintenance', 'Emergency', 'NovedadEntry', 'BuildingSettings', 'AuditLogs', 'Billing'],
+      concierge: ['ConciergeDashboard', 'PackageEntry', 'AccessControl', 'MessagesScreen', 'BitacoraScreen', 'UserProfile', 'ManualVisitorRegistration', 'RegisterPayment', 'ResidentDirectory', 'Reservations', 'Maintenance', 'Emergency', 'NovedadEntry', 'Billing'],
       resident: ['ResidentServices', 'CommunityWall', 'MessagesScreen', 'PaymentsScreen', 'UserProfile', 'QRCodeScreen', 'Reservations', 'Maintenance', 'Emergency']
     };
 
@@ -245,6 +267,8 @@ const App: React.FC = () => {
         return <Maintenance navigate={handleNavigate} role={currentUser.role} from={previousScreen} />;
       case 'AuditLogs':
         return <AuditLogsPage navigate={handleNavigate} />;
+      case 'Billing':
+        return <BillingPage onLogout={handleLogout} navigate={handleNavigate} />;
       default: 
         return currentUser.role === 'admin' ? <AdminDashboard navigate={handleNavigate} onLogout={handleLogout} /> :
                currentUser.role === 'concierge' ? <ConciergeDashboard navigate={handleNavigate} onLogout={handleLogout} /> :

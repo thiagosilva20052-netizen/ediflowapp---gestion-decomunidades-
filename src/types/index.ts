@@ -18,6 +18,10 @@ export interface Tenant {
   rut_edificio?: string;
   proration_percentage?: number;
   admin_pin?: string;
+  trial_started_at?: string;
+  subscription_status?: 'trial' | 'active' | 'past_due';
+  mercado_pago_id?: string;
+  last_payment_date?: string;
 }
 
 export interface LogEntry {
@@ -37,9 +41,10 @@ export interface VisitorPass {
   name: string;
   type: PassType;
   date: string;
-  status: 'active' | 'used' | 'expired';
+  status: 'active' | 'used' | 'expired' | 'Pendiente' | 'Ingresado' | 'Cancelado' | 'Expirado';
   tenantId: string;
   userId: string;
+  qrPayload?: string;
 }
 
 export interface Payment {

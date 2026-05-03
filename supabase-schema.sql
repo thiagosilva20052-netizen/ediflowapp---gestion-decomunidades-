@@ -15,9 +15,21 @@ CREATE TABLE IF NOT EXISTS public.tenants (
     address TEXT,
     rut_edificio VARCHAR(20),
     config JSONB DEFAULT '{}'::jsonb, -- Colores, logo, reglas
+    trial_started_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
+    subscription_status VARCHAR(50) DEFAULT 'trial' CHECK (subscription_status IN ('trial', 'active', 'past_due')),
+    mercado_pago_id VARCHAR(255),
+    last_payment_date TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+-- Real-time function to check trial status
+CREATE OR REPLACE FUNCTION check_tenant_trial_status(tenant_row public.tenants)
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN tenant_row.subscription_status = 'trial' AND (timezone('utc'::text, now()) > (tenant_row.trial_started_at + interval '15 days'));
+END;
+$$ LANGUAGE plpgsql STABLE;
 
 -- Tabla de Identidad (Profiles - Extiende auth.users)
 CREATE TABLE IF NOT EXISTS public.profiles (

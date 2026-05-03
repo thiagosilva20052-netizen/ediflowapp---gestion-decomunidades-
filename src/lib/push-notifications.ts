@@ -2,7 +2,7 @@ import { env } from '../config/env';
 
 export async function subscribeToPushNotifications() {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-    console.log('Push notifications are not supported by the browser.');
+    // Push unsupported
     return;
   }
 
@@ -12,12 +12,11 @@ export async function subscribeToPushNotifications() {
     // Check if we are already subscribed
     const existingSubscription = await registration.pushManager.getSubscription();
     if (existingSubscription) {
-      console.log('User is already subscribed:', existingSubscription);
+      // Already subscribed
       return existingSubscription;
     }
 
     if (!env.vapidPublicKey) {
-      console.warn('VAPID Public Key is missing. Push notifications will not work.');
       return;
     }
 
@@ -29,7 +28,7 @@ export async function subscribeToPushNotifications() {
       applicationServerKey: convertedVapidKey
     });
 
-    console.log('Push Notification Subscription successful:', subscription);
+    // Subscription successful
     
     // Here we would send the subscription to our backend (Supabase or Vercel Function)
     // await saveSubscriptionToBackend(subscription);
