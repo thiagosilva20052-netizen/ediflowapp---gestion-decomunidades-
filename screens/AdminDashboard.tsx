@@ -64,7 +64,7 @@ export const AdminDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
     const fetchMaintenance = async () => {
       const { data } = await supabase
         .from('maintenance_logs')
-        .select('*')
+        .select('id, equipment_name, provider, scheduled_date, status')
         .eq('tenant_id', currentTenant.id)
         .order('scheduled_date', { ascending: true })
         .limit(3);
@@ -101,11 +101,11 @@ export const AdminDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
 
     const fetchGlobalAlertsAndLogs = async () => {
        // Fetch active SOS for the tenant
-       const { data: sosData } = await supabase.from('panic_alerts').select('*, units(unit_number)').eq('tenant_id', currentTenant.id).eq('status', 'Activo');
+       const { data: sosData } = await supabase.from('panic_alerts').select('id, status, units(unit_number)').eq('tenant_id', currentTenant.id).eq('status', 'Activo');
        if (sosData) setGlobalSOS(sosData);
 
        // Fetch failed notifications from audit logs
-       const { data: failData } = await supabase.from('audit_logs').select('*').eq('tenant_id', currentTenant.id).in('severity', ['warning', 'critical']).order('created_at', { ascending: false }).limit(5);
+       const { data: failData } = await supabase.from('audit_logs').select('id').eq('tenant_id', currentTenant.id).in('severity', ['warning', 'critical']).order('created_at', { ascending: false }).limit(5);
        if (failData) setFailedLogs(failData);
     };
 

@@ -41,7 +41,7 @@ export const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
          const { supabase } = await import('../src/lib/supabase-client');
          const { data, error } = await supabase
             .from('panic_alerts')
-            .select('*, units(unit_number), profiles(full_name)')
+            .select('id, created_at, status, units(unit_number), profiles(full_name)')
             .eq('tenant_id', currentTenant.id)
             .eq('status', 'Activo')
             .order('created_at', { ascending: false })
@@ -102,7 +102,7 @@ export const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
 
       const { data: visitData, error: visitError } = await supabase
         .from('visit_access')
-        .select('*, units(unit_number, contact_email)')
+        .select('id, visitor_name, unit_id, units(unit_number, contact_email)')
         .eq('tenant_id', currentTenant.id)
         .eq('access_pin', pinValue)
         .eq('status', 'Pendiente')
@@ -206,7 +206,7 @@ export const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
       
       const { count } = await supabase
         .from('parcels')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .eq('tenant_id', currentTenant.id)
         .in('status', ['Pendiente', 'received']);
         
@@ -214,7 +214,7 @@ export const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
 
       const { data } = await supabase
         .from('parcels')
-        .select('*, units(unit_number)')
+        .select('id, created_at, recipient_name, package_type, department_number, status, units(unit_number)')
         .eq('tenant_id', currentTenant.id)
         .in('status', ['Pendiente', 'received'])
         .order('created_at', { ascending: false });

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ScreenName } from '../App';
 import { Html5Qrcode } from 'html5-qrcode';
+import { useAppContext } from '../src/context/AppContext';
+import { supabase } from '../src/lib/supabase-client';
 
 interface Props {
   navigate: (screen: ScreenName) => void;
@@ -8,6 +10,7 @@ interface Props {
 }
 
 const ManualVisitorRegistration: React.FC<Props> = ({ navigate, from }) => {
+  const { currentTenant, currentUser } = useAppContext();
   const [formData, setFormData] = useState({
     name: '',
     rut: '',
@@ -77,16 +80,34 @@ const ManualVisitorRegistration: React.FC<Props> = ({ navigate, from }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.rut || !formData.depto) return;
+    if (!formData.name || !formData.rut || !formData.depto || !currentTenant) return;
     
-    setIsSubmitting(true);
+    // Actualización optimista: cambiar UI inmediatamente sin esperar la BD
+    setShowSuccess(true);
+    
     setTimeout(() => {
-      setIsSubmitting(false);
-      setShowSuccess(true);
-      setTimeout(() => {
-        navigate(from || 'AccessControl');
-      }, 2000);
-    }, 1500);
+      navigate(from || 'AccessControl');
+    }, 2000);
+
+    // Insertar logs de forma asíncrona en segundo plano
+    const payload = {
+        tenant_id: currentTenant.id,
+        user_id: currentUser?.id,
+        action: 'Ingreso Visita',
+        details: `Recepción de visita: ${formData.name} a depto: ${formData.depto}`,
+        module: 'access',
+        severity: 'info'
+    };
+    supabase.from('audit_logs').insert(payload).catch(console.error);
+
+    const logPayload = {
+        tenant_id: currentTenant.id,
+        type: 'visita',
+        title: `Ingreso Visita ${formData.depto}`,
+        description: `Rut: ${formData.rut}, Nombre: ${formData.name}, Motivo: ${formData.reason}`,
+        user_id: currentUser?.id
+    };
+    supabase.from('logs').insert(logPayload).catch(console.error);
   };
 
     if (showSuccess) {

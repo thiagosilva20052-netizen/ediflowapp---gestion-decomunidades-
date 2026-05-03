@@ -160,78 +160,78 @@ const PackageEntry: React.FC<Props> = ({ navigate, from }) => {
     stopCamera();
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedUnitId || !currentTenant || !currentUser) return;
     
-    setIsSubmitting(true);
+    // Actualización optimista: cambiar UI inmediatamente sin esperar la BD
+    setShowSuccess(true);
     
-    try {
-      let finalPhotoUrl = null;
+    setTimeout(() => {
+      navigate(from || 'ConciergeDashboard');
+    }, 2500);
 
-      if (photoBlob) {
-        const fileExt = 'jpg';
-        const fileName = `${Date.now()}-package.${fileExt}`;
-        const filePath = `${currentTenant.id}/packages/${fileName}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('evidence')
-          .upload(filePath, photoBlob);
-          
-        if (uploadError) throw uploadError;
-
-        const { data } = supabase.storage.from('evidence').getPublicUrl(filePath);
-        finalPhotoUrl = data.publicUrl;
-      }
-
-      const selectedUnit = units.find(u => u.id === selectedUnitId);
-
-      const { error } = await supabase.from('parcels').insert({
-        tenant_id: currentTenant.id,
-        unit_id: selectedUnitId,
-        department_number: selectedUnit?.unit_number || 'S/N',
-        recipient_name: recipientName || 'Residente (Recibido por Conserjería)',
-        package_type: packageType,
-        status: 'Pendiente',
-        received_by: currentUser.id,
-        photo_url: finalPhotoUrl
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      // Trigger Push Notification seamlessly using API (Fire and Forget to not block UI)
+    // Background process for DB & Network calls
+    (async () => {
       try {
-         fetch((import.meta as any).env.VITE_BASE_URL + '/api/notify/parcel', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-               unitId: selectedUnitId,
-               tenantId: currentTenant.id,
-               title: '📦 ¡Tenes un nuevo paquete!',
-               body: `Ha llegado una encomienda (${packageType}) para el depto ${selectedUnit?.unit_number}. Pasa por conserjería a retirarlo.`,
-               packageType,
-               unitNumber: selectedUnit?.unit_number,
-               tenantName: currentTenant.name,
-               receivedAt: new Date().toLocaleString()
-            })
-         }).catch(err => console.error('Push error:', err));
-      } catch (pushErr) {
-         console.error('Push error:', pushErr);
+        let finalPhotoUrl = null;
+
+        if (photoBlob) {
+          const fileExt = 'jpg';
+          const fileName = `${Date.now()}-package.${fileExt}`;
+          const filePath = `${currentTenant.id}/packages/${fileName}`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from('evidence')
+            .upload(filePath, photoBlob);
+            
+          if (uploadError) throw uploadError;
+
+          const { data } = supabase.storage.from('evidence').getPublicUrl(filePath);
+          finalPhotoUrl = data.publicUrl;
+        }
+
+        const selectedUnit = units.find(u => u.id === selectedUnitId);
+
+        const { error } = await supabase.from('parcels').insert({
+          tenant_id: currentTenant.id,
+          unit_id: selectedUnitId,
+          department_number: selectedUnit?.unit_number || 'S/N',
+          recipient_name: recipientName || 'Residente (Recibido por Conserjería)',
+          package_type: packageType,
+          status: 'Pendiente',
+          received_by: currentUser.id,
+          photo_url: finalPhotoUrl
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        // Trigger Push Notification seamlessly using API (Fire and Forget to not block UI)
+        try {
+           fetch((import.meta as any).env.VITE_BASE_URL + '/api/notify/parcel', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                 unitId: selectedUnitId,
+                 tenantId: currentTenant.id,
+                 title: '📦 ¡Tenes un nuevo paquete!',
+                 body: `Ha llegado una encomienda (${packageType}) para el depto ${selectedUnit?.unit_number}. Pasa por conserjería a retirarlo.`,
+                 packageType,
+                 unitNumber: selectedUnit?.unit_number,
+                 tenantName: currentTenant.name,
+                 receivedAt: new Date().toLocaleString()
+              })
+           }).catch(err => console.error('Push error:', err));
+        } catch (pushErr) {
+           console.error('Push error:', pushErr);
+        }
+
+      } catch (err) {
+        console.error('Error recording parcel:', err);
       }
-
-      setShowSuccess(true);
-      setTimeout(() => {
-        navigate(from || 'ConciergeDashboard');
-      }, 2500);
-
-    } catch (err) {
-      console.error('Error recording parcel:', err);
-      alert('Error al registrar paquete.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    })();
   };
 
   if (showSuccess) {

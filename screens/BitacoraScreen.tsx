@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import useSWRInfinite from 'swr/infinite';
 import { ScreenName } from '../App';
 import { UserRole } from '../src/types';
 import { useAppContext } from '../src/context/AppContext';
@@ -9,78 +10,72 @@ interface Props {
   role: UserRole;
 }
 
+const PAGE_SIZE = 20;
+
+const fetchLogs = async (tenantId: string, filter: string, page: number) => {
+  let query = supabase
+    .from('logs')
+    .select('id, title, description, type, created_at, profiles(name)')
+    .eq('tenant_id', tenantId)
+    .order('created_at', { ascending: false })
+    .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+  
+  if (filter !== 'todos') {
+    if (filter === 'seguridad') {
+      query = query.in('type', ['incidente', 'emergencia']);
+    } else if (filter === 'mantenimiento') {
+      query = query.eq('type', 'mantenimiento');
+    } else if (filter === 'paquetes') {
+      query = query.eq('type', 'encomienda');
+    } else if (filter === 'visitas') {
+      query = query.eq('type', 'visita');
+    } else if (filter === 'turno') {
+      query = query.eq('type', 'turno');
+    }
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return data;
+};
+
 const BitacoraScreen: React.FC<Props> = ({ navigate, role }) => {
   const [filter, setFilter] = useState('todos');
   const { currentTenant } = useAppContext();
-  const [logs, setLogs] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+
+  const getKey = (pageIndex: number, previousPageData: any[]) => {
+    if (!currentTenant) return null;
+    if (previousPageData && !previousPageData.length) return null;
+    return ['logs', currentTenant.id, filter, pageIndex];
+  };
+
+  const { data: pages = [], error, isLoading, mutate, size, setSize } = useSWRInfinite(
+    getKey,
+    ([, tenantId, filterVal, page]) => fetchLogs(tenantId as string, filterVal as string, page as number),
+    { revalidateOnFocus: false }
+  );
+
+  const logs = pages.flat();
 
   useEffect(() => {
-    const fetchLogs = async () => {
-      setIsLoading(true);
-      
-      const { data: userAuth } = await supabase.auth.getUser();
-      if (!userAuth?.user) {
-        setIsLoading(false);
-        return;
-      }
-
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('tenant_id')
-        .eq('id', userAuth.user.id)
-        .single();
-        
-      if (!profileData) {
-        setIsLoading(false);
-        return;
-      }
-
-      const tenantId = profileData.tenant_id;
-
-      let query = supabase
-        .from('logs')
-        .select('*, profiles(name)')
-        .eq('tenant_id', tenantId)
-        .order('created_at', { ascending: false });
-      
-      if (filter !== 'todos') {
-        if (filter === 'seguridad') {
-          query = query.in('type', ['incidente', 'emergencia']);
-        } else if (filter === 'mantenimiento') {
-          query = query.eq('type', 'mantenimiento');
-        } else if (filter === 'paquetes') {
-          query = query.eq('type', 'encomienda');
-        } else if (filter === 'visitas') {
-          query = query.eq('type', 'visita');
-        } else if (filter === 'turno') {
-          query = query.eq('type', 'turno');
-        }
-      }
-
-      const { data } = await query;
-      
-      if (data) setLogs(data);
-      setIsLoading(false);
-
-      // Subscribe to realtime logs
-      const logsChannel = supabase.channel('public:logs')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'logs', filter: `tenant_id=eq.${tenantId}` }, payload => {
-          fetchLogs();
-        })
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(logsChannel);
-      };
-    };
-
-    const cleanupPromise = fetchLogs();
+    if (!currentTenant) return;
+    const logsChannel = supabase.channel('public:logs')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'logs', filter: `tenant_id=eq.${currentTenant.id}` }, () => {
+        mutate();
+      })
+      .subscribe();
 
     return () => {
-      cleanupPromise.then(cleanup => cleanup && cleanup());
+      supabase.removeChannel(logsChannel);
     };
-  }, [filter]);
+  }, [currentTenant, mutate]);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    if (scrollHeight - scrollTop <= clientHeight * 1.5) {
+      setSize(size + 1);
+    }
+  };
 
   const filteredLogs = logs; // Already filtered by DB
 
@@ -112,7 +107,7 @@ const BitacoraScreen: React.FC<Props> = ({ navigate, role }) => {
       </header>
 
       {/* Main Layout Area */}
-      <main className="flex-1 overflow-y-auto no-scrollbar px-6 md:px-16 pb-32 w-full max-w-6xl mx-auto flex flex-col md:flex-row gap-8 items-start">
+      <main className="flex-1 overflow-y-auto no-scrollbar px-6 md:px-16 pb-32 w-full max-w-6xl mx-auto flex flex-col md:flex-row gap-8 items-start" onScroll={handleScroll}>
         
         {/* Left Side: Desktop Filters (Sticky) & Stats Bento */}
         <aside className="w-full md:w-64 shrink-0 flex flex-col gap-6 sticky top-0 md:top-36 z-20 bg-[#0A0A0A] md:bg-transparent pb-4 md:pb-0 border-b border-white/5 md:border-none pt-2 md:pt-0">

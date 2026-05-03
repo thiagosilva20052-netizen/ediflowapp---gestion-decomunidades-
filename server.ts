@@ -5,6 +5,7 @@ import { MercadoPagoConfig, Preference } from 'mercadopago';
 import dotenv from 'dotenv';
 import path from 'path';
 import webpush from 'web-push';
+import rateLimit from 'express-rate-limit';
 
 import { Resend } from 'resend';
 
@@ -29,8 +30,20 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  // Rate Limiting (Seguridad de Escalado)
+  const apiLimiter = rateLimit({
+    windowMs: 1 * 60 * 1000, // 1 minuto
+    max: 150, // Límite de 150 peticiones por minuto por IP para evitar vecinos ruidosos
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Límite de tasa excedido. Por favor, modere sus peticiones.' }
+  });
+
   app.use(cors());
   app.use(express.json());
+
+  // Aplicar rate limiter a todas las rutas API
+  app.use('/api/', apiLimiter);
 
   // API Routes
   app.get('/api/health', (req, res) => {

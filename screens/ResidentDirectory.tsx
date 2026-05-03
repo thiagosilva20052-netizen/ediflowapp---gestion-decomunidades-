@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import useSWR from 'swr';
+import useSWRInfinite from 'swr/infinite';
 import { ScreenName } from '../App';
 import { UserRole } from '../src/types';
 
@@ -11,11 +12,18 @@ interface Props {
   role: UserRole;
 }
 
-const fetcher = async (tenantId: string) => {
+const PAGE_SIZE = 20;
+
+const fetcher = async (tenantId: string, page: number) => {
   const { data, error } = await supabase
     .from('units')
     .select(`
-      *,
+      id,
+      unit_number,
+      contact_email,
+      contact_phone,
+      tenant_id,
+      proration_factor,
       profiles:owner_id (
         id,
         full_name,
@@ -25,7 +33,8 @@ const fetcher = async (tenantId: string) => {
       )
     `)
     .eq('tenant_id', tenantId)
-    .order('unit_number', { ascending: true });
+    .order('unit_number', { ascending: true })
+    .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
   if (error) throw error;
   return data;
@@ -37,11 +46,19 @@ const ResidentDirectory: React.FC<Props> = ({ navigate, role }) => {
   const [isAddMode, setIsAddMode] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const { data: units = [], error, isLoading, mutate } = useSWR(
-    currentTenant ? `units-${currentTenant.id}` : null,
-    () => fetcher(currentTenant!.id),
+  const getKey = (pageIndex: number, previousPageData: any[]) => {
+    if (!currentTenant) return null;
+    if (previousPageData && !previousPageData.length) return null; // reached the end
+    return ['units', currentTenant.id, pageIndex];
+  };
+
+  const { data: pages = [], error, isLoading, mutate, size, setSize } = useSWRInfinite(
+    getKey,
+    ([, tenantId, page]) => fetcher(tenantId as string, page as number),
     { revalidateOnFocus: false }
   );
+
+  const units = pages.flat();
 
   useEffect(() => {
     if (!currentTenant) return;
@@ -59,6 +76,14 @@ const ResidentDirectory: React.FC<Props> = ({ navigate, role }) => {
       supabase.removeChannel(channel);
     };
   }, [currentTenant, mutate]);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    if (scrollHeight - scrollTop <= clientHeight * 1.5) {
+      setSize(size + 1);
+    }
+  };
+
 
   const [formData, setFormData] = useState({
     name: '',
@@ -257,7 +282,7 @@ const ResidentDirectory: React.FC<Props> = ({ navigate, role }) => {
         </header>
 
         {/* Content */}
-        <div className="px-6 md:px-10 flex-1 overflow-y-auto no-scrollbar pb-32 pt-6 w-full">
+        <div className="px-6 md:px-10 flex-1 overflow-y-auto no-scrollbar pb-32 pt-6 w-full" onScroll={handleScroll}>
           
           {isAddMode ? (
              <form onSubmit={handleSaveResident} className="max-w-3xl mx-auto space-y-6">
