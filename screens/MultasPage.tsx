@@ -25,6 +25,7 @@ const MultasPage: React.FC<Props> = ({ navigate }) => {
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'pending' | 'historial'>('pending');
 
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -59,7 +60,7 @@ const MultasPage: React.FC<Props> = ({ navigate }) => {
     fetchFines();
 
     const channel = supabase.channel('public:fines')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'fines', filter: `tenant_id=eq.${currentTenant.id}` }, payload => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'fines', filter: `tenant_id=eq.${currentTenant.id}` }, () => {
         fetchFines();
       })
       .subscribe();
@@ -78,8 +79,10 @@ const MultasPage: React.FC<Props> = ({ navigate }) => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setFileName(e.target.files[0].name);
-      showToast("Archivo adjuntado correctamente (Simulado)");
+      const file = e.target.files[0];
+      setSelectedFile(file);
+      setFileName(file.name);
+      showToast("Archivo listo para subir.");
     }
   };
 
@@ -96,28 +99,50 @@ const MultasPage: React.FC<Props> = ({ navigate }) => {
     
     setIsSubmitting(true);
     try {
-       const { data: unitData } = await supabase.from('units').select('owner_id').eq('id', formData.unit_id).single();
+        let personalEvidenceUrl = null;
 
-       const { error } = await supabase.from('fines').insert({
+        // 1. Upload File to Supabase Storage if exists
+        if (selectedFile) {
+          const fileExt = selectedFile.name.split('.').pop();
+          const filePath = `${currentTenant.id}/fines/${Date.now()}.${fileExt}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from('evidence')
+            .upload(filePath, selectedFile);
+
+          if (uploadError) throw uploadError;
+
+          const { data: { publicUrl } } = supabase.storage
+            .from('evidence')
+            .getPublicUrl(filePath);
+          
+          personalEvidenceUrl = publicUrl;
+        }
+
+        const { data: unitData } = await supabase.from('units').select('owner_id').eq('id', formData.unit_id).single();
+
+        const { error } = await supabase.from('fines').insert({
           tenant_id: currentTenant.id,
           unit_id: formData.unit_id,
           user_id: unitData?.owner_id,
           amount: parseFloat(formData.monto),
           description: formData.motivo + (formData.observacion ? ` - ${formData.observacion}` : ''),
           status: 'pending',
-          evidence_url: fileName || null
-       });
-       if (error) throw error;
+          evidence_url: personalEvidenceUrl
+        });
 
-       setShowModal(false);
-       setFormData({ unit_id: '', motivo: '', monto: '', observacion: '' });
-       setFileName(null);
-       showToast("Infracción registrada con éxito.");
+        if (error) throw error;
+
+        setShowModal(false);
+        setFormData({ unit_id: '', motivo: '', monto: '', observacion: '' });
+        setFileName(null);
+        setSelectedFile(null);
+        showToast("Infracción registrada con éxito.");
     } catch(err) {
-       console.error(err);
-       showToast("Error al registrar infracción");
+        console.error(err);
+        showToast("Error al registrar infracción");
     } finally {
-       setIsSubmitting(false);
+        setIsSubmitting(false);
     }
   };
 
@@ -173,7 +198,7 @@ const MultasPage: React.FC<Props> = ({ navigate }) => {
            className="bg-ediflow-primary text-black px-6 py-4 rounded-xl font-bold hover:bg-white transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(0,174,239,0.3)] active:scale-95 md:w-auto"
         >
            <span className="material-symbols-outlined">add</span>
-           Registrar Infracción
+           Registrar Cargo / Multa
         </button>
       </header>
 
@@ -319,7 +344,7 @@ const MultasPage: React.FC<Props> = ({ navigate }) => {
                   <span className="material-symbols-outlined">close</span>
                 </button>
 
-                <h3 className="text-3xl font-bold tracking-tight text-white mb-2 text-center">Registrar Infracción</h3>
+                <h3 className="text-3xl font-bold tracking-tight text-white mb-2 text-center">Registrar Cargo o Multa</h3>
                 <p className="text-gray-400 text-sm mb-10 text-center font-medium">Asigna un cargo extra o multa a una unidad.</p>
                 
                 <div className="space-y-6">
@@ -345,13 +370,21 @@ const MultasPage: React.FC<Props> = ({ navigate }) => {
                            className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-ediflow-primary/50 transition-colors appearance-none"
                          >
                            <option value="">Selecciona el motivo...</option>
-                           <option value="Ruidos molestos">Ruidos molestos</option>
-                           <option value="Mal estacionado">Mal estacionado</option>
-                           <option value="Basura en áreas comunes">Basura en áreas comunes</option>
-                           <option value="Daños a infraestructura">Daños a infraestructura</option>
-                           <option value="Mascota sin correa">Mascota sin correa</option>
-                           <option value="Uso indebido de piscina">Uso indebido de piscina o quinchos</option>
-                           <option value="Otro">Otro (Especificar)</option>
+                           <optgroup label="Multas Estándar">
+                             <option value="Ruidos molestos">Ruidos molestos</option>
+                             <option value="Mal estacionado">Mal estacionado</option>
+                             <option value="Basura en áreas comunes">Basura en áreas comunes</option>
+                             <option value="Mascota sin correa">Mascota sin correa</option>
+                             <option value="Uso indebido de piscina">Uso indebido de piscina o quinchos</option>
+                           </optgroup>
+                           <optgroup label="Cargos Operacionales y Daños">
+                             <option value="Reparación de vidrios comunes">Reparación de vidrios comunes</option>
+                             <option value="Daños a infraestructura">Daños a infraestructura</option>
+                             <option value="Reposición de tarjeta/llave">Reposición de tarjeta/llave</option>
+                             <option value="Arriendo Salón de Eventos">Arriendo Salón de Eventos</option>
+                             <option value="Cargo por mudanza">Cargo por mudanza</option>
+                             <option value="Otro">Otro Cargo Manual (Especificar abajo)</option>
+                           </optgroup>
                          </select>
                        </div>
                     </div>
@@ -413,7 +446,7 @@ const MultasPage: React.FC<Props> = ({ navigate }) => {
                        disabled={isSubmitting}
                        className="w-full bg-ediflow-primary text-black font-bold text-sm tracking-tight py-4 rounded-xl mt-4 hover:bg-white active:scale-[0.98] transition-all shadow-[0_0_20px_rgba(0,174,239,0.3)] hover:shadow-[0_0_30px_rgba(255,255,255,0.4)] disabled:opacity-50"
                     >
-                       {isSubmitting ? 'Procesando...' : 'Confirmar y Crear Multa'}
+                       {isSubmitting ? 'Procesando...' : 'Confirmar Cargo / Multa'}
                     </button>
                 </div>
              </motion.div>

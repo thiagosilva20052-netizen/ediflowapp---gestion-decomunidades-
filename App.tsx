@@ -43,6 +43,7 @@ import ProrrationTemplatePage from './screens/ProrrationTemplatePage';
 import ChecklistLeyPage from './screens/ChecklistLeyPage';
 import { RegisterScreen } from './screens/RegisterScreen';
 import { OnboardingScreen } from './screens/OnboardingScreen';
+import { AuditLogsPage } from './screens/AuditLogsPage';
 import { useAppContext } from './src/context/AppContext';
 import { User, UserRole } from './src/types';
 import { ModuleHub } from './components/ModuleHub';
@@ -91,7 +92,9 @@ export type ScreenName =
   | 'MorosidadPage'
   | 'MultasPage'
   | 'ReportesFinancierosPage'
-  | 'MedidoresPage';
+  | 'MedidoresPage'
+  | 'Onboarding'
+  | 'AuditLogs';
 
 const App: React.FC = () => {
   const { currentUser, setCurrentUser, isGlobalMenuOpen, setIsGlobalMenuOpen, theme, setCurrentTenant } = useAppContext();
@@ -196,7 +199,7 @@ const App: React.FC = () => {
     }
 
     const roleAccess: Record<UserRole, ScreenName[]> = {
-      admin: ['AdminDashboard', 'ManageExpenses', 'EgresosPage', 'MedidoresPage', 'ProrrateoPage', 'RecaudacionPage', 'MapConfigPage', 'FinanceCommunicationsPage', 'MorosidadPage', 'MultasPage', 'ReportesFinancierosPage', 'CommunityWall', 'MessagesScreen', 'PaymentsScreen', 'BitacoraScreen', 'UserProfile', 'StaffManagement', 'ResidentDirectory', 'Reservations', 'Maintenance', 'Emergency', 'NovedadEntry', 'BuildingSettings'],
+      admin: ['AdminDashboard', 'ManageExpenses', 'EgresosPage', 'MedidoresPage', 'ProrrateoPage', 'RecaudacionPage', 'MapConfigPage', 'FinanceCommunicationsPage', 'MorosidadPage', 'MultasPage', 'ReportesFinancierosPage', 'CommunityWall', 'MessagesScreen', 'PaymentsScreen', 'BitacoraScreen', 'UserProfile', 'StaffManagement', 'ResidentDirectory', 'Reservations', 'Maintenance', 'Emergency', 'NovedadEntry', 'BuildingSettings', 'AuditLogs'],
       concierge: ['ConciergeDashboard', 'PackageEntry', 'AccessControl', 'MessagesScreen', 'BitacoraScreen', 'UserProfile', 'ManualVisitorRegistration', 'RegisterPayment', 'ResidentDirectory', 'Reservations', 'Maintenance', 'Emergency', 'NovedadEntry'],
       resident: ['ResidentServices', 'CommunityWall', 'MessagesScreen', 'PaymentsScreen', 'UserProfile', 'QRCodeScreen', 'Reservations', 'Maintenance', 'Emergency']
     };
@@ -240,6 +243,8 @@ const App: React.FC = () => {
       case 'Reservations': return <Reservations navigate={handleNavigate} role={currentUser.role} from={previousScreen} />;
       case 'Maintenance':
         return <Maintenance navigate={handleNavigate} role={currentUser.role} from={previousScreen} />;
+      case 'AuditLogs':
+        return <AuditLogsPage navigate={handleNavigate} />;
       default: 
         return currentUser.role === 'admin' ? <AdminDashboard navigate={handleNavigate} onLogout={handleLogout} /> :
                currentUser.role === 'concierge' ? <ConciergeDashboard navigate={handleNavigate} onLogout={handleLogout} /> :

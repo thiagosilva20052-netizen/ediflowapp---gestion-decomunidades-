@@ -1,7 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { env } from '../config/env';
 
-const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL || 'https://mock-project.supabase.co';
-const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || 'mock-anon-key';
-
-export const supabase = createClient<any>(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient<any>(env.supabaseUrl, env.supabaseAnonKey);
 

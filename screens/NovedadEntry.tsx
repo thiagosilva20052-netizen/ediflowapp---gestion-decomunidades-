@@ -89,14 +89,29 @@ const NovedadEntry: React.FC<Props> = ({ navigate, from }) => {
     setIsSubmitting(true);
     try {
       const { supabase } = await import('../src/lib/supabase-client');
-      // type: 'visita', 'encomienda', 'incidente', 'mantenimiento', 'turno'
-      // mapped from local 'category'
+      const { data: userAuth, error: authError } = await supabase.auth.getUser();
+      if (authError || !userAuth?.user) throw new Error('Not authenticated');
+
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', userAuth.user.id)
+        .single();
+        
+      if (profileError || !profileData) throw new Error('Profile not found');
+
+      const mappedType = category === 'mantenimiento' ? 'mantenimiento' 
+        : category === 'limpieza' ? 'incidente' 
+        : category === 'emergencia' ? 'incidente' 
+        : category === 'administrativo' ? 'turno' 
+        : 'incidente';
+
       const { error } = await supabase.from('logs').insert({
-         tenant_id: currentTenant.id,
-         type: category === 'mantenimiento' ? 'mantenimiento' : category === 'limpieza' ? 'incidente' : category === 'emergencia' ? 'incidente' : category === 'administrativo' ? 'turno' : 'incidente',
+         tenant_id: profileData.tenant_id,
+         type: mappedType,
          title: `${category.toUpperCase()} - Prioridad ${priority.toUpperCase()}`,
          description: `${location ? `[${location}] ` : ''}${description}`,
-         created_by: currentUser.id,
+         created_by: userAuth.user.id,
          status: 'active'
       });
       if (error) throw error;

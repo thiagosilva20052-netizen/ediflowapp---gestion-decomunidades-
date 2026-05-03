@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0A0A0A">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Ediflow</title>
     
     <!-- Google Fonts -->
@@ -44,6 +47,16 @@
                     boxShadow: {
                         'light-card': '0 4px 20px rgba(0,0,0,0.05)',
                         'dark-glow': '0 0 15px rgba(0, 204, 255, 0.4)',
+                    },
+                    keyframes: {
+                        shake: {
+                            '0%, 100%': { transform: 'translateX(0)' },
+                            '10%, 30%, 50%, 70%, 90%': { transform: 'translateX(-5px)' },
+                            '20%, 40%, 60%, 80%': { transform: 'translateX(5px)' }
+                        }
+                    },
+                    animation: {
+                        shake: 'shake 0.4s ease-in-out'
                     }
                 }
             }
@@ -89,6 +102,45 @@
         .no-scrollbar {
             -ms-overflow-style: none;  /* IE and Edge */
             scrollbar-width: none;  /* Firefox */
+        }
+        @media print {
+            body { 
+                background: white !important; 
+                color: black !important; 
+            }
+            #root > div > header, 
+            #root > div > main > div:not(.printable-area),
+            button, .no-print {
+                display: none !important;
+            }
+            .printable-area {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100% !important;
+                background: white !important;
+                color: black !important;
+                padding: 20px;
+                box-shadow: none !important;
+                border: none !important;
+            }
+            .printable-area table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            .printable-area table th, 
+            .printable-area table td {
+                color: black !important;
+                border-bottom: 1px solid #ddd !important;
+                padding: 8px !important;
+            }
+            .printable-area h2, .printable-area p {
+                color: black !important;
+            }
+            .printable-area .text-blue-400,
+            .printable-area .text-white {
+                color: black !important;
+            }
         }
     </style>
 <script type="importmap">

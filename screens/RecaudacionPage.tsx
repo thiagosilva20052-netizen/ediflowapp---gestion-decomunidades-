@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ScreenName } from '../App';
+import { supabase } from '../src/lib/supabase-client';
 
 interface Props {
   navigate: (screen: ScreenName) => void;
@@ -25,12 +26,53 @@ const RecaudacionPage: React.FC<Props> = ({ navigate }) => {
     }, 2500);
   };
 
-  const transfers = [
-    { id: '1', date: '05-04-2026', amount: 157500, sender: 'JUAN PEREZ SOT', concept: 'GC Marzo 101', suggestedUnit: '101', confidence: 98, isConciliated: isConciliated },
-    { id: '2', date: '04-04-2026', amount: 242000, sender: 'MARIA GOMEZ', concept: 'gasto comun', suggestedUnit: '102', confidence: 92, isConciliated: isConciliated },
-    { id: '3', date: '06-04-2026', amount: 80000, sender: 'CARLOS RUIZ', concept: 'pago gc', suggestedUnit: '103', confidence: 85, isConciliated: isConciliated },
-    { id: '4', date: '07-04-2026', amount: 120000, sender: 'SOC INMOBILIARIA LIMITADA', concept: 'Varios', suggestedUnit: null, confidence: 30, isConciliated: false },
-  ];
+  const [transfers, setTransfers] = useState<any[]>([]);
+
+  useEffect(() => {
+    // Fetch manual reports
+    const fetchReports = async () => {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('*, profiles(full_name), units(unit_number)')
+        .eq('status', 'reviewing')
+        .order('created_at', { ascending: false });
+
+      if (data && !error) {
+        const mapped = data.map(tx => ({
+           id: tx.id,
+           date: new Date(tx.created_at).toLocaleDateString('es-CL'),
+           amount: Number(tx.amount),
+           sender: tx.profiles?.full_name || 'Desconocido',
+           concept: tx.billing_month || 'Pago Informado',
+           suggestedUnit: tx.units?.unit_number || null,
+           confidence: 100,
+           isConciliated: false,
+           receipt_url: tx.receipt_url
+        }));
+        
+        setTransfers([
+          ...mapped,
+          { id: 'mock1', date: '05-04-2026', amount: 157500, sender: 'JUAN PEREZ SOT', concept: 'GC Marzo 101', suggestedUnit: '101', confidence: 98, isConciliated: isConciliated },
+          { id: 'mock2', date: '04-04-2026', amount: 242000, sender: 'MARIA GOMEZ', concept: 'gasto comun', suggestedUnit: '102', confidence: 92, isConciliated: isConciliated },
+          { id: 'mock3', date: '06-04-2026', amount: 80000, sender: 'CARLOS RUIZ', concept: 'pago gc', suggestedUnit: '103', confidence: 85, isConciliated: isConciliated },
+          { id: 'mock4', date: '07-04-2026', amount: 120000, sender: 'SOC INMOBILIARIA LIMITADA', concept: 'Varios', suggestedUnit: null, confidence: 30, isConciliated: false },
+        ]);
+      }
+    };
+    fetchReports();
+  }, [isConciliated]);
+
+  const approveMatch = async (txId: string) => {
+    if (txId.startsWith('mock')) {
+       // Mock logic
+       setTransfers(prev => prev.map(t => t.id === txId ? { ...t, isConciliated: true } : t));
+       return;
+    }
+    // Real logic
+    await supabase.from('transactions').update({ status: 'success' }).eq('id', txId);
+    setTransfers(prev => prev.map(t => t.id === txId ? { ...t, isConciliated: true } : t));
+    showToast("Pago validado exitosamente");
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-[#050505] text-white font-sans overflow-hidden relative">
@@ -176,6 +218,11 @@ const RecaudacionPage: React.FC<Props> = ({ navigate }) => {
                           ) : (
                              <span className="block text-center text-xs text-gray-600 font-medium">Buscando...</span>
                           )}
+                          {tx.receipt_url && (
+                             <a href={tx.receipt_url} target="_blank" rel="noreferrer" className="block text-center mt-2 text-purple-400 hover:text-purple-300">
+                               <span className="material-symbols-outlined text-[14px]">receipt</span>
+                             </a>
+                          )}
                        </td>
                        <td className="px-6 py-4 text-center">
                           {tx.isConciliated ? (
@@ -183,7 +230,10 @@ const RecaudacionPage: React.FC<Props> = ({ navigate }) => {
                                <span className="material-symbols-outlined text-[12px]">done_all</span> Pagado
                             </span>
                           ) : tx.suggestedUnit ? (
-                            <button className="bg-white/10 text-white border border-white/10 text-[10px] uppercase font-bold tracking-widest px-3 py-1.5 rounded-sm hover:bg-white/20 transition-colors">
+                            <button 
+                              onClick={() => approveMatch(tx.id)}
+                              className="bg-white/10 text-white border border-white/10 text-[10px] uppercase font-bold tracking-widest px-3 py-1.5 rounded-sm hover:bg-white/20 transition-colors"
+                            >
                                Aprobar Match
                             </button>
                           ) : (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ScreenName } from '../App';
 import { useAppContext } from '../src/context/AppContext';
 import { Logo } from '../components/Logo';
@@ -13,6 +13,13 @@ export const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [currentTime, setCurrentTime] = useState("");
   const [parcelsCount, setParcelsCount] = useState<number>(0);
+  const [isPackageModalOpen, setIsPackageModalOpen] = useState(false);
+  const [parcels, setParcels] = useState<any[]>([]);
+  
+  const [pinValue, setPinValue] = useState("");
+  const [isPinSubmitting, setIsPinSubmitting] = useState(false);
+  const [pinError, setPinError] = useState(false);
+  const pinInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -22,24 +29,142 @@ export const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
     return () => clearInterval(timer);
   }, []);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      if (!currentTenant) return;
-      try {
-        const { supabase } = await import('../src/lib/supabase-client');
-        const { count } = await supabase
-          .from('parcels')
-          .select('*', { count: 'exact', head: true })
-          .eq('tenant_id', currentTenant.id)
-          .in('status', ['received', 'notified']);
-          
-        if (count !== null) setParcelsCount(count);
-      } catch (err) {
-        console.error(err);
+  const handlePinSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pinValue.length !== 4 || isPinSubmitting || !currentTenant) return;
+
+    setIsPinSubmitting(true);
+    setPinError(false);
+    try {
+      const { supabase } = await import('../src/lib/supabase-client');
+      
+      // Auto-expire pins TTL
+      await supabase
+         .from('visit_access')
+         .update({ status: 'Expirado' })
+         .eq('tenant_id', currentTenant.id)
+         .eq('status', 'Pendiente')
+         .lt('expires_at', new Date().toISOString());
+
+      const { data: visitData, error: visitError } = await supabase
+        .from('visit_access')
+        .select('*, units(unit_number, contact_email)')
+        .eq('tenant_id', currentTenant.id)
+        .eq('access_pin', pinValue)
+        .eq('status', 'Pendiente')
+        .maybeSingle();
+
+      if (!visitData) {
+         setPinError(true);
+         setTimeout(() => setPinError(false), 1000);
+         setPinValue("");
+         pinInputRef.current?.focus();
+         setIsPinSubmitting(false);
+         return;
       }
-    };
+
+      const { data: currentUserRes } = await supabase.auth.getUser();
+      const currentUserId = currentUserRes.user?.id;
+
+      await supabase
+        .from('visit_access')
+        .update({ status: 'Ingresado' })
+        .eq('id', visitData.id);
+
+      await supabase
+        .from('audit_logs')
+        .insert({
+          tenant_id: currentTenant.id,
+          user_id: currentUserId,
+          action: 'Ingreso Visita por PIN',
+          details: `Visita ${visitData.visitor_name} (PIN: ${pinValue}) al Depto ${visitData.units?.unit_number}`,
+          module: 'access_control',
+          severity: 'info'
+        });
+
+      // Fire and forget notification
+      fetch((import.meta as any).env.VITE_BASE_URL + '/api/notify/visit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+           unitId: visitData.unit_id,
+           tenantId: currentTenant.id,
+           visitorName: visitData.visitor_name,
+           unitNumber: visitData.units?.unit_number,
+           tenantName: currentTenant.name,
+           accessedAt: new Date().toLocaleString()
+        })
+      }).catch(err => console.error('Push error:', err));
+
+      alert(`✅ Acceso Aprobado:\nVisita: ${visitData.visitor_name}\nDepto: ${visitData.units?.unit_number}`);
+      setPinValue("");
+      pinInputRef.current?.focus();
+
+    } catch (err: any) {
+      console.error(err);
+      alert('Error validando PIN');
+    } finally {
+      setIsPinSubmitting(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    if (!currentTenant) return;
+    try {
+      const { supabase } = await import('../src/lib/supabase-client');
+
+      // Auto-expire pins TTL en background (sin bloquear UI)
+      supabase
+         .from('visit_access')
+         .update({ status: 'Expirado' })
+         .eq('tenant_id', currentTenant.id)
+         .eq('status', 'Pendiente')
+         .lt('expires_at', new Date().toISOString())
+         .then(({ error }) => { if (error) console.error(error) });
+      
+      const { count } = await supabase
+        .from('parcels')
+        .select('*', { count: 'exact', head: true })
+        .eq('tenant_id', currentTenant.id)
+        .in('status', ['Pendiente', 'received']);
+        
+      if (count !== null) setParcelsCount(count);
+
+      const { data } = await supabase
+        .from('parcels')
+        .select('*, units(unit_number)')
+        .eq('tenant_id', currentTenant.id)
+        .in('status', ['Pendiente', 'received'])
+        .order('created_at', { ascending: false });
+
+      if (data) setParcels(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
     fetchStats();
   }, [currentTenant]);
+
+  const handleDeliverPackage = async (id: string) => {
+    if (!currentTenant) return;
+    try {
+      const { supabase } = await import('../src/lib/supabase-client');
+      await supabase
+        .from('parcels')
+        .update({ 
+          status: 'Entregado', 
+          picked_up_at: new Date().toISOString() 
+        })
+        .eq('id', id);
+        
+      fetchStats();
+    } catch (error) {
+      console.error('Error delivering package:', error);
+      alert('Error al marcar entregado');
+    }
+  };
 
   return (
     <div className="flex h-screen bg-[#0A0A0A] text-white font-sans overflow-hidden py-safe selection:bg-white/10">
@@ -157,7 +282,10 @@ export const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
 
                 {/* KPI Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-12">
-                   <div className="bg-[#0A0A0A] p-6 rounded-[1.5rem] border border-white/5 flex flex-col items-center text-center shadow-inner">
+                   <div 
+                      onClick={() => setIsPackageModalOpen(true)}
+                      className="bg-[#0A0A0A] p-6 rounded-[1.5rem] border border-white/5 flex flex-col items-center text-center shadow-inner cursor-pointer hover:border-blue-400/50 hover:bg-[#111] transition-colors"
+                   >
                       <span className="text-4xl lg:text-5xl font-light text-white mb-2 tracking-tighter">{parcelsCount}</span>
                       <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Bodega</span>
                       <span className="material-symbols-outlined text-blue-400 mt-3 text-[20px] opacity-80">inventory_2</span>
@@ -200,6 +328,35 @@ export const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
           {/* Quick Tools Column */}
           <div className="flex flex-col gap-6 md:gap-8">
             
+            {/* Quick PIN Validation */}
+            <form 
+              onSubmit={handlePinSubmit}
+              className={`rounded-[2.5rem] border p-8 flex flex-col justify-center relative overflow-hidden shadow-lg transition-all ${pinError ? 'bg-red-500/10 border-red-500 shadow-[0_0_40px_rgba(239,68,68,0.3)] animate-shake' : 'bg-[#111] border-white/5 focus-within:border-emerald-500/50 focus-within:shadow-[0_0_30px_rgba(16,185,129,0.15)] group'}`}
+            >
+               {!pinError && <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 to-emerald-500/5 opacity-0 group-focus-within:opacity-100 transition-opacity duration-500"></div>}
+               {pinError && <div className="absolute inset-0 bg-gradient-to-r from-red-500/0 to-red-500/10"></div>}
+               <div className="relative z-10 flex items-center justify-between mb-4">
+                  <h3 className={`text-sm font-bold tracking-widest uppercase transition-colors ${pinError ? 'text-red-400' : 'text-gray-400 group-focus-within:text-emerald-400'}`}>
+                    {pinError ? 'PIN INVALIDO' : 'Validación Rápida'}
+                  </h3>
+                  <span className={`material-symbols-outlined text-[20px] transition-colors ${pinError ? 'text-red-400' : 'text-gray-500 group-focus-within:text-emerald-400'}`}>
+                    {pinError ? 'error' : 'dialpad'}
+                  </span>
+               </div>
+               <input
+                 ref={pinInputRef}
+                 type="text"
+                 maxLength={4}
+                 value={pinValue}
+                 onChange={(e) => setPinValue(e.target.value.replace(/[^0-9]/g, ''))}
+                 placeholder="PIN"
+                 disabled={isPinSubmitting}
+                 className={`w-full bg-[#0A0A0A] border rounded-xl h-14 text-center text-2xl font-mono tracking-[0.5em] text-white focus:outline-none transition-colors disabled:opacity-50 ${pinError ? 'border-red-500/50 text-red-500' : 'border-white/10 focus:border-emerald-500/50'}`}
+                 autoFocus
+               />
+               <p className={`mt-3 text-[10px] text-center uppercase tracking-widest transition-colors ${pinError ? 'text-red-500' : 'text-gray-500'}`}>Presione Enter para validar</p>
+            </form>
+
             {/* Quick Record: Packages */}
             <div 
               onClick={() => navigate('PackageEntry')}
@@ -286,6 +443,52 @@ export const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
             <span className="text-[10px] font-medium">Perfil</span>
          </div>
       </nav>
+
+      {/* Package Delivery Modal */}
+      {isPackageModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+           <div className="bg-[#0A0A0A] border border-white/10 rounded-[2rem] p-6 md:p-8 max-w-2xl w-full shadow-2xl relative max-h-[85vh] flex flex-col">
+              <button 
+                onClick={() => setIsPackageModalOpen(false)}
+                className="absolute top-6 right-6 w-10 h-10 bg-[#111] rounded-full flex items-center justify-center border border-white/5 hover:bg-white/10 transition-colors"
+                title="Cerrar"
+              >
+                 <span className="material-symbols-outlined text-gray-400 hover:text-white">close</span>
+              </button>
+
+              <h2 className="text-2xl font-light text-white tracking-tight mb-2">Paquetes en <span className="font-bold">Bodega</span></h2>
+              <p className="text-gray-400 text-sm mb-6">Gestiona las entregas pendientes de retiro.</p>
+
+              <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-4">
+                 {parcels.length === 0 ? (
+                    <div className="text-center text-gray-500 py-12">No hay paquetes pendientes de entrega.</div>
+                 ) : (
+                    parcels.map(pkg => (
+                       <div key={pkg.id} className="bg-[#111] border border-white/5 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                           <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 bg-blue-500/10 text-blue-400 rounded-xl flex items-center justify-center">
+                                 <span className="material-symbols-outlined">inventory_2</span>
+                              </div>
+                              <div>
+                                 <p className="text-white font-bold tracking-wide">Depto {pkg.units?.unit_number || pkg.department_number}</p>
+                                 <p className="text-xs text-gray-400">{pkg.recipient_name} • {pkg.package_type}</p>
+                                 <p className="text-[10px] text-gray-500 uppercase mt-0.5">{new Date(pkg.created_at).toLocaleString()}</p>
+                              </div>
+                           </div>
+                           <button 
+                             onClick={() => handleDeliverPackage(pkg.id)}
+                             className="w-full sm:w-auto bg-green-500/10 hover:bg-green-500/20 text-green-500 border border-green-500/20 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
+                           >
+                             <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                             Entregar
+                           </button>
+                       </div>
+                    ))
+                 )}
+              </div>
+           </div>
+        </div>
+      )}
 
     </div>
   );

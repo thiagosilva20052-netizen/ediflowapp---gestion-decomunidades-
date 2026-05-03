@@ -1,31 +1,138 @@
 import React, { useState } from 'react';
 import { ScreenName } from '../App';
+import { supabase } from '../src/lib/supabase-client';
+import { useAppContext } from '../src/context/AppContext';
 
 interface Props {
   navigate: (screen: ScreenName) => void;
 }
 
 export const BuildingSettings: React.FC<Props> = ({ navigate }) => {
+  const { currentTenant, updateTenant } = useAppContext();
   const [activeTab, setActiveTab] = useState<'general' | 'modules'>('general');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [formData, setFormData] = useState({
-    name: 'Condominio Ediflow Central',
-    rut: '76.123.456-K',
-    address: 'Av. Providencia 1234, Santiago',
-    adminEmail: 'contacto@ediflow.cl',
-    adminPhone: '+56 9 1234 5678',
-    unitsCount: '120',
+    name: currentTenant?.name || '',
+    rut: currentTenant?.rut_edificio || '',
+    address: currentTenant?.address || '',
+    bankAccount: currentTenant?.config?.bank_account || '',
+    bankName: currentTenant?.config?.bank_name || '',
+    bankType: currentTenant?.config?.bank_type || 'Corriente',
+    adminEmail: currentTenant?.config?.admin_email || '',
+    adminPhone: currentTenant?.config?.admin_phone || '',
+    unitsCount: currentTenant?.config?.units_count || '120',
   });
+
+  const formatRUT = (value: string) => {
+    let clean = value.replace(/[^0-9kK]/g, '');
+    if (clean.length <= 1) return clean;
+    
+    let result = '';
+    let dv = clean.slice(-1);
+    let numbers = clean.slice(0, -1);
+    
+    // Reverse numbers to add dots every 3 digits
+    let count = 0;
+    for (let i = numbers.length - 1; i >= 0; i--) {
+      result = numbers[i] + result;
+      count++;
+      if (count === 3 && i !== 0) {
+        result = '.' + result;
+        count = 0;
+      }
+    }
+    
+    return result + '-' + dv.toUpperCase();
+  };
+
+  const handleRUTChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    // Only format if adding characters
+    if (raw.length < formData.rut.length) {
+        setFormData({...formData, rut: raw});
+        return;
+    }
+    const formatted = formatRUT(raw);
+    setFormData({...formData, rut: formatted});
+  };
+
+  const [isImporting, setIsImporting] = useState(false);
+  const handleCSVImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0 || !currentTenant) return;
+    
+    setIsImporting(true);
+    const file = e.target.files[0];
+    const reader = new FileReader();
+
+    reader.onload = async (event) => {
+      try {
+        const text = event.target?.result as string;
+        const lines = text.split('\n').filter(l => l.trim() !== '');
+        
+        // Expecting: UnitNumber,Aliquot (e.g. 101,0.0125)
+        const unitsToInsert = lines.map(line => {
+          const [num, factor] = line.split(',');
+          return {
+            tenant_id: currentTenant.id,
+            unit_number: num.trim(),
+            proration_factor: parseFloat(factor.trim()),
+            status: 'active'
+          };
+        });
+
+        const { error } = await supabase.from('units').insert(unitsToInsert);
+        if (error) throw error;
+
+        showToast(`${unitsToInsert.length} unidades importadas con éxito.`);
+      } catch (err) {
+        console.error(err);
+        showToast("Error en formato CSV. Use: NumeroUnidad,Alicuota");
+      } finally {
+        setIsImporting(false);
+        if (e.target) e.target.value = '';
+      }
+    };
+    reader.readAsText(file);
+  };
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    showToast('Configuraciones guardadas exitosamente.');
+    if (!currentTenant) return;
+
+    setIsSaving(true);
+    try {
+      const { error } = await supabase.from('tenants').update({
+        name: formData.name,
+        address: formData.address,
+        rut_edificio: formData.rut,
+        config: {
+          ...currentTenant.config,
+          bank_account: formData.bankAccount,
+          bank_name: formData.bankName,
+          bank_type: formData.bankType,
+          admin_email: formData.adminEmail,
+          admin_phone: formData.adminPhone,
+          units_count: formData.unitsCount
+        }
+      }).eq('id', currentTenant.id);
+
+      if (error) throw error;
+      
+      showToast('Configuraciones guardadas exitosamente.');
+      // Ideally refresh the global context here
+    } catch (err) {
+      console.error(err);
+      showToast('Error al guardar configuraciones.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -117,8 +224,10 @@ export const BuildingSettings: React.FC<Props> = ({ navigate }) => {
                           </label>
                           <input 
                             type="text" 
+                            placeholder="Ej: 76.123.456-K"
                             value={formData.rut}
-                            onChange={(e) => setFormData({...formData, rut: e.target.value})}
+                            onChange={handleRUTChange}
+                            maxLength={12}
                             className="w-full h-14 bg-[#0A0A0A] border border-white/5 rounded-xl px-4 text-white focus:outline-none focus:border-white/20 focus:bg-[#141414] transition-all font-mono tracking-widest text-sm"
                             required
                           />
@@ -144,6 +253,87 @@ export const BuildingSettings: React.FC<Props> = ({ navigate }) => {
                             value={formData.unitsCount}
                             onChange={(e) => setFormData({...formData, unitsCount: e.target.value})}
                             className="w-full h-14 bg-[#0A0A0A] border border-white/5 rounded-xl px-4 text-white focus:outline-none focus:border-white/20 focus:bg-[#141414] transition-all font-mono text-sm"
+                          />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Bulk Import Section */}
+                <div className="bg-[#111] p-8 rounded-[2rem] border border-white/5 shadow-2xl border-l-4 border-l-blue-500 overflow-hidden relative group">
+                    <div className="absolute right-[-20px] top-[-20px] opacity-5 group-hover:opacity-10 transition-opacity">
+                        <span className="material-symbols-outlined text-[120px]">upload_file</span>
+                    </div>
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+                        <div className="max-w-md">
+                            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                <span className="material-symbols-outlined text-[16px]">database</span>
+                                Carga Masiva de Unidades
+                            </h3>
+                            <p className="text-sm text-gray-400">
+                                Sube un archivo CSV con la lista de departamentos y sus alícuotas para configurar el edificio rápidamente.
+                            </p>
+                            <p className="text-[10px] text-gray-600 mt-2 font-mono">Formato: NumeroUnidad,FactorProrrateo (Ej: 101,0.0085)</p>
+                        </div>
+                        <label className={`cursor-pointer px-8 py-4 rounded-xl font-bold text-xs flex items-center gap-3 transition-all ${
+                          isImporting ? 'bg-gray-800 text-gray-500' : 'bg-blue-600 text-white hover:bg-blue-500 shadow-[0_0_20px_rgba(37,99,235,0.3)]'
+                        }`}>
+                            <span className="material-symbols-outlined text-[20px]">{isImporting ? 'sync' : 'cloud_upload'}</span>
+                            {isImporting ? 'PROCESANDO...' : 'SUBIR LISTA CSV'}
+                            <input 
+                              type="file" 
+                              accept=".csv" 
+                              className="hidden" 
+                              onChange={handleCSVImport}
+                              disabled={isImporting}
+                            />
+                        </label>
+                    </div>
+                </div>
+
+                {/* Bank Information (New Section) */}
+                <div className="bg-[#111] p-8 rounded-[2rem] border border-white/5 shadow-2xl border-l-4 border-l-amber-500">
+                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-6 pb-4 border-b border-white/5 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[16px]">account_balance</span>
+                        Cuenta Bancaria de la Comunidad
+                    </h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">
+                            Banco
+                          </label>
+                          <input 
+                            type="text" 
+                            placeholder="Ej: Banco Estado"
+                            value={formData.bankName}
+                            onChange={(e) => setFormData({...formData, bankName: e.target.value})}
+                            className="w-full h-14 bg-[#0A0A0A] border border-white/5 rounded-xl px-4 text-white focus:outline-none focus:border-white/20 focus:bg-[#141414] transition-all text-sm font-medium"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">
+                            Tipo de Cuenta
+                          </label>
+                          <select 
+                            value={formData.bankType}
+                            onChange={(e) => setFormData({...formData, bankType: e.target.value})}
+                            className="w-full h-14 bg-[#0A0A0A] border border-white/5 rounded-xl px-4 text-white focus:outline-none focus:border-white/20 focus:bg-[#141414] transition-all text-sm font-medium appearance-none"
+                          >
+                            <option value="Corriente">Cuenta Corriente</option>
+                            <option value="Vista">Cuenta Vista / RUT</option>
+                            <option value="Ahorro">Cuenta de Ahorro</option>
+                          </select>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">
+                            Número de Cuenta
+                          </label>
+                          <input 
+                            type="text" 
+                            placeholder="Ej: 123456789"
+                            value={formData.bankAccount}
+                            onChange={(e) => setFormData({...formData, bankAccount: e.target.value})}
+                            className="w-full h-14 bg-[#0A0A0A] border border-white/5 rounded-xl px-4 text-white focus:outline-none focus:border-white/20 focus:bg-[#141414] transition-all font-mono tracking-widest text-sm"
                           />
                         </div>
                     </div>

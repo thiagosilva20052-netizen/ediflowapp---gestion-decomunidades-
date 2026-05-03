@@ -13,42 +13,76 @@ const BitacoraScreen: React.FC<Props> = ({ navigate, role }) => {
   const [filter, setFilter] = useState('todos');
   const { currentTenant } = useAppContext();
   const [logs, setLogs] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!currentTenant) return;
     const fetchLogs = async () => {
-      const { data } = await supabase
+      setIsLoading(true);
+      
+      const { data: userAuth } = await supabase.auth.getUser();
+      if (!userAuth?.user) {
+        setIsLoading(false);
+        return;
+      }
+
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', userAuth.user.id)
+        .single();
+        
+      if (!profileData) {
+        setIsLoading(false);
+        return;
+      }
+
+      const tenantId = profileData.tenant_id;
+
+      let query = supabase
         .from('logs')
         .select('*, profiles(name)')
-        .eq('tenant_id', currentTenant.id)
+        .eq('tenant_id', tenantId)
         .order('created_at', { ascending: false });
       
+      if (filter !== 'todos') {
+        if (filter === 'seguridad') {
+          query = query.in('type', ['incidente', 'emergencia']);
+        } else if (filter === 'mantenimiento') {
+          query = query.eq('type', 'mantenimiento');
+        } else if (filter === 'paquetes') {
+          query = query.eq('type', 'encomienda');
+        } else if (filter === 'visitas') {
+          query = query.eq('type', 'visita');
+        } else if (filter === 'turno') {
+          query = query.eq('type', 'turno');
+        }
+      }
+
+      const { data } = await query;
+      
       if (data) setLogs(data);
+      setIsLoading(false);
+
+      // Subscribe to realtime logs
+      const logsChannel = supabase.channel('public:logs')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'logs', filter: `tenant_id=eq.${tenantId}` }, payload => {
+          fetchLogs();
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(logsChannel);
+      };
     };
 
-    fetchLogs();
-
-    // Subscribe to realtime logs
-    const logsChannel = supabase.channel('public:logs')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'logs', filter: `tenant_id=eq.${currentTenant.id}` }, payload => {
-        fetchLogs();
-      })
-      .subscribe();
+    const cleanupPromise = fetchLogs();
 
     return () => {
-      supabase.removeChannel(logsChannel);
+      cleanupPromise.then(cleanup => cleanup && cleanup());
     };
-  }, [currentTenant]);
+  }, [filter]);
 
-  const filteredLogs = logs.filter(log => {
-      if (filter === 'todos') return true;
-      if (filter === 'seguridad' && (log.type === 'incidente' || log.type === 'emergencia')) return true;
-      if (filter === 'mantenimiento' && log.type === 'mantenimiento') return true;
-      if (filter === 'paquetes' && log.type === 'encomienda') return true;
-      if (filter === 'visitas' && log.type === 'visita') return true;
-      if (filter === 'turno' && log.type === 'turno') return true;
-      return false;
-  });
+  const filteredLogs = logs; // Already filtered by DB
 
   return (
     <div className="flex flex-col min-h-screen bg-[#0A0A0A] text-white font-sans overflow-hidden">

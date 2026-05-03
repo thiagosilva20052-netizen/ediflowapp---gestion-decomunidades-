@@ -1,41 +1,190 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { ScreenName } from '../App';
+import { supabase } from '../src/lib/supabase-client';
+import { useAppContext } from '../src/context/AppContext';
 
 interface Props {
   navigate: (screen: ScreenName) => void;
 }
 
+interface MeterRow {
+  unit_id: string;
+  unidad: string;
+  mesAnterior: number;
+  mesActual: number;
+}
+
 const MedidoresPage: React.FC<Props> = ({ navigate }) => {
+  const { currentTenant } = useAppContext();
   const [costoUnitario, setCostoUnitario] = useState(2500); // Costo por M3 Agua Caliente
   const [isSaving, setIsSaving] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Lista simulada de medidores por departamento
-  const [lecturas, setLecturas] = useState([
-    { id: '101', unidad: 'Dpto 101', mesAnterior: 120, mesActual: 126 },
-    { id: '102', unidad: 'Dpto 102', mesAnterior: 450, mesActual: 461 },
-    { id: '103', unidad: 'Dpto 103', mesAnterior: 80, mesActual: 82 },
-    { id: '201', unidad: 'Dpto 201', mesAnterior: 310, mesActual: 318 },
-    { id: '202', unidad: 'Dpto 202', mesAnterior: 105, mesActual: 105 },
-    { id: '203', unidad: 'Dpto 203', mesAnterior: 220, mesActual: 227 },
-  ]);
+  // Lista de medidores por departamento
+  const [lecturas, setLecturas] = useState<MeterRow[]>([]);
+
+  useEffect(() => {
+    if (!currentTenant) return;
+
+    const fetchUnitsAndReadings = async () => {
+      setIsLoading(true);
+      try {
+        // Fetch all units for tenant
+        const { data: unitsData, error: unitsError } = await supabase
+          .from('units')
+          .select('id, unit_number')
+          .eq('tenant_id', currentTenant.id)
+          .order('unit_number');
+
+        if (unitsError) throw unitsError;
+
+        // Fetch this month's meter readings (simplified lookup for MVP)
+        const currentMonth = new Intl.DateTimeFormat('es-CL', { month: 'long', year: 'numeric' }).format(new Date());
+
+        const { data: readingsData, error: readingsError } = await supabase
+          .from('meter_readings')
+          .select('unit_id, current_reading, previous_reading')
+          .eq('tenant_id', currentTenant.id)
+          .eq('billing_month', currentMonth)
+          .eq('type', 'Agua Caliente');
+
+        if (readingsError) throw readingsError;
+
+        // Map readings to units
+        const readingsMap: Record<string, { prev: number, curr: number }> = {};
+        if (readingsData) {
+          readingsData.forEach(r => {
+            readingsMap[r.unit_id] = { prev: r.previous_reading, curr: r.current_reading };
+          });
+        }
+
+        const formattedLecturas: MeterRow[] = (unitsData || []).map(u => ({
+          unit_id: u.id,
+          unidad: `Dpto ${u.unit_number}`,
+          mesAnterior: readingsMap[u.id]?.prev || 0,
+          mesActual: readingsMap[u.id]?.curr || 0
+        }));
+
+        setLecturas(formattedLecturas);
+      } catch (err) {
+        console.error(err);
+        showToast("Error al cargar unidades y lecturas");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUnitsAndReadings();
+  }, [currentTenant]);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
 
   const handleLecturaChange = (id: string, prop: 'mesAnterior' | 'mesActual', value: string) => {
     const val = parseInt(value) || 0;
     setLecturas(prev => prev.map(item => {
-      if (item.id === id) {
+      if (item.unit_id === id) {
         return { ...item, [prop]: val };
       }
       return item;
     }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (!currentTenant) return;
     setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
-      navigate('ManageExpenses');
-    }, 1500);
+    
+    try {
+       const currentMonth = new Intl.DateTimeFormat('es-CL', { month: 'long', year: 'numeric' }).format(new Date());
+       
+       // Prepare upsert payload
+       const payload = lecturas.map(row => {
+          const consumo = row.mesActual - row.mesAnterior;
+          const monto = (consumo > 0 ? consumo : 0) * costoUnitario;
+          return {
+            tenant_id: currentTenant.id,
+            unit_id: row.unit_id,
+            type: 'Agua Caliente',
+            previous_reading: row.mesAnterior,
+            current_reading: row.mesActual,
+            amount: monto,
+            billing_month: currentMonth
+          };
+       });
+
+       // Wipe existing this-month data to avoid duplicates, then insert
+       // (Real upsert requires a unique constraint on unit_id + month + type + tenant)
+       await supabase.from('meter_readings')
+          .delete()
+          .eq('tenant_id', currentTenant.id)
+          .eq('billing_month', currentMonth)
+          .eq('type', 'Agua Caliente');
+
+       const { error } = await supabase.from('meter_readings').insert(payload);
+       if (error) throw error;
+
+       showToast("¡Consumos guardados en Base de Datos!");
+       setTimeout(() => {
+         setIsSaving(false);
+         navigate('ManageExpenses');
+       }, 1500);
+    } catch (err) {
+       console.error(err);
+       setIsSaving(false);
+       showToast("Error al guardar en Supabase");
+    }
+  };
+
+  const handleImportExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0 || !currentTenant) return;
+    
+    const file = e.target.files[0];
+    const reader = new FileReader();
+
+    reader.onload = async (event) => {
+      try {
+        const text = event.target?.result as string;
+        // Format expected: UnitNumber,PreviousReading,CurrentReading
+        const lines = text.split('\n').filter(l => l.trim() !== '');
+        
+        const mappedData: Record<string, { prev: number, curr: number }> = {};
+        lines.forEach(line => {
+           const [unitNum, prev, curr] = line.split(',');
+           if (unitNum && prev && curr) {
+             mappedData[unitNum.trim()] = {
+                prev: parseFloat(prev.trim()),
+                curr: parseFloat(curr.trim())
+             };
+           }
+        });
+
+        // Update local state by mapping unit numbers
+        setLecturas(prevList => prevList.map(item => {
+           const unitNum = item.unidad.replace('Dpto ', '');
+           if (mappedData[unitNum]) {
+              return { 
+                ...item, 
+                mesAnterior: mappedData[unitNum].prev, 
+                mesActual: mappedData[unitNum].curr 
+              };
+           }
+           return item;
+        }));
+
+        showToast("Datos importados del CSV correctamente");
+
+      } catch (err) {
+         console.error(err);
+         showToast("Error procesando Archivo CSV");
+      } finally {
+         if (e.target) e.target.value = '';
+      }
+    };
+    reader.readAsText(file);
   };
 
   const totalConsumoMes = lecturas.reduce((acc, curr) => {
@@ -44,6 +193,7 @@ const MedidoresPage: React.FC<Props> = ({ navigate }) => {
   }, 0);
 
   const totalDineroMes = totalConsumoMes * costoUnitario;
+
 
   return (
     <div className="flex flex-col min-h-screen bg-[#050505] text-white font-sans overflow-hidden relative">
@@ -115,12 +265,21 @@ const MedidoresPage: React.FC<Props> = ({ navigate }) => {
            <div className="p-6 border-b border-white/5 flex items-center justify-between bg-[#1A1A1A]">
              <h3 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
                 <span className="material-symbols-outlined text-[20px] text-gray-400">table_chart</span>
-                Mes de Marzo 2026: Agua Caliente
+                Mes de {new Intl.DateTimeFormat('es-CL', { month: 'long', year: 'numeric' }).format(new Date())}: Agua Caliente
              </h3>
-             <button className="text-xs text-ediflow-primary font-bold tracking-wide hover:text-white transition-colors flex items-center gap-1">
-                <span className="material-symbols-outlined text-[14px]">upload_file</span>
-                Importar Excel
-             </button>
+             <div className="relative overflow-hidden">
+                <input 
+                  type="file" 
+                  id="csv-upload" 
+                  className="hidden" 
+                  accept=".csv"
+                  onChange={handleImportExcel}
+                />
+                <label htmlFor="csv-upload" className="cursor-pointer text-xs bg-ediflow-primary/10 text-ediflow-primary border border-ediflow-primary/20 px-4 py-2 rounded-lg font-bold tracking-wide hover:bg-ediflow-primary/20 transition-colors flex items-center gap-2">
+                   <span className="material-symbols-outlined text-[14px]">upload_file</span>
+                   Importar CSV
+                </label>
+             </div>
            </div>
            
            <div className="overflow-x-auto">

@@ -16,6 +16,8 @@ interface Expense {
   category: string;
   status: 'Aprobado' | 'Pendiente';
   aiMatched?: boolean;
+  receipt_url?: string | null;
+  is_reserve_fund_expense?: boolean;
 }
 
 const EgresosPage: React.FC<Props> = ({ navigate }) => {
@@ -34,7 +36,7 @@ const EgresosPage: React.FC<Props> = ({ navigate }) => {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [isManualFormActive, setIsManualFormActive] = useState(false);
-  const [manualFormData, setManualFormData] = useState({ provider: '', rut: '', amount: '', date: '', category: '' });
+  const [manualFormData, setManualFormData] = useState({ provider: '', rut: '', amount: '', date: '', category: '', isReserveFund: false });
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -74,7 +76,8 @@ const EgresosPage: React.FC<Props> = ({ navigate }) => {
           date: new Date(e.expense_date + 'T12:00:00Z').toLocaleDateString('es-CL'),
           category: e.category || 'Gastos Administrativos',
           status: (e.status as 'Aprobado' | 'Pendiente') || 'Aprobado',
-          aiMatched: false
+          aiMatched: false,
+          receipt_url: e.receipt_url
         }));
         setExpenses(formatted);
       } else {
@@ -132,30 +135,41 @@ const EgresosPage: React.FC<Props> = ({ navigate }) => {
       try {
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9]/g, '_')}.${fileExt}`;
-        const filePath = `facturas/${fileName}`;
+        const filePath = `${tenantId}/facturas/${fileName}`;
         
-        console.log("Iniciando subida a Supabase:", filePath);
-        
-        const { data, error } = await supabase.storage
-          .from('egresos')
+        const { error: uploadError } = await supabase.storage
+          .from('evidence') // Using 'evidence' bucket as configured in previous step
           .upload(filePath, file);
           
-        if (error) {
-          console.error("Error al subir el archivo:", error);
-          showToast(`Error al subir a Supabase: ${error.message}`);
-          // Continuamos de igual forma por si es entorno de pruebas y no existe el bucket
-        } else {
-          console.log("Archivo subido con éxito a Supabase Storage:", data);
-        }
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('evidence')
+          .getPublicUrl(filePath);
+
+        setScanProgress(50);
+        setScanStatus('Extrayendo datos con IA');
+        
+        // Simulating OCR extraction after upload
+        setTimeout(() => {
+          setScanProgress(100);
+          setScannedInvoice({
+            id: Date.now().toString(),
+            provider: 'Mantención Jardines S.A.',
+            amount: 125000,
+            date: new Date().toLocaleDateString('es-CL'),
+            category: 'Áreas Verdes',
+            status: 'Pendiente',
+            aiMatched: true,
+            receipt_url: publicUrl
+          });
+        }, 1500);
         
       } catch (err) {
-        console.error("Exception subiendo a Supabase:", err);
-        showToast("Error subiendo el archivo. Simulando proceso local...");
+        console.error("Error subiendo a Supabase:", err);
+        showToast("Error subiendo el archivo.");
+        setIsScanning(false);
       }
-
-      setScanProgress(30);
-      setScanStatus('Extrayendo datos con IA');
-      startOCRScan(30);
       
       if (e.target) e.target.value = '';
     }
@@ -175,7 +189,7 @@ const EgresosPage: React.FC<Props> = ({ navigate }) => {
     const expenseAmount = parseFloat(manualFormData.amount);
 
     try {
-      const { data: userProfile, error: profileErr } = await supabase.auth.getUser();
+      const { data: userProfile } = await supabase.auth.getUser();
       
       const { error } = await supabase.from('expenses').insert({
         tenant_id: tenantId,
@@ -185,24 +199,21 @@ const EgresosPage: React.FC<Props> = ({ navigate }) => {
         expense_date: manualFormData.date,
         category: manualFormData.category,
         status: 'Aprobado',
+        is_reserve_fund_expense: manualFormData.isReserveFund,
         created_by: userProfile?.user?.id || null,
       });
 
-      if (error) {
-         console.error('Insert error:', error);
-         showToast("Error al registrar egreso en Supabase.");
-         return;
-      }
+      if (error) throw error;
       
       showToast("Egreso registrado exitosamente.");
       setIsManualFormActive(false);
       setShowUploadModal(false);
-      setManualFormData({ provider: '', rut: '', amount: '', date: '', category: '' });
-      fetchExpenses(); // Refresh list
+      setManualFormData({ provider: '', rut: '', amount: '', date: '', category: '', isReserveFund: false });
+      fetchExpenses();
 
     } catch (err) {
       console.error(err);
-      showToast("Excepción al intentar registrar.");
+      showToast("Error al intentar registrar.");
     }
   };
 
@@ -215,66 +226,45 @@ const EgresosPage: React.FC<Props> = ({ navigate }) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       setIsImportingSueldos(true);
-      showToast("Subiendo archivo a Supabase...");
+      showToast("Subiendo planilla a Supabase...");
 
       try {
         const fileExt = file.name.split('.').pop();
-        const fileName = `sueldos-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9]/g, '_')}.${fileExt}`;
-        const filePath = `facturas/${fileName}`;
+        const fileName = `sueldos-${Date.now()}.${fileExt}`;
+        const filePath = `${tenantId}/remuneraciones/${fileName}`;
         
-        console.log("Iniciando subida de sueldos a Supabase:", filePath);
-        
-        const { data, error } = await supabase.storage
-          .from('egresos')
+        const { error: uploadError } = await supabase.storage
+          .from('evidence')
           .upload(filePath, file);
           
-        if (error) {
-          console.error("Error al subir el archivo de sueldos:", error);
-          // fall back a simulado
-        } else {
-          console.log("Archivo de sueldos subido a Supabase Storage:", data);
+        if (uploadError) throw uploadError;
+
+        const { data: { user } } = await supabase.auth.getUser();
+        const today = new Date().toISOString().split('T')[0];
+
+        if (tenantId) {
+          await supabase.from('expenses').insert([
+            {
+                tenant_id: tenantId,
+                provider_name: 'Sueldos Líquidos (Nómina Bancaria)',
+                amount: 2850000,
+                expense_date: today,
+                category: 'Remuneraciones',
+                status: 'Pendiente',
+                created_by: user?.id || null
+            }
+          ]);
         }
+        setIsImportingSueldos(false);
+        showToast("Nómina importada correctamente.");
+        fetchExpenses();
       } catch (err) {
-        console.error("Exception subiendo sueldos a Supabase:", err);
+        console.error(err);
+        setIsImportingSueldos(false);
+        showToast("Error al importar nómina.");
       }
 
-      setTimeout(async () => {
-        try {
-           const { data: userProfile } = await supabase.auth.getUser();
-           const today = new Date().toISOString().split('T')[0];
-
-           if (tenantId) {
-             await supabase.from('expenses').insert([
-               {
-                  tenant_id: tenantId,
-                  provider_name: 'Sueldos Líquidos (Nómina Bancaria)',
-                  amount: 2850000,
-                  expense_date: today,
-                  category: 'Remuneraciones',
-                  status: 'Pendiente',
-                  created_by: userProfile?.user?.id || null
-               },
-               {
-                  tenant_id: tenantId,
-                  provider_name: 'Instituciones Previsionales (Previred)',
-                  amount: 620000,
-                  expense_date: today,
-                  category: 'Remuneraciones',
-                  status: 'Pendiente',
-                  created_by: userProfile?.user?.id || null
-               }
-             ]);
-           }
-           setIsImportingSueldos(false);
-           showToast("Planilla de Sueldos y Previred procesados exitosamente.");
-           fetchExpenses();
-        } catch(err) {
-           console.error(err);
-           setIsImportingSueldos(false);
-        }
-
-        if (e.target) e.target.value = '';
-      }, 2000);
+      if (e.target) e.target.value = '';
     }
   };
 
@@ -309,14 +299,11 @@ const EgresosPage: React.FC<Props> = ({ navigate }) => {
     if (scannedInvoice && tenantId) {
       try {
         const { data: userProfile } = await supabase.auth.getUser();
-        // Since scannedInvoice.date might be in es-CL format (DD-MM-YYYY), we need an ISO string for Supabase:
-        // Or if it's new Date().toLocaleDateString('es-CL'), it might be tricky to parse reliably without moment/date-fns.
-        // Let's just use the current date or split if it looks like DD-MM-YYYY.
         let isoDate = new Date().toISOString().split('T')[0];
-        if (scannedInvoice.date.includes('-')) {
-            const parts = scannedInvoice.date.split('-');
+        if (scannedInvoice.date.includes('/')) {
+            const parts = scannedInvoice.date.split('/');
             if(parts.length === 3 && parts[2].length === 4) {
-               isoDate = `${parts[2]}-${parts[1]}-${parts[0]}`; // assuming DD-MM-YYYY
+               isoDate = `${parts[2]}-${parts[1]}-${parts[0]}`; 
             }
         }
 
@@ -327,14 +314,11 @@ const EgresosPage: React.FC<Props> = ({ navigate }) => {
           expense_date: isoDate,
           category: scannedInvoice.category,
           status: 'Aprobado',
+          receipt_url: scannedInvoice.receipt_url || null,
           created_by: userProfile?.user?.id || null,
         });
 
-        if (error) {
-           console.error('Insert error OCR:', error);
-           showToast("Error guardando el registro escaneado.");
-           return;
-        }
+        if (error) throw error;
 
         setIsScanning(false);
         setScannedInvoice(null);
@@ -342,10 +326,8 @@ const EgresosPage: React.FC<Props> = ({ navigate }) => {
         fetchExpenses();
       } catch(err) {
          console.error(err);
-         showToast("Error al guardar factura escaneada.");
+         showToast("Error al guardar factura.");
       }
-    } else if (!tenantId) {
-       showToast("Falta identificar tu edificio (Tenant ID).");
     }
   };
 
@@ -455,6 +437,17 @@ const EgresosPage: React.FC<Props> = ({ navigate }) => {
                                <option value="Seguros">Seguros</option>
                              </select>
                            </div>
+                           <div className="space-y-2 md:col-span-2">
+                             <label className="flex items-center gap-3 cursor-pointer p-4 rounded-xl border transition-colors bg-[#0A0A0A] border-white/10 hover:border-white/20">
+                               <input 
+                                 type="checkbox" 
+                                 checked={manualFormData.isReserveFund}
+                                 onChange={(e) => setManualFormData({...manualFormData, isReserveFund: e.target.checked})}
+                                 className="w-5 h-5 rounded border-gray-600 bg-transparent text-ediflow-primary focus:ring-ediflow-primary focus:ring-offset-0 transition-colors"
+                               />
+                               <span className="text-sm font-medium text-gray-300">Este saldo se cubrirá con el Fondo de Reserva</span>
+                             </label>
+                           </div>
                         </div>
                         <div className="flex gap-4 pt-6">
                            <button 
@@ -541,7 +534,7 @@ const EgresosPage: React.FC<Props> = ({ navigate }) => {
       </AnimatePresence>
 
       {/* Header */}
-      <header className="px-6 md:px-12 pt-12 pb-6 flex items-center justify-between sticky top-0 z-30 bg-[#050505]/80 backdrop-blur-xl border-b border-white/5">
+      <header className="px-6 md:px-12 pt-12 pb-6 flex items-center justify-between sticky top-0 z-30 bg-[#050505]/80 backdrop-blur-xl border-b border-white/5 no-print">
         <div className="flex items-center gap-5">
             <button 
               onClick={() => navigate('AdminDashboard')}
@@ -550,12 +543,21 @@ const EgresosPage: React.FC<Props> = ({ navigate }) => {
               <span className="material-symbols-outlined">arrow_back</span>
             </button>
             <div>
-              <h1 className="text-3xl font-bold tracking-tight text-white mb-1">Registro de Egresos</h1>
+              <h1 className="text-3xl font-bold tracking-tight text-white mb-1">Egresos <span className="font-serif italic font-normal text-ediflow-primary">y Facturas</span></h1>
               <p className="text-xs text-gray-500 uppercase tracking-widest font-semibold flex items-center gap-2">
-                <span className="material-symbols-outlined text-[14px] text-ediflow-primary">account_balance_wallet</span>
+                <span className="material-symbols-outlined text-[14px] text-ediflow-primary">finance_mode</span>
                 La Billetera de la Comunidad
               </p>
             </div>
+        </div>
+        <div className="hidden md:flex items-center gap-4">
+           <button 
+             onClick={() => navigate('ProrrateoPage')}
+             className="px-6 py-3 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 transition-all text-xs font-bold flex items-center gap-2"
+           >
+             <span className="material-symbols-outlined text-[18px]">calculate</span>
+             Cierre de Mes
+           </button>
         </div>
       </header>
 
@@ -678,6 +680,17 @@ const EgresosPage: React.FC<Props> = ({ navigate }) => {
                   </span>
                   <div className="text-right">
                     <span className="text-xl font-medium text-white block">${expense.amount.toLocaleString('es-CL')}</span>
+                    {expense.receipt_url && (
+                      <a 
+                        href={expense.receipt_url} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="text-[10px] text-ediflow-primary font-bold hover:underline flex items-center gap-1 justify-end mt-1"
+                      >
+                        <span className="material-symbols-outlined text-[14px]">visibility</span>
+                        Ver Comprobante
+                      </a>
+                    )}
                   </div>
                 </div>
               </div>

@@ -38,6 +38,8 @@ CREATE TABLE IF NOT EXISTS public.units (
     unit_number VARCHAR(50) NOT NULL,
     owner_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
     proration_factor DECIMAL(5,4),
+    contact_email VARCHAR(255),
+    is_unsubscribed BOOLEAN DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -55,6 +57,7 @@ CREATE TABLE IF NOT EXISTS public.expenses (
     expense_date DATE NOT NULL,
     category VARCHAR(100),
     status VARCHAR(50) DEFAULT 'Aprobado',
+    is_reserve_fund_expense BOOLEAN DEFAULT false,
     receipt_url TEXT, -- Factura/Boleta en Storage
     created_by UUID REFERENCES public.profiles(id),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
@@ -70,8 +73,9 @@ CREATE TABLE IF NOT EXISTS public.transactions (
     amount DECIMAL(12,2) NOT NULL,
     billing_month VARCHAR(20),
     method VARCHAR(50) DEFAULT 'mercadopago',
-    status VARCHAR(50) CHECK (status IN ('pending', 'success', 'failure')) DEFAULT 'pending',
+    status VARCHAR(50) CHECK (status IN ('pending', 'success', 'failure', 'reviewing')) DEFAULT 'pending',
     external_reference VARCHAR(100),
+    receipt_url TEXT,
     payment_date TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -107,10 +111,12 @@ CREATE TABLE IF NOT EXISTS public.reservations (
 CREATE TABLE IF NOT EXISTS public.parcels (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE NOT NULL,
+    unit_id UUID REFERENCES public.units(id) ON DELETE CASCADE,
     department_number VARCHAR(50) NOT NULL,
     recipient_name VARCHAR(255),
     tracking_provider VARCHAR(100),
-    status VARCHAR(50) CHECK (status IN ('received', 'notified', 'delivered')) DEFAULT 'received',
+    package_type VARCHAR(100) DEFAULT 'Caja',
+    status VARCHAR(50) CHECK (status IN ('Pendiente', 'received', 'notified', 'Entregado', 'delivered')) DEFAULT 'Pendiente',
     photo_url TEXT,
     received_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL, -- Conserje que lo recibe
     delivered_at TIMESTAMP WITH TIME ZONE,
@@ -130,6 +136,17 @@ CREATE TABLE IF NOT EXISTS public.visitor_passes (
     status VARCHAR(50) CHECK (status IN ('active', 'used', 'expired', 'revoked')) DEFAULT 'active',
     scanned_at TIMESTAMP WITH TIME ZONE,
     scanned_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL, -- The concierge who scanned
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.visit_access (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE NOT NULL,
+    unit_id UUID REFERENCES public.units(id) ON DELETE CASCADE NOT NULL,
+    visitor_name VARCHAR(255) NOT NULL,
+    access_pin VARCHAR(4) NOT NULL,
+    status VARCHAR(50) CHECK (status IN ('Pendiente', 'Ingresado', 'Expirado', 'Cancelado')) DEFAULT 'Pendiente',
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -325,6 +342,19 @@ CREATE POLICY "Concierges update passes (Scan QR)" ON public.visitor_passes
         AND (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('admin', 'concierge')
     );
 
+ALTER TABLE public.visit_access ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Concierge can view and update visit access" ON public.visit_access
+    FOR ALL USING (
+        tenant_id = (SELECT tenant_id FROM public.profiles WHERE id = auth.uid())
+        AND (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('admin', 'concierge')
+    );
+
+CREATE POLICY "Residents can manage their visits" ON public.visit_access
+    FOR ALL USING (
+        unit_id IN (SELECT id FROM public.units WHERE owner_id = auth.uid())
+    );
+
 -- Logs: Conserjes/Admin manejan, Residentes read-only encomiendas/visitas propias si aplica.
 CREATE POLICY "Concierge manage logs" ON public.logs
     FOR ALL USING (
@@ -351,6 +381,100 @@ CREATE POLICY "Residents view own fines" ON public.fines
         user_id = auth.uid()
     );
 
+
+-- Meter Readings (Consumos Individuales)
+CREATE TABLE IF NOT EXISTS public.meter_readings (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE NOT NULL,
+    unit_id UUID REFERENCES public.units(id) ON DELETE CASCADE NOT NULL,
+    type VARCHAR(50) CHECK (type IN ('Agua Caliente', 'Agua Fria', 'Luz', 'Gas')) NOT NULL,
+    previous_reading DECIMAL(12,2) NOT NULL DEFAULT 0,
+    current_reading DECIMAL(12,2) NOT NULL,
+    consumption DECIMAL(12,2) GENERATED ALWAYS AS (current_reading - previous_reading) STORED,
+    amount DECIMAL(12,2),
+    reading_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    billing_month VARCHAR(50),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.meter_readings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admin manage meter readings" ON public.meter_readings
+    FOR ALL USING (
+        tenant_id = (SELECT tenant_id FROM public.profiles WHERE id = auth.uid())
+        AND (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
+    );
+
+CREATE POLICY "Residents view own meter readings" ON public.meter_readings
+    FOR SELECT USING (
+        unit_id IN (SELECT id FROM public.units WHERE owner_id = auth.uid())
+    );
+
+-- Notification Logs
+CREATE TABLE IF NOT EXISTS public.notification_logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE NOT NULL,
+    unit_id UUID REFERENCES public.units(id) ON DELETE SET NULL,
+    user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+    type VARCHAR(50) NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    details TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.notification_logs ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admin manage notification logs" ON public.notification_logs
+    FOR ALL USING (
+        tenant_id = (SELECT tenant_id FROM public.profiles WHERE id = auth.uid())
+        AND (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
+    );
+
+-- Onboarding Drafts (Persistence)
+CREATE TABLE IF NOT EXISTS public.onboarding_drafts (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    step INT DEFAULT 1,
+    building_name VARCHAR(255),
+    building_rut VARCHAR(20),
+    building_address TEXT,
+    bank_name VARCHAR(100),
+    account_number VARCHAR(100),
+    account_type VARCHAR(50),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.onboarding_drafts ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage their own drafts" ON public.onboarding_drafts
+    FOR ALL USING (user_id = auth.uid());
+
+-- Audit Logs (Strict INSERT-ONLY Governance)
+CREATE TABLE IF NOT EXISTS public.audit_logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE NOT NULL,
+    user_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+    action VARCHAR(255) NOT NULL,
+    details TEXT,
+    module VARCHAR(100),
+    severity VARCHAR(50) CHECK (severity IN ('info', 'warning', 'critical')) DEFAULT 'info',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admins can view audit logs" ON public.audit_logs
+    FOR SELECT USING (
+        tenant_id = (SELECT tenant_id FROM public.profiles WHERE id = auth.uid())
+        AND (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
+    );
+
+CREATE POLICY "System/Users can insert audit logs" ON public.audit_logs
+    FOR INSERT WITH CHECK (
+        tenant_id = (SELECT tenant_id FROM public.profiles WHERE id = auth.uid())
+    );
+-- Missing UPDATE and DELETE policies enforces strict immutability. No one can edit or delete a log.
 
 -- ==========================================
 -- 4. Triggers (Auth Sync)
@@ -392,3 +516,60 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+
+-- ==========================================
+-- Sincronización de Identidad (auth.users/profiles -> units)
+-- ==========================================
+
+-- Sincroniza el correo de un perfil hacia las unidades que posee
+CREATE OR REPLACE FUNCTION public.sync_unit_contact_email()
+RETURNS trigger AS $$
+BEGIN
+  IF TG_OP = 'UPDATE' AND NEW.email IS DISTINCT FROM OLD.email THEN
+    UPDATE public.units SET contact_email = NEW.email WHERE owner_id = NEW.id;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_profile_email_update ON public.profiles;
+CREATE TRIGGER on_profile_email_update
+  AFTER UPDATE OF email ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.sync_unit_contact_email();
+
+-- Sincroniza el correo cuando se asigna un nuevo dueño a una unidad
+CREATE OR REPLACE FUNCTION public.sync_unit_owner_email()
+RETURNS trigger AS $$
+BEGIN
+  IF NEW.owner_id IS NOT NULL AND NEW.owner_id IS DISTINCT FROM OLD.owner_id THEN
+    NEW.contact_email = (SELECT email FROM public.profiles WHERE id = NEW.owner_id);
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS on_unit_owner_update ON public.units;
+CREATE TRIGGER on_unit_owner_update
+  BEFORE UPDATE OF owner_id ON public.units
+  FOR EACH ROW EXECUTE FUNCTION public.sync_unit_owner_email();
+
+-- ==========================================
+-- Políticas RLS (Row Level Security)
+-- ==========================================
+ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.meter_readings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.fines ENABLE ROW LEVEL SECURITY;
+
+-- Políticas para Transactions
+CREATE POLICY "Admins ven transacciones" ON public.transactions FOR ALL USING (EXISTS (SELECT 1 FROM public.profiles WHERE profiles.id = auth.uid() AND profiles.role IN ('admin', 'concierge')));
+CREATE POLICY "Residentes ven sus transacciones" ON public.transactions FOR SELECT USING (user_id = auth.uid());
+CREATE POLICY "Residentes insertan transacciones_informadas" ON public.transactions FOR INSERT WITH CHECK (user_id = auth.uid());
+
+-- Políticas para Meter Readings
+CREATE POLICY "Admins ven medidores" ON public.meter_readings FOR ALL USING (EXISTS (SELECT 1 FROM public.profiles WHERE profiles.id = auth.uid() AND (profiles.role = 'admin' OR profiles.role = 'concierge')));
+CREATE POLICY "Residentes ven sus medidores" ON public.meter_readings FOR SELECT USING (unit_id IN (SELECT id FROM public.units WHERE owner_id = auth.uid()));
+
+-- Políticas para Multas
+CREATE POLICY "Admins ven multas" ON public.fines FOR ALL USING (EXISTS (SELECT 1 FROM public.profiles WHERE profiles.id = auth.uid() AND (profiles.role = 'admin' OR profiles.role = 'concierge')));
+CREATE POLICY "Residentes ven sus multas" ON public.fines FOR SELECT USING (unit_id IN (SELECT id FROM public.units WHERE owner_id = auth.uid()));
+

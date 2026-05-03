@@ -1,72 +1,64 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScreenName } from '../App';
 import { UserRole } from '../src/types';
+
+import { useAppContext } from '../src/context/AppContext';
+import { supabase } from '../src/lib/supabase-client';
 
 interface Props {
   navigate: (screen: ScreenName) => void;
   role: UserRole;
 }
 
-interface Resident {
-  id: string;
-  name: string;
-  depto: string;
-  phone?: string;
-  email: string;
-  bodega?: string;
-  parking?: string;
-  hasAccount: boolean;
-  aliquot?: number; // Datos financieros
-  unitType?: string; // Tipo de unidad (Departamento, Casa, Local)
-}
-
-const DUMMY_RESIDENTS: Resident[] = [
-  {
-    id: '1',
-    name: 'María González',
-    depto: '402',
-    phone: '+56 9 1234 5678',
-    email: 'maria.g@ediflow.cl',
-    bodega: 'B-12',
-    parking: 'E-45',
-    hasAccount: true,
-    aliquot: 1.2000,
-    unitType: 'Departamento'
-  },
-  {
-    id: '2',
-    name: 'Carlos Rodríguez',
-    depto: '1105',
-    phone: '+56 9 8765 4321',
-    email: 'carlos.r@ediflow.cl',
-    parking: 'E-12',
-    hasAccount: false,
-    aliquot: 0.9500,
-    unitType: 'Departamento'
-  },
-  {
-    id: '3',
-    name: 'Ana Silva',
-    depto: '201',
-    phone: '+56 9 5555 6666',
-    email: 'ana.s@ediflow.cl',
-    bodega: 'B-05',
-    hasAccount: true,
-    aliquot: 1.1000,
-    unitType: 'Departamento'
-  }
-];
-
 const ResidentDirectory: React.FC<Props> = ({ navigate, role }) => {
+  const { currentTenant } = useAppContext();
   const [searchQuery, setSearchQuery] = useState('');
-  const [residents, setResidents] = useState<Resident[]>(DUMMY_RESIDENTS);
+  const [units, setUnits] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isAddMode, setIsAddMode] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!currentTenant) return;
+
+    const fetchUnits = async () => {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('units')
+        .select(`
+          *,
+          profiles:owner_id (
+            id,
+            name,
+            role
+          )
+        `)
+        .eq('tenant_id', currentTenant.id)
+        .order('unit_number', { ascending: true });
+
+      if (data) {
+        setUnits(data);
+      }
+      setIsLoading(false);
+    };
+
+    fetchUnits();
+
+    const channel = supabase.channel('public:units')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'units', filter: `tenant_id=eq.${currentTenant.id}` }, () => {
+        fetchUnits();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentTenant]);
 
   const [formData, setFormData] = useState({
     name: '',
     depto: '',
-    email: '',
+    email: '', // Note: Email logic usually needs edge functions or auth service
     phone: '',
     bodega: '',
     parking: '',
@@ -80,31 +72,52 @@ const ResidentDirectory: React.FC<Props> = ({ navigate, role }) => {
       setIsAddMode(false);
   };
 
-  const handleSaveResident = (e: React.FormEvent) => {
+  const handleSaveResident = async (e: React.FormEvent) => {
       e.preventDefault();
+      if (!currentTenant) return;
       
-      const newResident: Resident = {
-          id: Math.random().toString(),
-          name: formData.name,
-          depto: formData.depto,
-          email: formData.email,
-          phone: formData.phone || undefined,
-          bodega: formData.bodega || undefined,
-          parking: formData.parking || undefined,
-          aliquot: formData.aliquot ? parseFloat(formData.aliquot) : 0,
-          unitType: formData.unitType,
-          hasAccount: true
-      };
+      try {
+        // En una implementación real, aquí se crearía el usuario en Auth y luego el Perfil.
+        // Por ahora simulamos la inserción en units vinculando a un perfil si existe o creando uno básico.
+        
+        // 1. (Simulado) Crear o Buscar Perfil
+        // ... (Generalmente esto se hace vía Función de Borde para asegurar integridad de Auth)
+        
+        const { error } = await supabase.from('units').insert({
+          tenant_id: currentTenant.id,
+          unit_number: formData.depto,
+          contact_email: formData.email ? formData.email : null,
+          proration_factor: formData.aliquot ? parseFloat(formData.aliquot) : null
+          // owner_id: ...
+        });
 
-      setResidents(prev => [newResident, ...prev]);
-      showToast("Unidad registrada exitosamente. Acceso enviado al correo.");
-      setFormData({ name: '', depto: '', email: '', phone: '', bodega: '', parking: '', aliquot: '', unitType: 'Departamento' });
+        if (error) throw error;
+
+        if (formData.email) {
+          fetch('/api/email/send-welcome', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: formData.email,
+              unitNumber: formData.depto,
+              setPasswordUrl: window.location.origin + '/register',
+              tenantName: currentTenant.name,
+              tenantRut: currentTenant.rut_edificio
+            })
+          }).catch(err => console.error("Error sending welcome email:", err));
+        }
+
+        showToast("Unidad registrada exitosamente.");
+        setFormData({ name: '', depto: '', email: '', phone: '', bodega: '', parking: '', aliquot: '', unitType: 'Departamento' });
+      } catch (err) {
+        console.error(err);
+        showToast("Error al registrar unidad.");
+      }
   };
 
-  const filteredResidents = residents.filter(r => 
-    r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    r.depto.includes(searchQuery) ||
-    (r.parking && r.parking.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredUnits = units.filter(u => 
+    u.unit_number.includes(searchQuery) ||
+    u.profiles?.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -140,14 +153,59 @@ const ResidentDirectory: React.FC<Props> = ({ navigate, role }) => {
             </div>
 
             {role === 'admin' && !isAddMode && (
-              <div className="flex gap-3 pointer-events-auto">
-                <button 
-                  onClick={() => alert('Simulación: Importar desde Excel')}
-                  className="bg-[#111] hover:bg-[#1A1A1A] border border-white/5 text-gray-400 hover:text-white rounded-xl px-5 py-3 text-xs font-bold uppercase tracking-widest transition-all active:scale-[0.98] flex items-center gap-2 shadow-sm"
+              <div className="flex gap-3 pointer-events-auto relative overflow-hidden">
+                <input 
+                  type="file" 
+                  id="csv-upload" 
+                  className="hidden" 
+                  accept=".csv"
+                  onChange={async (e) => {
+                    if (!e.target.files || e.target.files.length === 0 || !currentTenant) return;
+                    
+                    const file = e.target.files[0];
+                    const reader = new FileReader();
+
+                    reader.onload = async (event) => {
+                      try {
+                        const text = event.target?.result as string;
+                        // Format expected: UnitNumber,ProrationFactor,Email
+                        const lines = text.split('\n').filter(l => l.trim() !== '');
+                        
+                        const payload = [];
+                        for (const line of lines) {
+                          const [unitNum, factorStr, email] = line.split(',');
+                          if (unitNum) {
+                            payload.push({
+                              tenant_id: currentTenant.id,
+                              unit_number: unitNum.trim(),
+                              proration_factor: factorStr ? parseFloat(factorStr.trim()) : null,
+                              contact_email: email ? email.trim() : null
+                            });
+                          }
+                        }
+
+                        const { error } = await supabase.from('units').insert(payload);
+                        if (error) throw error;
+
+                        showToast("Unidades y correos importados correctamente del CSV.");
+
+                      } catch (err) {
+                        console.error(err);
+                        showToast("Error procesando Archivo CSV");
+                      } finally {
+                        if (e.target) e.target.value = '';
+                      }
+                    };
+                    reader.readAsText(file);
+                  }}
+                />
+                <label 
+                  htmlFor="csv-upload"
+                  className="cursor-pointer bg-[#111] hover:bg-[#1A1A1A] border border-white/5 text-gray-400 hover:text-white rounded-xl px-5 py-3 text-xs font-bold uppercase tracking-widest transition-all active:scale-[0.98] flex items-center gap-2 shadow-sm"
                 >
                   <span className="material-symbols-outlined text-[18px]">table_chart</span>
                   Importar CSV/Excel
-                </button>
+                </label>
                 <button 
                   onClick={() => setIsAddMode(true)}
                   className="bg-ediflow-primary text-black hover:bg-white text-xs font-bold uppercase tracking-widest rounded-xl px-5 py-3 transition-all shadow-[0_0_15px_rgba(0,174,239,0.3)] active:scale-[0.98] flex items-center gap-2"
@@ -347,60 +405,71 @@ const ResidentDirectory: React.FC<Props> = ({ navigate, role }) => {
                 </div>
 
                 <div className="divide-y divide-white/5">
-                  {filteredResidents.map(resident => (
-                    <div key={resident.id} className="p-6 md:px-8 md:py-6 hover:bg-[#141414] transition-colors grid grid-cols-1 md:grid-cols-12 gap-4 items-center group">
+                  {isLoading ? (
+                    [1, 2, 3, 4, 5].map(i => (
+                      <div key={i} className="p-8 animate-pulse flex items-center gap-6">
+                        <div className="w-12 h-12 bg-white/5 rounded-xl"></div>
+                        <div className="flex-1 space-y-2">
+                           <div className="h-4 bg-white/5 rounded w-1/4"></div>
+                           <div className="h-3 bg-white/5 rounded w-1/3"></div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    filteredUnits.map(unit => (
+                    <div key={unit.id} className="p-6 md:px-8 md:py-6 hover:bg-[#141414] transition-colors grid grid-cols-1 md:grid-cols-12 gap-4 items-center group">
                        
                        <div className="col-span-2 flex items-center gap-3">
                           <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex flex-col items-center justify-center">
-                             <span className="text-sm font-bold text-white tracking-tighter leading-none mb-1">{resident.depto}</span>
+                             <span className="text-sm font-bold text-white tracking-tighter leading-none mb-1">{unit.unit_number}</span>
                              <span className="text-[8px] text-gray-500 uppercase tracking-widest leading-none">
-                               {resident.unitType === 'Departamento' ? 'Depto' : resident.unitType}
+                               {unit.unit_type || 'Unidad'}
                              </span>
                           </div>
                           <span className="md:hidden text-[10px] font-bold uppercase tracking-widest text-gray-500">Unidad</span>
                        </div>
-
+ 
                        <div className="col-span-3 flex flex-col mt-2 md:mt-0">
-                          <span className="text-sm font-medium text-white">{resident.name}</span>
-                          <span className="text-xs text-gray-500 mt-0.5">{resident.email}</span>
-                          {resident.phone && (
+                          <span className="text-sm font-medium text-white">{unit.profiles?.name || 'Vacante / Sin Dueño'}</span>
+                          <span className="text-xs text-gray-500 mt-0.5">{unit.profiles?.email || 'Sin correo asociado'}</span>
+                          {unit.profiles?.phone && (
                             <span className="text-[10px] text-gray-400 mt-1 uppercase tracking-widest font-mono flex items-center gap-1">
-                                <span className="material-symbols-outlined text-[12px]">smartphone</span> {resident.phone}
+                                <span className="material-symbols-outlined text-[12px]">smartphone</span> {unit.profiles.phone}
                             </span>
                           )}
                        </div>
-
+ 
                        <div className="col-span-2 flex flex-col mt-2 md:mt-0 md:items-end justify-center">
                            <span className="md:hidden text-[10px] font-bold uppercase tracking-widest text-gray-500 block mb-1">Alícuota</span>
                            <span className="text-sm font-mono text-blue-400">
-                             {resident.aliquot ? `${resident.aliquot.toFixed(4)}%` : '--'}
+                             {unit.aliquot ? `${parseFloat(unit.aliquot).toFixed(4)}%` : '--'}
                            </span>
                        </div>
-
+ 
                        <div className="col-span-2 flex flex-wrap gap-2 mt-2 md:mt-0">
-                         {resident.bodega && (
+                         {unit.bodega && (
                             <span className="px-2.5 py-1 bg-[#0A0A0A] border border-white/5 rounded text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1">
-                              Bod: {resident.bodega}
+                              Bod: {unit.bodega}
                             </span>
                          )}
-                         {resident.parking && (
+                         {unit.parking && (
                             <span className="px-2.5 py-1 bg-[#0A0A0A] border border-white/5 rounded text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1">
-                              Est: {resident.parking}
+                              Est: {unit.parking}
                             </span>
                          )}
-                         {!resident.bodega && !resident.parking && (
+                         {!unit.bodega && !unit.parking && (
                             <span className="text-[10px] text-gray-600 uppercase tracking-widest italic">N/A</span>
                          )}
                        </div>
-
+ 
                        <div className="col-span-3 flex items-center justify-start md:justify-end gap-3 mt-4 md:mt-0">
-                          {resident.hasAccount ? (
+                          {unit.owner_id ? (
                              <span className="px-3 py-1 bg-green-500/10 border border-green-500/20 text-green-400 rounded-lg text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5">
                                <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span> Vinculado
                              </span>
                           ) : (
                              <button className="px-3 py-1.5 bg-[#0A0A0A] border border-white/10 text-gray-400 rounded-lg text-[9px] font-bold uppercase tracking-widest hover:text-white hover:border-white/30 hover:bg-white/5 transition-all outline-none">
-                               Enviar Acceso
+                               Vincular Dueño
                              </button>
                           )}
                           
@@ -410,11 +479,12 @@ const ResidentDirectory: React.FC<Props> = ({ navigate, role }) => {
                             </button>
                           )}
                        </div>
-
+ 
                     </div>
-                  ))}
+                  ))
+                  )}
                   
-                  {filteredResidents.length === 0 && (
+                  {!isLoading && filteredUnits.length === 0 && (
                     <div className="text-center py-20 px-6">
                       <span className="material-symbols-outlined text-4xl text-gray-600 mb-3 opacity-50">quick_reference_all</span>
                       <h3 className="text-lg font-light tracking-tight text-white">No hay registros</h3>

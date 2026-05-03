@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { ScreenName } from '../App';
 import { Logo } from '../components/Logo';
 import { useAppContext } from '../src/context/AppContext';
@@ -10,11 +11,46 @@ interface Props {
 }
 
 export const AdminDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
-  const { setIsGlobalMenuOpen, currentTenant } = useAppContext();
+  const { setIsGlobalMenuOpen, currentTenant, demoMode, setDemoMode, setCurrentTenant } = useAppContext();
   const [isApproved, setIsApproved] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  const [viewMode, setViewMode] = useState<'tenant' | 'consolidated'>('consolidated');
+  
+  // Available Communities Mock (Simulating Multi-Tenant)
+  const availableCommunities = [
+     { id: '1', name: 'Edificio Agua Santa', role: 'admin' },
+     { id: '2', name: 'Torre Reñaca', role: 'admin' },
+     { id: '3', name: 'Condominio El Bosque', role: 'concierge' } // Admin acts as concierge here for demo? No, let's say Admin handles all 3.
+  ];
+
+  const handleSelectCommunity = (tenantId: string) => {
+     if (tenantId === 'consolidated') {
+         setViewMode('consolidated');
+     } else {
+         const community = availableCommunities.find(c => c.id === tenantId) || availableCommunities[0];
+         setCurrentTenant({ ...currentTenant, id: community.id, name: community.name } as any);
+         setViewMode('tenant');
+     }
+  };
+
   const [maintenanceLogs, setMaintenanceLogs] = useState<any[]>([]);
+  const [financialStats, setFinancialStats] = useState({ totalCollected: 0, pendingAmount: 0, totalEmitted: 0 });
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
+  const [showWelcome, setShowWelcome] = useState(false);
+
+  useEffect(() => {
+    // Check if it's the first time
+    const hasVisited = localStorage.getItem('ediflow_welcome_shown');
+    if (!hasVisited) {
+      setShowWelcome(true);
+    }
+  }, []);
+
+  const closeWelcome = () => {
+    localStorage.setItem('ediflow_welcome_shown', 'true');
+    setShowWelcome(false);
+  };
 
   useEffect(() => {
     if (!currentTenant) return;
@@ -27,8 +63,37 @@ export const AdminDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
         .limit(3);
       if (data) setMaintenanceLogs(data);
     };
+
+    const fetchFinancialStats = async () => {
+      setIsLoadingStats(true);
+      const { data } = await supabase
+        .from('transactions')
+        .select('amount, status')
+        .eq('tenant_id', currentTenant.id);
+
+      if (data) {
+        const collected = data.filter(t => t.status === 'success')
+                              .reduce((acc, curr) => acc + Number(curr.amount), 0);
+        const pending = data.filter(t => t.status === 'pending')
+                             .reduce((acc, curr) => acc + Number(curr.amount), 0);
+        const total = collected + pending;
+        
+        setFinancialStats({
+          totalCollected: collected,
+          pendingAmount: pending,
+          totalEmitted: total
+        });
+      }
+      setIsLoadingStats(false);
+    };
+
     fetchMaintenance();
+    fetchFinancialStats();
   }, [currentTenant]);
+
+  const delinquencyRate = financialStats.totalEmitted > 0 
+    ? (financialStats.pendingAmount / financialStats.totalEmitted) * 100 
+    : 0;
 
   const handleApprove = () => {
     setIsApproving(true);
@@ -79,6 +144,7 @@ export const AdminDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
           <SidebarItem icon="deck" label="Espacios Comunes" onClick={() => navigate('Reservations')} expanded={isSidebarExpanded} />
           <SidebarItem icon="groups" label="Equipo de Trabajo" onClick={() => navigate('StaffManagement')} expanded={isSidebarExpanded} />
           <SidebarItem icon="campaign" label="Comunicaciones" onClick={() => navigate('CommunityWall')} expanded={isSidebarExpanded} />
+          <SidebarItem icon="policy" label="Auditoría" onClick={() => navigate('AuditLogs')} expanded={isSidebarExpanded} />
           
           <div className="pt-6 mt-4 border-t border-white/5">
             <SidebarItem icon="domain" label="Perfil del Edificio" onClick={() => navigate('BuildingSettings')} expanded={isSidebarExpanded} />
@@ -93,6 +159,13 @@ export const AdminDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
         <header className="md:hidden flex items-center justify-between px-6 pt-12 pb-4 border-b border-white/5 sticky top-0 bg-[#0A0A0A]/90 backdrop-blur-xl z-30">
           <span className="text-xl font-bold tracking-tighter text-[#00AEEF]">Ediflow</span>
           <div className="flex gap-2">
+             <button 
+                title="Modo Demo" 
+                onClick={() => setDemoMode(!demoMode)}
+                className={`w-10 h-10 rounded-xl border flex items-center justify-center relative active:scale-95 transition-all ${demoMode ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' : 'bg-[#111] text-gray-500 border-white/10'}`}
+             >
+               <span className="material-symbols-outlined text-[20px]">science</span>
+             </button>
              <button title="Notificaciones" className="w-10 h-10 rounded-xl bg-[#111] border border-white/10 text-white flex items-center justify-center relative active:scale-95 transition-transform">
                <span className="material-symbols-outlined text-[20px]">notifications</span>
                <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.5)]"></span>
@@ -115,10 +188,57 @@ export const AdminDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
           </div>
           
           {/* Desktop Right Actions */}
-          <div className="hidden md:flex items-center gap-5 pointer-events-auto">
+          <div className="hidden flex-wrap md:flex items-center gap-5 pointer-events-auto">
+             
+             {/* Multi-Tenant Selector */}
+             <div className="relative group/selector z-50">
+                <button className="h-12 px-5 rounded-xl border border-white/10 bg-[#111] hover:bg-[#141414] hover:border-white/20 transition-all shadow-xl flex items-center gap-3">
+                   <div className="w-6 h-6 rounded-md bg-ediflow-primary/20 text-ediflow-primary border border-ediflow-primary/30 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-[14px]">domain</span>
+                   </div>
+                   <span className="text-sm font-semibold text-white whitespace-nowrap">
+                      {viewMode === 'consolidated' ? '🏢 Portafolio Global (3)' : currentTenant?.name}
+                   </span>
+                   <span className="material-symbols-outlined text-gray-500 text-[20px]">expand_more</span>
+                </button>
+                <div className="absolute top-14 right-0 w-64 bg-[#141414] border border-white/10 rounded-2xl shadow-2xl opacity-0 invisible group-hover/selector:opacity-100 group-hover/selector:visible transition-all flex flex-col py-2 overflow-hidden backdrop-blur-2xl">
+                   <p className="px-4 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/5 mb-1">Tu Portafolio</p>
+                   <button 
+                      onClick={() => handleSelectCommunity('consolidated')}
+                      className={`px-4 py-3 text-sm text-left transition-colors flex items-center gap-3 w-full ${viewMode === 'consolidated' ? 'bg-white/5 text-white font-bold' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+                   >
+                     <span className="material-symbols-outlined text-[18px]">dashboard</span> Vista Consolidada
+                   </button>
+                   {availableCommunities.map(c => (
+                      <button 
+                        key={c.id} 
+                        onClick={() => handleSelectCommunity(c.id)}
+                        className={`px-4 py-3 text-sm text-left transition-colors flex items-center gap-3 w-full border-t border-white/5 ${viewMode === 'tenant' && currentTenant?.id === c.id ? 'bg-white/5 text-white font-bold' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
+                      >
+                         <span className="material-symbols-outlined text-[18px]">{c.role === 'admin' ? 'admin_panel_settings' : 'badge'}</span>
+                         <div className="flex flex-col">
+                            <span>{c.name}</span>
+                            <span className="text-[10px] text-gray-500 uppercase tracking-widest">{c.role === 'admin' ? 'Administrador' : 'Conserje'}</span>
+                         </div>
+                      </button>
+                   ))}
+                   <button className="px-4 py-3 text-sm text-left text-ediflow-primary hover:bg-ediflow-primary/10 transition-colors flex items-center gap-3 w-full border-t border-white/5 font-bold">
+                     <span className="material-symbols-outlined text-[18px]">add_circle</span> Crear Comunidad
+                   </button>
+                </div>
+             </div>
+
              <button 
-               title="Notificaciones"
-               className="relative w-12 h-12 rounded-xl bg-[#111] border border-white/5 hover:border-white/10 hover:bg-[#141414] flex items-center justify-center text-gray-400 hover:text-white transition-all active:scale-95 shadow-xl"
+                onClick={() => setDemoMode(!demoMode)}
+                title="Modo Demo"
+                className={`h-12 px-6 rounded-xl border flex items-center gap-2 font-bold uppercase tracking-widest text-[10px] transition-all active:scale-95 shadow-xl ${demoMode ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' : 'bg-[#111] text-gray-400 border-white/5 hover:border-white/10 hover:text-white'}`}
+             >
+                <span className="material-symbols-outlined text-[16px]">science</span>
+                {demoMode ? 'Demo: ON' : 'Demo: OFF'}
+             </button>
+             <button 
+                title="Notificaciones"
+                className="relative w-12 h-12 rounded-xl bg-[#111] border border-white/5 hover:border-white/10 hover:bg-[#141414] flex items-center justify-center text-gray-400 hover:text-white transition-all active:scale-95 shadow-xl"
              >
                <span className="material-symbols-outlined text-[20px]">notifications</span>
                <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)]"></span>
@@ -134,9 +254,12 @@ export const AdminDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
           </div>
         </header>
 
-        <div className="px-6 md:px-16 pb-32 md:pb-24 max-w-7xl w-full mx-auto relative z-10">
-          {/* Asymmetrical Bento Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+        {viewMode === 'consolidated' ? (
+           <ConsolidatedDashboardStats availableCommunities={availableCommunities} navigate={navigate} />
+        ) : (
+           <div className="px-6 md:px-16 pb-32 md:pb-24 max-w-7xl w-full mx-auto relative z-10">
+           {/* Asymmetrical Bento Grid */}
+           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
             
             {/* LARGE CARD: Pending Payments & AI OCR Expenses (60% visually / col-span-2) */}
             <div className={`lg:col-span-2 rounded-[2.5rem] border p-8 md:p-12 flex flex-col relative overflow-hidden shadow-2xl transition-all duration-700 bg-[#111] group
@@ -152,11 +275,11 @@ export const AdminDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-colors 
                        ${isApproved ? 'bg-green-500/10 text-green-500' : 'bg-[#00AEEF]/10 text-[#00AEEF]'}
                    `}>
-                     <span className="material-symbols-outlined text-[20px]">psychology</span>
+                     <span className="material-symbols-outlined text-[20px]">analytics</span>
                    </div>
                    <div>
-                     <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">Lectura OCR</h2>
-                     <p className="text-white text-xs font-medium tracking-tight mt-0.5">Pendiente de revisión</p>
+                     <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">Salud Financiera</h2>
+                     <p className="text-white text-xs font-medium tracking-tight mt-0.5">Recaudación del mes</p>
                    </div>
                  </div>
                </div>
@@ -165,45 +288,28 @@ export const AdminDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
                  <div className="flex items-baseline gap-3 mb-4">
                      <span className="text-2xl md:text-3xl font-light text-gray-500">$</span>
                      <h3 className="text-6xl md:text-7xl lg:text-8xl font-light text-white tracking-tighter">
-                       420.000
+                       {financialStats.totalCollected.toLocaleString('es-CL')}
                      </h3>
                  </div>
-                 <p className="text-sm text-gray-400 font-medium flex items-center gap-2">
-                   <span className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse shrink-0 shadow-[0_0_8px_rgba(234,179,8,0.8)]"></span> Requiere validación manual
-                 </p>
+                 <div className="flex flex-col md:flex-row gap-6 md:items-center">
+                    <p className="text-sm text-gray-400 font-medium flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-green-500 shrink-0 shadow-[0_0_8px_rgba(74,222,128,0.8)]"></span> Ingresos confirmados
+                    </p>
+                    <p className="text-sm text-gray-400 font-medium flex items-center gap-2">
+                      <span className={`w-2.5 h-2.5 rounded-full shrink-0 shadow-[0_0_8px_rgba(239,68,68,0.8)] ${delinquencyRate > 15 ? 'bg-red-500' : 'bg-amber-500'}`}></span> Morosidad: {delinquencyRate.toFixed(1)}%
+                    </p>
+                 </div>
                </div>
 
-               {/* Micro-interaction Container */}
-               <div className="mt-auto relative md:h-[88px] min-h-[5rem] overflow-hidden rounded-[1.5rem] bg-[#0A0A0A] border border-white/5 group-hover:border-white/10 transition-colors shadow-inner">
-                 
-                 {/* Success State (Hidden initially, slides in) */}
-                 <div className={`absolute inset-0 flex items-center justify-between px-8 bg-green-500/5 transition-all duration-[800ms] cubic-bezier(0.4, 0, 0.2, 1) ${isApproved ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}`}>
-                    <div className="flex items-center gap-3">
-                       <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-500 border border-green-500/30">
-                           <span className="material-symbols-outlined text-[16px]">done_all</span>
-                       </div>
-                       <span className="text-green-400 font-medium text-sm">Validado. Ingresado a contabilidad mensual.</span>
-                    </div>
-                 </div>
-
-                 {/* Action State (Visible initially, slides out) */}
-                 <div className={`absolute inset-0 flex flex-col md:flex-row items-center justify-between p-2 md:p-2 gap-2 transition-all duration-[600ms] cubic-bezier(0.4, 0, 0.2, 1) ${isApproving || isApproved ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'}`}>
-                    <div className="hidden md:flex items-center bg-[#111] border border-white/5 rounded-2xl px-6 h-full gap-4 w-full">
-                       <span className="material-symbols-outlined text-gray-500 shrink-0">receipt_long</span>
-                       <div>
-                         <p className="text-sm font-medium text-white">Factura Enel S.A.</p>
-                         <p className="text-xs text-gray-500 font-mono mt-0.5">Confianza OCR: 99.8% (Exacto)</p>
-                       </div>
-                    </div>
-                    <button 
-                      onClick={handleApprove}
-                      className="bg-[#00AEEF] text-black px-6 py-4 md:py-0 w-full md:w-[280px] shrink-0 h-full rounded-2xl text-[11px] font-bold uppercase tracking-[0.15em] hover:bg-white transition-all shadow-[0_0_30px_rgba(0,174,239,0.2)] hover:shadow-[0_0_40px_rgba(255,255,255,0.4)] active:scale-[0.98] flex items-center justify-center gap-2"
-                    >
-                      Aprobar Captura
-                      <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
-                    </button>
-                 </div>
-
+               <div className="mt-auto grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
+                  <div className="bg-[#0A0A0A] border border-white/5 rounded-2xl p-6 flex flex-col justify-center">
+                     <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-1">Por Recaudar</p>
+                     <p className="text-xl font-mono text-amber-500 font-bold">${financialStats.pendingAmount.toLocaleString('es-CL')}</p>
+                  </div>
+                  <div className="bg-[#0A0A0A] border border-white/5 rounded-2xl p-6 flex flex-col justify-center">
+                     <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-1">Total Emitido</p>
+                     <p className="text-xl font-mono text-white font-bold">${financialStats.totalEmitted.toLocaleString('es-CL')}</p>
+                  </div>
                </div>
             </div>
 
@@ -318,6 +424,7 @@ export const AdminDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
           </div>
 
         </div>
+        )}
       </main>
 
       {/* Sticky Mobile Navbar - Bottom - iOS Style */}
@@ -346,6 +453,68 @@ export const AdminDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
          </div>
       </nav>
 
+      <AnimatePresence>
+        {showWelcome && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 sm:p-0">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closeWelcome}
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative w-full max-w-lg bg-[#111] rounded-[2.5rem] border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden"
+            >
+              <div className="h-40 bg-gradient-to-br from-[#00AEEF] to-[#005F82] relative flex items-center justify-center">
+                 <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
+                 <div className="relative text-center">
+                    <span className="material-symbols-outlined text-6xl text-white mb-2">waving_hand</span>
+                    <h2 className="text-2xl font-bold text-white uppercase tracking-tighter">Bienvenido a Ediflow</h2>
+                 </div>
+              </div>
+              <div className="p-8">
+                 <p className="text-gray-300 text-center mb-8 leading-relaxed">
+                   Estamos felices de tenerte aquí. Ediflow es tu nuevo aliado en la gestión de comunidades. Para comenzar con el pie derecho, te recomendamos realizar los siguientes pasos:
+                 </p>
+                 <div className="space-y-4 mb-8">
+                    <div className="flex items-start gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
+                       <span className="material-symbols-outlined text-blue-400">domain</span>
+                       <div>
+                          <p className="font-bold text-sm text-white">Configura tu Edificio</p>
+                          <p className="text-[10px] text-gray-500">Carga el RUT, logo y cuentas bancarias en Ajustes.</p>
+                       </div>
+                    </div>
+                    <div className="flex items-start gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
+                       <span className="material-symbols-outlined text-emerald-400">group_add</span>
+                       <div>
+                          <p className="font-bold text-sm text-white">Importa Unidades</p>
+                          <p className="text-[10px] text-gray-500">Usa nuestra herramienta de Excel para subir residentes masivamente.</p>
+                       </div>
+                    </div>
+                    <div className="flex items-start gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
+                       <span className="material-symbols-outlined text-amber-400">account_balance_wallet</span>
+                       <div>
+                          <p className="font-bold text-sm text-white">Registra un Egreso</p>
+                          <p className="text-[10px] text-gray-500">Sube tu primera factura y deja que nuestra IA haga el resto.</p>
+                       </div>
+                    </div>
+                 </div>
+                 <button 
+                   onClick={closeWelcome}
+                   className="w-full py-4 rounded-xl bg-white text-black font-bold uppercase tracking-widest text-xs hover:bg-[#00AEEF] hover:text-white transition-all shadow-xl"
+                 >
+                   Comenzar mi Experiencia
+                 </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 };
@@ -358,6 +527,105 @@ interface SidebarItemProps {
   expanded: boolean;
   onClick?: () => void;
 }
+
+const ConsolidatedDashboardStats: React.FC<{ availableCommunities: any[], navigate: any }> = ({ availableCommunities, navigate }) => {
+  return (
+     <div className="px-6 md:px-16 pb-32 md:pb-24 max-w-7xl w-full mx-auto relative z-10 animate-fade-in">
+        <div className="mb-8">
+           <h2 className="text-2xl font-light text-white tracking-tight mb-2">Vista Consolidada</h2>
+           <p className="text-sm text-gray-400">Resumen global de todos tus condominios activos.</p>
+        </div>
+
+        {/* Global KPIs */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="bg-[#111] p-8 rounded-[2rem] border border-white/5 shadow-2xl relative overflow-hidden group">
+               <div className="absolute top-0 right-0 w-32 h-32 bg-[#00AEEF]/5 blur-[40px] rounded-full pointer-events-none"></div>
+               <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest mb-2 flex items-center gap-2">Morosidad Global</p>
+               <h3 className="text-4xl text-red-400 font-light tracking-tight mt-1">$2.450.000</h3>
+               <p className="text-[10px] text-gray-500 mt-2 font-bold flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[14px]">warning</span> En 3 comunidades
+               </p>
+            </div>
+            <div className="bg-[#111] p-8 rounded-[2rem] border border-white/5 shadow-2xl relative overflow-hidden group">
+               <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest mb-2 flex items-center gap-2">Egresos Totales</p>
+               <h3 className="text-4xl text-emerald-400 font-light tracking-tight mt-1">$14.200.000</h3>
+               <p className="text-[10px] text-gray-500 mt-2 font-bold">Mes en curso</p>
+            </div>
+            <div className="bg-[#111] p-8 rounded-[2rem] border border-white/5 shadow-2xl relative overflow-hidden group">
+               <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest mb-2 flex items-center gap-2">Tickets Pendientes</p>
+               <h3 className="text-4xl text-white font-light tracking-tight mt-1">12</h3>
+               <p className="text-[10px] text-ediflow-primary mt-2 font-bold">Requieren tu atención</p>
+            </div>
+        </div>
+
+        {/* Communities List */}
+        <div className="bg-[#111] rounded-[2.5rem] border border-white/5 overflow-hidden shadow-2xl">
+            <div className="p-6 border-b border-white/5 flex items-center justify-between">
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                   <span className="material-symbols-outlined text-gray-400">domain</span> Comunidades
+                </h3>
+            </div>
+            <table className="w-full text-left text-sm text-gray-300">
+             <thead className="text-[10px] text-gray-500 uppercase bg-[#1A1A1A] border-b border-white/5 tracking-widest font-bold">
+               <tr>
+                 <th className="px-6 py-4">Edificio</th>
+                 <th className="px-6 py-4">Rol</th>
+                 <th className="px-6 py-4 text-right">Recaudación</th>
+                 <th className="px-6 py-4 text-right">Morosidad</th>
+               </tr>
+             </thead>
+             <tbody className="divide-y divide-white/5">
+                <tr className="hover:bg-[#141414] transition-colors cursor-pointer" onClick={() => {}}>
+                   <td className="px-6 py-4 font-medium text-white flex items-center gap-3">
+                       <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                          <span className="text-xs">EA</span>
+                       </div>
+                       Edificio Agua Santa
+                   </td>
+                   <td className="px-6 py-4">
+                      <span className="bg-ediflow-primary/10 text-ediflow-primary px-2 py-1 rounded-md text-[10px] uppercase font-bold tracking-widest border border-ediflow-primary/20">Admin</span>
+                   </td>
+                   <td className="px-6 py-4 text-right">
+                      <span className="text-emerald-400 font-mono">85%</span>
+                   </td>
+                   <td className="px-6 py-4 text-right text-white font-mono">$1.200.000</td>
+                </tr>
+                <tr className="hover:bg-[#141414] transition-colors cursor-pointer" onClick={() => {}}>
+                   <td className="px-6 py-4 font-medium text-white flex items-center gap-3">
+                       <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                          <span className="text-xs">TR</span>
+                       </div>
+                       Torre Reñaca
+                   </td>
+                   <td className="px-6 py-4">
+                      <span className="bg-ediflow-primary/10 text-ediflow-primary px-2 py-1 rounded-md text-[10px] uppercase font-bold tracking-widest border border-ediflow-primary/20">Admin</span>
+                   </td>
+                   <td className="px-6 py-4 text-right">
+                      <span className="text-emerald-400 font-mono">92%</span>
+                   </td>
+                   <td className="px-6 py-4 text-right text-white font-mono">$450.000</td>
+                </tr>
+                <tr className="hover:bg-[#141414] transition-colors cursor-pointer" onClick={() => {}}>
+                   <td className="px-6 py-4 font-medium text-white flex items-center gap-3">
+                       <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                          <span className="text-xs">CB</span>
+                       </div>
+                       Condominio El Bosque
+                   </td>
+                   <td className="px-6 py-4">
+                      <span className="bg-gray-500/10 text-gray-400 px-2 py-1 rounded-md text-[10px] uppercase font-bold tracking-widest border border-gray-500/20">Conserje</span>
+                   </td>
+                   <td className="px-6 py-4 text-right">
+                      <span className="text-emerald-400 font-mono">70%</span>
+                   </td>
+                   <td className="px-6 py-4 text-right text-white font-mono">$800.000</td>
+                </tr>
+             </tbody>
+            </table>
+        </div>
+     </div>
+  );
+};
 
 const SidebarItem: React.FC<SidebarItemProps> = ({ icon, label, active, expanded, onClick }) => {
   return (

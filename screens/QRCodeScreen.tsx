@@ -4,7 +4,6 @@ import { UserRole } from '../src/types';
 import { useAppContext } from '../src/context/AppContext';
 import { PassType, VisitorPass } from '../src/types';
 import { supabase } from '../src/lib/supabase-client';
-import QRCode from 'react-qr-code';
 
 interface Props {
   navigate: (screen: ScreenName) => void;
@@ -29,26 +28,40 @@ const QRCodeScreen: React.FC<Props> = ({ navigate, role }) => {
   }, [currentUser]);
 
   const fetchPasses = async () => {
-    if (!currentUser) return;
+    if (!currentUser || !currentTenant) return;
     try {
+      
+      const { data: units } = await supabase
+        .from('units')
+        .select('id')
+        .eq('tenant_id', currentTenant.id)
+        .eq('owner_id', currentUser.id);
+
+      if (!units || units.length === 0) {
+        setIsLoading(false);
+        return;
+      }
+
+      const unitIds = units.map(u => u.id);
+
       const { data, error } = await supabase
-        .from('visitor_passes')
+        .from('visit_access')
         .select('*')
-        .eq('user_id', currentUser.id)
+        .in('unit_id', unitIds)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       
       if (data) {
         setPasses(data.map((p: any) => ({
-          id: p.qr_code_data, // we use qr_code_data as the key/id for the pass view
+          id: p.id,
           name: p.visitor_name,
-          type: p.pass_type as PassType,
+          type: 'visita', // defaulting to 'visita' since type is not currently in model but could be mapped if added
           date: new Date(p.created_at).toLocaleString('es-CL', { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' }),
-          status: p.status,
+          status: p.status === 'Pendiente' && new Date(p.expires_at) < new Date() ? 'expired' : p.status, // Quick check
           tenantId: p.tenant_id,
-          userId: p.user_id,
-          qrPayload: p.qr_code_data
+          userId: currentUser.id,
+          qrPayload: p.access_pin
         })));
       }
     } catch (err) {
@@ -75,38 +88,51 @@ const QRCodeScreen: React.FC<Props> = ({ navigate, role }) => {
     e.preventDefault();
     if (!visitorName.trim() || !currentUser || !currentTenant) return;
 
-    // Generate unique payload for QR
-    const payload = crypto.randomUUID();
+    // Generate unique 4 digit PIN
+    const generatedPin = Math.floor(1000 + Math.random() * 9000).toString();
     // Expiration: 24 hs from now
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 24);
 
     try {
-      const { data, error } = await supabase.from('visitor_passes').insert({
+      // Find unit id
+      const { data: units } = await supabase
+        .from('units')
+        .select('id')
+        .eq('tenant_id', currentTenant.id)
+        .eq('owner_id', currentUser.id)
+        .limit(1);
+
+      if (!units || units.length === 0) {
+        alert("No se encontró su unidad registrada.");
+        return;
+      }
+      
+      const { data, error } = await supabase.from('visit_access').insert({
         tenant_id: currentTenant.id,
-        user_id: currentUser.id,
+        unit_id: units[0].id,
         visitor_name: visitorName,
-        pass_type: passType,
-        qr_code_data: payload,
+        access_pin: generatedPin,
         expires_at: expiresAt.toISOString(),
-        status: 'active'
+        status: 'Pendiente'
       }).select().single();
 
       if (error) throw error;
 
       const newPass: VisitorPass = {
-        id: payload,
+        id: data.id,
         name: visitorName,
         type: passType,
         date: 'Hoy, Válido por 24h',
-        status: 'active',
+        status: 'Pendiente',
         tenantId: currentTenant.id,
-        userId: currentUser.id
+        userId: currentUser.id,
+        qrPayload: generatedPin // Retaining this parameter to hold PIN temporarily
       };
 
       setPasses([newPass, ...passes]);
       setCurrentPass(newPass);
-      setView('show_qr');
+      setView('show_qr'); // we'll rename the view label in rendering
 
     } catch (err) {
       console.error('Error generating pass:', err);
@@ -339,21 +365,13 @@ const QRCodeScreen: React.FC<Props> = ({ navigate, role }) => {
                     <h2 className="text-2xl font-light text-white tracking-tight mb-2 leading-none">{currentPass.name}</h2>
                     <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-10">Pase de Autorización</p>
                     
-                    {/* The QR Code Graphic Area */}
-                    <div className="bg-white p-4 rounded-3xl mb-12 shadow-[0_0_40px_rgba(255,255,255,0.1)] relative">
-                        {/* Decorative scan line animation */}
-                        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#00AEEF]/20 to-transparent opacity-0 animate-[scan_3s_ease-in-out_infinite]"></div>
+                    {/* The PIN Code Graphic Area */}
+                    <div className="bg-[#050505] p-6 rounded-3xl mb-12 shadow-[0_0_40px_rgba(255,255,255,0.02)] border border-white/5 relative">
                         <div className="flex justify-center items-center">
                           {currentPass?.qrPayload ? (
-                            <QRCode
-                                value={currentPass.qrPayload}
-                                size={180}
-                                level="H"
-                                bgColor="#ffffff"
-                                fgColor="#000000"
-                            />
+                             <span className="text-6xl text-white font-mono tracking-[0.2em]">{currentPass.qrPayload}</span>
                           ) : (
-                            <span className="material-symbols-outlined text-[180px] text-black leading-none block">qr_code_2</span>
+                            <span className="material-symbols-outlined text-[100px] text-gray-600 leading-none block">pin</span>
                           )}
                         </div>
                     </div>
@@ -363,7 +381,7 @@ const QRCodeScreen: React.FC<Props> = ({ navigate, role }) => {
                 <div className="relative z-10 w-full mt-2 grid grid-cols-2 gap-4">
                     <div className="text-left">
                         <p className="text-[9px] text-gray-500 font-semibold uppercase tracking-widest mb-1">Destino</p>
-                        <p className="text-white font-medium text-sm">Unidad 402</p>
+                        <p className="text-white font-medium text-sm">Tu Unidad</p>
                     </div>
                     <div className="text-right">
                         <p className="text-[9px] text-gray-500 font-semibold uppercase tracking-widest mb-1">Vigencia</p>
@@ -374,10 +392,15 @@ const QRCodeScreen: React.FC<Props> = ({ navigate, role }) => {
 
             {/* Actions for the Ticket */}
             <div className="w-full max-w-sm mt-8 space-y-4">
-              <button className="w-full bg-[#111] border border-white/10 hover:bg-white text-white hover:text-black font-bold py-5 rounded-2xl flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-xl group">
+              <a 
+                href={`https://wa.me/?text=${encodeURIComponent(`Hola ${currentPass.name},\nTu código de acceso a la comunidad es: *${currentPass.qrPayload}*. Entrégalo en conserjería para validar tu ingreso.`)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full bg-[#111] border border-white/10 hover:bg-white text-white hover:text-black font-bold py-5 rounded-2xl flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-xl group"
+              >
                 <span className="material-symbols-outlined text-[#25D366] group-hover:text-[#1FAF53] transition-colors">share</span>
-                <span className="text-xs uppercase tracking-widest">Enviar por WhatsApp</span>
-              </button>
+                <span className="text-xs uppercase tracking-widest">Compartir PIN por WhatsApp</span>
+              </a>
               
               <button 
                 onClick={() => setView('list')}

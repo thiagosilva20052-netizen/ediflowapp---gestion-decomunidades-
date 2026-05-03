@@ -22,24 +22,34 @@ const CommunityWall: React.FC<Props> = ({ navigate, role }) => {
 
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [reads, setReads] = useState<string[]>([]); // Array of read announcement IDs
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!currentTenant || !currentUser) return;
 
     const fetchAnnouncements = async () => {
-      // Fetch announcements
-      const { data } = await supabase
+      setIsLoading(true);
+      let query = supabase
         .from('announcements')
         .select('*, profiles(name), announcement_reads:announcement_reads(count)')
         .eq('tenant_id', currentTenant.id)
         .order('created_at', { ascending: false });
 
-      if (data) {
-         setAnnouncements(data.map(ann => ({
-           ...ann,
-           readsCount: ann.announcement_reads?.[0]?.count || 0
-         })));
+      if (selectedCategory !== 'all') {
+        const dbCategory = selectedCategory === 'info' ? 'informative' : selectedCategory;
+        query = query.eq('category', dbCategory);
       }
+
+      const { data } = await query;
+
+      if (data) {
+        setAnnouncements(data.map(ann => ({
+          ...ann,
+          readsCount: ann.announcement_reads?.[0]?.count || 0
+        })));
+      }
+      setIsLoading(false);
 
       // Fetch reads for current user
       const { data: readData } = await supabase
@@ -61,7 +71,7 @@ const CommunityWall: React.FC<Props> = ({ navigate, role }) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [currentTenant, currentUser]);
+  }, [currentTenant, currentUser, selectedCategory]);
 
   const markAsRead = async (id: string) => {
     if (reads.includes(id) || !currentUser) return;
@@ -178,17 +188,44 @@ const CommunityWall: React.FC<Props> = ({ navigate, role }) => {
 
         {/* Pareto: The 80% - Official Announcements (Bento Layout) */}
         <section>
-            <div className="flex items-center justify-between mb-6 md:mb-8 px-2 md:px-0">
+            <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-6">
                 <div className="flex items-center gap-3">
                     <span className="material-symbols-outlined text-gray-500 text-[20px]">flag</span>
                     <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Comunicados Oficiales</h2>
                 </div>
-                <span className="text-[9px] font-bold bg-ediflow-primary/10 text-ediflow-primary px-3 py-1 rounded-full border border-ediflow-primary/20 uppercase tracking-widest flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[12px]">verified</span> Verificados
-                </span>
+                
+                {/* Filter Controls */}
+                <div className="flex items-center gap-2 bg-[#111] p-1.5 rounded-2xl border border-white/5 overflow-x-auto no-scrollbar">
+                  {[
+                    { id: 'all', label: 'Todos', icon: 'apps' },
+                    { id: 'urgent', label: 'Urgentes', icon: 'campaign' },
+                    { id: 'info', label: 'Info', icon: 'info' },
+                    { id: 'event', label: 'Eventos', icon: 'event' }
+                  ].map(cat => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setSelectedCategory(cat.id)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${
+                        selectedCategory === cat.id
+                          ? 'bg-white text-black shadow-lg'
+                          : 'text-gray-500 hover:text-white hover:bg-white/5'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-[14px]">{cat.icon}</span>
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="h-[340px] bg-[#111] rounded-[2rem] border border-white/5"></div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {announcements.map(ann => {
                     const isUrgent = ann.category === 'urgent';
                     const isEvent = ann.category === 'event';
@@ -281,7 +318,8 @@ const CommunityWall: React.FC<Props> = ({ navigate, role }) => {
                 {announcements.length === 0 && (
                     <div className="text-gray-500 col-span-full py-10 text-center">No hay comunicados publicados aún.</div>
                 )}
-            </div>
+              </div>
+            )}
         </section>
 
       </main>
