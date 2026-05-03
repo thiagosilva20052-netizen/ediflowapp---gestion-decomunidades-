@@ -16,6 +16,8 @@ export const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
   const [isPackageModalOpen, setIsPackageModalOpen] = useState(false);
   const [parcels, setParcels] = useState<any[]>([]);
   
+  const [activeSosAlert, setActiveSosAlert] = useState<any>(null);
+  
   const [pinValue, setPinValue] = useState("");
   const [isPinSubmitting, setIsPinSubmitting] = useState(false);
   const [pinError, setPinError] = useState(false);
@@ -28,6 +30,58 @@ export const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (!currentTenant) return;
+    
+    // Check pending SOS alerts periodically since we might miss realtime events in Dev
+    let isActive = true;
+    const fetchSos = async () => {
+      try {
+         const { supabase } = await import('../src/lib/supabase-client');
+         const { data, error } = await supabase
+            .from('panic_alerts')
+            .select('*, units(unit_number), profiles(full_name)')
+            .eq('tenant_id', currentTenant.id)
+            .eq('status', 'Activo')
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+         if (data && data.length > 0 && isActive) {
+            setActiveSosAlert(data[0]);
+         } else if (isActive) {
+            setActiveSosAlert(null);
+         }
+      } catch (err) {
+         console.error("Error fetching SOS", err);
+      }
+    };
+    
+    fetchSos();
+    
+    // Fallback polling
+    const sosTimer = setInterval(fetchSos, 10000);
+
+    // Supabase Realtime
+    let channel: any;
+    import('../src/lib/supabase-client').then(({ supabase }) => {
+       channel = supabase.channel('public:panic_alerts')
+         .on('postgres_changes', { event: '*', schema: 'public', table: 'panic_alerts', filter: `tenant_id=eq.${currentTenant.id}` }, () => {
+            fetchSos();
+         })
+         .subscribe();
+    });
+
+    return () => {
+      isActive = false;
+      clearInterval(sosTimer);
+      if (channel) {
+         import('../src/lib/supabase-client').then(({ supabase }) => {
+            supabase.removeChannel(channel);
+         });
+      }
+    };
+  }, [currentTenant]);
 
   const handlePinSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,6 +159,34 @@ export const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
       alert('Error validando PIN');
     } finally {
       setIsPinSubmitting(false);
+    }
+  };
+
+  const resolveSos = async () => {
+    if (!activeSosAlert || !currentUser || !currentTenant) return;
+    try {
+      const { supabase } = await import('../src/lib/supabase-client');
+      
+      await supabase
+         .from('panic_alerts')
+         .update({ status: 'Resuelto', resolved_by: currentUser.id })
+         .eq('id', activeSosAlert.id);
+         
+      await supabase
+         .from('audit_logs')
+         .insert({
+           tenant_id: currentTenant.id,
+           user_id: currentUser.id,
+           action: 'SOS Resuelto',
+           details: `Emergencia atendida del Depto ${activeSosAlert.units?.unit_number}`,
+           module: 'emergency',
+           severity: 'warning'
+         });
+         
+      setActiveSosAlert(null);
+    } catch (err) {
+      console.error(err);
+      alert("Error resolviendo alerta");
     }
   };
 
@@ -443,6 +525,30 @@ export const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
             <span className="text-[10px] font-medium">Perfil</span>
          </div>
       </nav>
+
+      {/* Giant SOS Modal */}
+      {activeSosAlert && (
+         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-red-950/90 backdrop-blur-md animate-[pulse_1.5s_infinite]">
+            <div className="bg-red-600 border-4 border-red-400 rounded-[2rem] p-8 md:p-12 max-w-2xl w-full shadow-[0_0_100px_rgba(239,68,68,0.8)] relative text-center">
+               <span className="material-symbols-outlined text-[80px] text-white animate-bounce mb-4">warning</span>
+               <h1 className="text-4xl md:text-6xl font-bold text-white mb-2 uppercase tracking-tighter">ALERTA SOS</h1>
+               <p className="text-xl md:text-3xl text-red-100 mb-8 font-medium">Depto {activeSosAlert.units?.unit_number}</p>
+               
+               <div className="bg-white/10 rounded-xl p-4 mb-10 text-left backdrop-blur-sm border border-white/20">
+                  <p className="text-white text-sm mb-1"><span className="opacity-70">Residente:</span> <span className="font-semibold">{activeSosAlert.profiles?.full_name || 'Desconocido'}</span></p>
+                  <p className="text-white text-sm"><span className="opacity-70">Hora Activación:</span> <span className="font-semibold">{new Date(activeSosAlert.created_at).toLocaleTimeString('es-CL')}</span></p>
+               </div>
+
+               <button 
+                  onClick={resolveSos}
+                  className="w-full bg-white text-red-600 font-black text-xl py-6 rounded-2xl shadow-xl hover:bg-gray-100 active:scale-95 transition-all"
+               >
+                  HE RECIBIDO LA ALERTA
+               </button>
+               <p className="text-red-200 text-xs mt-4 uppercase tracking-widest font-semibold">Al presionar, confirma que está gestionando la emergencia</p>
+            </div>
+         </div>
+      )}
 
       {/* Package Delivery Modal */}
       {isPackageModalOpen && (

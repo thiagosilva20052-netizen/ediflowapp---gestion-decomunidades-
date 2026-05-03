@@ -29,7 +29,9 @@ const ResidentDirectory: React.FC<Props> = ({ navigate, role }) => {
           *,
           profiles:owner_id (
             id,
-            name,
+            full_name,
+            email,
+            metadata,
             role
           )
         `)
@@ -117,7 +119,8 @@ const ResidentDirectory: React.FC<Props> = ({ navigate, role }) => {
 
   const filteredUnits = units.filter(u => 
     u.unit_number.includes(searchQuery) ||
-    u.profiles?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+    u.profiles?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    u.profiles?.email?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -394,105 +397,79 @@ const ResidentDirectory: React.FC<Props> = ({ navigate, role }) => {
                 />
               </div>
 
-              {/* Data Table Approach (List view) */}
-              <div className="w-full bg-[#111] border border-white/5 rounded-[2rem] overflow-hidden shadow-2xl">
-                <div className="hidden md:grid grid-cols-12 gap-4 px-8 py-5 border-b border-white/5 bg-[#0A0A0A]/50">
-                   <div className="col-span-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Unidad</div>
-                   <div className="col-span-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Titular & Contacto</div>
-                   <div className="col-span-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest text-right">Alícuota</div>
-                   <div className="col-span-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Anexos Operativos</div>
-                   <div className="col-span-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest text-right">Cuenta App</div>
-                </div>
-
-                <div className="divide-y divide-white/5">
-                  {isLoading ? (
-                    [1, 2, 3, 4, 5].map(i => (
-                      <div key={i} className="p-8 animate-pulse flex items-center gap-6">
-                        <div className="w-12 h-12 bg-white/5 rounded-xl"></div>
-                        <div className="flex-1 space-y-2">
-                           <div className="h-4 bg-white/5 rounded w-1/4"></div>
-                           <div className="h-3 bg-white/5 rounded w-1/3"></div>
-                        </div>
+              {/* Grid view */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                 {isLoading ? (
+                    [1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                      <div key={i} className="bg-[#111] border border-white/5 rounded-3xl p-6 animate-pulse flex flex-col items-center">
+                         <div className="w-24 h-24 rounded-full bg-white/5 mb-4"></div>
+                         <div className="h-4 bg-white/5 w-1/2 rounded mb-2"></div>
+                         <div className="h-3 bg-white/5 w-1/3 rounded"></div>
                       </div>
                     ))
-                  ) : (
+                 ) : (
                     filteredUnits.map(unit => (
-                    <div key={unit.id} className="p-6 md:px-8 md:py-6 hover:bg-[#141414] transition-colors grid grid-cols-1 md:grid-cols-12 gap-4 items-center group">
-                       
-                       <div className="col-span-2 flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex flex-col items-center justify-center">
-                             <span className="text-sm font-bold text-white tracking-tighter leading-none mb-1">{unit.unit_number}</span>
-                             <span className="text-[8px] text-gray-500 uppercase tracking-widest leading-none">
-                               {unit.unit_type || 'Unidad'}
-                             </span>
+                       <div key={unit.id} className="bg-[#111] border border-white/5 rounded-[2rem] p-6 flex flex-col items-center text-center shadow-lg hover:border-white/10 hover:shadow-xl transition-all group relative overflow-hidden">
+                          {/* Top Tag */}
+                          <div className="absolute top-4 right-4 bg-white/5 px-2 py-1 rounded text-[9px] font-bold uppercase tracking-widest text-gray-400">
+                             Dpto {unit.unit_number}
                           </div>
-                          <span className="md:hidden text-[10px] font-bold uppercase tracking-widest text-gray-500">Unidad</span>
-                       </div>
- 
-                       <div className="col-span-3 flex flex-col mt-2 md:mt-0">
-                          <span className="text-sm font-medium text-white">{unit.profiles?.name || 'Vacante / Sin Dueño'}</span>
-                          <span className="text-xs text-gray-500 mt-0.5">{unit.profiles?.email || 'Sin correo asociado'}</span>
-                          {unit.profiles?.phone && (
-                            <span className="text-[10px] text-gray-400 mt-1 uppercase tracking-widest font-mono flex items-center gap-1">
-                                <span className="material-symbols-outlined text-[12px]">smartphone</span> {unit.profiles.phone}
-                            </span>
-                          )}
-                       </div>
- 
-                       <div className="col-span-2 flex flex-col mt-2 md:mt-0 md:items-end justify-center">
-                           <span className="md:hidden text-[10px] font-bold uppercase tracking-widest text-gray-500 block mb-1">Alícuota</span>
-                           <span className="text-sm font-mono text-blue-400">
-                             {unit.aliquot ? `${parseFloat(unit.aliquot).toFixed(4)}%` : '--'}
-                           </span>
-                       </div>
- 
-                       <div className="col-span-2 flex flex-wrap gap-2 mt-2 md:mt-0">
-                         {unit.bodega && (
-                            <span className="px-2.5 py-1 bg-[#0A0A0A] border border-white/5 rounded text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1">
-                              Bod: {unit.bodega}
-                            </span>
-                         )}
-                         {unit.parking && (
-                            <span className="px-2.5 py-1 bg-[#0A0A0A] border border-white/5 rounded text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1">
-                              Est: {unit.parking}
-                            </span>
-                         )}
-                         {!unit.bodega && !unit.parking && (
-                            <span className="text-[10px] text-gray-600 uppercase tracking-widest italic">N/A</span>
-                         )}
-                       </div>
- 
-                       <div className="col-span-3 flex items-center justify-start md:justify-end gap-3 mt-4 md:mt-0">
-                          {unit.owner_id ? (
-                             <span className="px-3 py-1 bg-green-500/10 border border-green-500/20 text-green-400 rounded-lg text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5">
-                               <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span> Vinculado
-                             </span>
-                          ) : (
-                             <button className="px-3 py-1.5 bg-[#0A0A0A] border border-white/10 text-gray-400 rounded-lg text-[9px] font-bold uppercase tracking-widest hover:text-white hover:border-white/30 hover:bg-white/5 transition-all outline-none">
-                               Vincular Dueño
-                             </button>
-                          )}
+
+                          {/* Avatar */}
+                          <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-[#1A1A1A] border-2 border-white/10 mb-4 overflow-hidden relative shadow-inner group-hover:scale-105 transition-transform duration-500">
+                             {unit.profiles?.metadata?.avatar_url ? (
+                                <img src={unit.profiles.metadata.avatar_url} alt="Resident Avatar" className="w-full h-full object-cover" />
+                             ) : (
+                                <div className="w-full h-full flex flex-col items-center justify-center text-gray-600 bg-gradient-to-tr from-[#0A0A0A] to-[#141414]">
+                                   <span className="material-symbols-outlined text-[32px] md:text-[40px] opacity-50">person</span>
+                                </div>
+                             )}
+                          </div>
+
+                          {/* Details */}
+                          <h3 className="font-semibold text-white tracking-tight mb-1">{unit.profiles?.full_name || 'Sin asignación'}</h3>
+                          <p className="text-[10px] text-gray-500 font-mono tracking-widest uppercase mb-6 truncate max-w-full px-2">
+                             {unit.contact_email || unit.profiles?.email || 'Sin correo asociado'}
+                          </p>
+
+                          {/* Quick Call Action */}
+                          <div className="w-full mt-auto">
+                              {unit.profiles?.metadata?.phone ? (
+                                <a 
+                                  href={`tel:${unit.profiles.metadata.phone}`}
+                                  className="w-full py-3 bg-white/5 hover:bg-ediflow-primary hover:text-black border border-white/5 rounded-xl flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest transition-all shadow-sm group/btn active:scale-95"
+                                >
+                                  <span className="material-symbols-outlined text-[18px]">call</span>
+                                  Llamada Rápida
+                                </a>
+                              ) : (
+                                <button disabled className="w-full py-3 bg-black/50 border border-white/5 rounded-xl flex items-center justify-center gap-2 text-[10px] font-bold text-gray-600 uppercase tracking-widest opacity-50 cursor-not-allowed">
+                                  <span className="material-symbols-outlined text-[16px]">phone_disabled</span>
+                                  Sin Número
+                                </button>
+                              )}
+                          </div>
                           
+                          {/* Admin Only tools */}
                           {role === 'admin' && (
-                            <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 text-gray-500 hover:text-white transition-colors outline-none shrink-0 border border-transparent hover:border-white/10">
-                                <span className="material-symbols-outlined text-[18px]">more_vert</span>
-                            </button>
+                             <div className="absolute top-4 left-4">
+                                <button className="w-6 h-6 flex items-center justify-center rounded hover:bg-white/10 text-gray-500 hover:text-white transition-colors">
+                                   <span className="material-symbols-outlined text-[16px]">edit</span>
+                                </button>
+                             </div>
                           )}
                        </div>
- 
-                    </div>
-                  ))
-                  )}
-                  
-                  {!isLoading && filteredUnits.length === 0 && (
-                    <div className="text-center py-20 px-6">
-                      <span className="material-symbols-outlined text-4xl text-gray-600 mb-3 opacity-50">quick_reference_all</span>
-                      <h3 className="text-lg font-light tracking-tight text-white">No hay registros</h3>
-                      <p className="text-xs text-gray-500 mt-1">Busque otro término o cree una unidad nueva.</p>
-                    </div>
-                  )}
-                </div>
+                    ))
+                 )}
               </div>
+              
+              {!isLoading && filteredUnits.length === 0 && (
+                <div className="text-center py-20 px-6">
+                  <span className="material-symbols-outlined text-4xl text-gray-600 mb-3 opacity-50">quick_reference_all</span>
+                  <h3 className="text-lg font-light tracking-tight text-white">No hay registros</h3>
+                  <p className="text-xs text-gray-500 mt-1">Busque otro término o cree una unidad nueva.</p>
+                </div>
+              )}
             </>
           )}
 

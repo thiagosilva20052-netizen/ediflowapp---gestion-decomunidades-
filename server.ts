@@ -326,6 +326,67 @@ async function startServer() {
     }
   });
 
+  // Web Push and Email - Notify Admin of SOS Emergency
+  app.post('/api/notify/sos', async (req, res) => {
+    try {
+      const { unitId, tenantId, unitNumber, tenantName, activatedAt } = req.body;
+      console.log(`[SOS Notification] -> Unit: ${unitId} | Tenant: ${tenantId}`);
+      
+      res.status(200).json({ success: true, message: 'SOS Notification queued.' });
+
+      (async () => {
+         try {
+           const { supabaseServer } = await import('./src/lib/supabase-server.js');
+           const { data: adminProfiles } = await (supabaseServer as any)
+             .from('profiles')
+             .select('email')
+             .eq('tenant_id', tenantId)
+             .eq('role', 'admin');
+             
+           // Email all admins
+           if (adminProfiles && adminProfiles.length > 0) {
+              const html = `
+                <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+                  <h2 style="color: #EF4444; font-size: 24px;">🚨 ALERTA DE EMERGENCIA (SOS)</h2>
+                  <p>Hola,</p>
+                  <p>Se ha activado el botón de pánico en <strong>${tenantName || 'tu comunidad'}</strong>.</p>
+                  <div style="background-color: #FEF2F2; padding: 16px; border-radius: 8px; margin: 20px 0; border: 1px solid #FCA5A5;">
+                     <p style="margin: 0 0 8px 0; color: #991B1B;"><strong>Departamento:</strong> ${unitNumber}</p>
+                     <p style="margin: 0; color: #991B1B;"><strong>Hora de Activación:</strong> ${activatedAt}</p>
+                  </div>
+                  <p>Por favor, revisa el panel de administración o conserjería de inmediato.</p>
+                  <a href="${process.env.VITE_BASE_URL || 'https://seguify.app'}/dashboard" style="display: inline-block; padding: 12px 24px; background-color: #EF4444; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 10px;">Ver Panel de Control</a>
+                  <p>Saludos,<br/>Sistema de Seguridad Seguify</p>
+                </div>
+              `;
+              
+              const adminEmails = adminProfiles.map((p: any) => p.email).filter(Boolean);
+              
+              if (adminEmails.length > 0) {
+                 const { error: emailError } = await resend.emails.send({
+                   from: 'Alerta Seguify <conserjeria@resend.dev>',
+                   to: adminEmails,
+                   subject: `🚨 ALERTA SOS - Unidad ${unitNumber}`,
+                   html,
+                 });
+                 
+                 if (emailError) {
+                    console.error('[SOS Email Failed]', emailError);
+                 } else {
+                    console.log(`[SOS Email Sent] Sent to ${adminEmails.join(', ')}`);
+                 }
+              }
+           }
+         } catch (bgError) {
+           console.error('[Background Notification Error - SOS]', bgError);
+         }
+      })();
+    } catch (error) {
+       console.error('Notify SOS error:', error);
+       res.status(500).json({ error: 'Failed to send notification' });
+    }
+  });
+
   // Web Push and Email - Notify Resident of Visitor Access
   app.post('/api/notify/visit', async (req, res) => {
     try {

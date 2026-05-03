@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { ScreenName } from '../App';
 import { Logo } from '../components/Logo';
 import { UserRole } from '../src/types';
+import { supabase } from '../src/lib/supabase-client';
+import { useAppContext } from '../src/context/AppContext';
 
 interface Props {
   navigate: (screen: ScreenName) => void;
@@ -10,6 +12,10 @@ interface Props {
 }
 
 const Emergency: React.FC<Props> = ({ navigate, from, role }) => {
+  const { currentTenant, currentUser } = useAppContext();
+  const [isPressing, setIsPressing] = useState(false);
+  const pressTimeout = useRef<number | null>(null);
+
   const handleBack = () => {
     if (from) {
       navigate(from);
@@ -18,6 +24,74 @@ const Emergency: React.FC<Props> = ({ navigate, from, role }) => {
       else if (role === 'concierge') navigate('ConciergeDashboard');
       else navigate('ResidentServices');
     }
+  };
+
+  const triggerSOS = async () => {
+    if (!currentTenant || !currentUser) return;
+    try {
+       // Find user's primary unit
+       const { data: units } = await supabase
+         .from('units')
+         .select('id, unit_number')
+         .eq('tenant_id', currentTenant.id)
+         .eq('owner_id', currentUser.id)
+         .limit(1);
+         
+       if (!units || units.length === 0) {
+         alert("No tienes unidad registrada.");
+         return;
+       }
+
+       const { error } = await supabase.from('panic_alerts').insert({
+         tenant_id: currentTenant.id,
+         unit_id: units[0].id,
+         user_id: currentUser.id,
+         status: 'Activo'
+       });
+
+       if (error) throw error;
+       
+       await supabase.from('audit_logs').insert({
+          tenant_id: currentTenant.id,
+          user_id: currentUser.id,
+          action: 'Activación de SOS (Residente)',
+          details: `SOS activado desde Depto ${units[0].unit_number}`,
+          module: 'emergency',
+          severity: 'critical'
+       });
+
+       // Trigger email via API
+       await fetch((import.meta as any).env.VITE_BASE_URL + '/api/notify/sos', {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({
+           unitId: units[0].id,
+           tenantId: currentTenant.id,
+           unitNumber: units[0].unit_number,
+           tenantName: currentTenant.name,
+           activatedAt: new Date().toLocaleString()
+         })
+       }).catch(console.error);
+
+       alert("ALERTA ENVIADA: Conserjería notificada de inmediato.");
+
+    } catch (err: any) {
+      console.error(err);
+      alert("Error enviando alerta. Use el intercomunicador.");
+    }
+  };
+
+  const handlePointerDown = () => {
+    setIsPressing(true);
+    pressTimeout.current = window.setTimeout(() => {
+      triggerSOS();
+      setIsPressing(false);
+    }, 3000);
+  };
+
+  const handlePointerUp = () => {
+    setIsPressing(false);
+    if (pressTimeout.current) clearTimeout(pressTimeout.current);
   };
 
   const emergencyContacts = [
@@ -105,7 +179,12 @@ const Emergency: React.FC<Props> = ({ navigate, from, role }) => {
                  {/* Ripple effect rings */}
                  <div className="absolute inset-0 rounded-full border border-red-500/30 animate-ping opacity-50 duration-1000 w-32 h-32 md:w-40 md:h-40 mx-auto"></div>
                  
-                 <button className="w-32 h-32 md:w-40 md:h-40 bg-gradient-to-b from-red-500 to-red-700 rounded-full flex items-center justify-center shadow-[0_0_60px_rgba(220,38,38,0.6),inset_0_4px_10px_rgba(255,255,255,0.3)] active:scale-[0.95] active:shadow-[0_0_20px_rgba(220,38,38,0.8),inset_0_10px_20px_rgba(0,0,0,0.5)] transition-all cursor-pointer ring-8 ring-[#1A1A1A] z-10 relative">
+                 <button 
+                   onPointerDown={handlePointerDown}
+                   onPointerUp={handlePointerUp}
+                   onPointerLeave={handlePointerUp}
+                   className={`w-32 h-32 md:w-40 md:h-40 bg-gradient-to-b from-red-500 to-red-700 rounded-full flex items-center justify-center shadow-[0_0_60px_rgba(220,38,38,0.6),inset_0_4px_10px_rgba(255,255,255,0.3)] transition-all cursor-pointer ring-8 ring-[#1A1A1A] z-10 relative ${isPressing ? 'scale-[0.85] shadow-none brightness-110 ring-red-500/50' : 'active:scale-[0.95]'}`}
+                 >
                    <span className="material-symbols-outlined text-white text-[48px] md:text-[64px] font-bold">notifications_active</span>
                  </button>
               </div>

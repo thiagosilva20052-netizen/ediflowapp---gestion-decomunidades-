@@ -451,6 +451,30 @@ CREATE POLICY "Users can manage their own drafts" ON public.onboarding_drafts
     FOR ALL USING (user_id = auth.uid());
 
 -- Audit Logs (Strict INSERT-ONLY Governance)
+CREATE TABLE IF NOT EXISTS public.panic_alerts (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE NOT NULL,
+    unit_id UUID REFERENCES public.units(id) ON DELETE CASCADE NOT NULL,
+    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+    status VARCHAR(50) CHECK (status IN ('Activo', 'Resuelto')) DEFAULT 'Activo',
+    resolved_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.panic_alerts ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Residents can create their panic alerts" ON public.panic_alerts
+    FOR INSERT WITH CHECK (
+        unit_id IN (SELECT id FROM public.units WHERE owner_id = auth.uid()) OR
+        user_id = auth.uid()
+    );
+
+CREATE POLICY "Concierge can view and update panic alerts" ON public.panic_alerts
+    FOR ALL USING (
+        tenant_id = (SELECT tenant_id FROM public.profiles WHERE id = auth.uid())
+        AND (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('admin', 'concierge')
+    );
+
 CREATE TABLE IF NOT EXISTS public.audit_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE NOT NULL,
@@ -475,6 +499,11 @@ CREATE POLICY "System/Users can insert audit logs" ON public.audit_logs
         tenant_id = (SELECT tenant_id FROM public.profiles WHERE id = auth.uid())
     );
 -- Missing UPDATE and DELETE policies enforces strict immutability. No one can edit or delete a log.
+
+-- Realtime Publication
+DROP PUBLICATION IF EXISTS supabase_realtime;
+CREATE PUBLICATION supabase_realtime FOR TABLE public.panic_alerts;
+
 
 -- ==========================================
 -- 4. Triggers (Auth Sync)
@@ -568,6 +597,35 @@ CREATE POLICY "Residentes insertan transacciones_informadas" ON public.transacti
 -- Políticas para Meter Readings
 CREATE POLICY "Admins ven medidores" ON public.meter_readings FOR ALL USING (EXISTS (SELECT 1 FROM public.profiles WHERE profiles.id = auth.uid() AND (profiles.role = 'admin' OR profiles.role = 'concierge')));
 CREATE POLICY "Residentes ven sus medidores" ON public.meter_readings FOR SELECT USING (unit_id IN (SELECT id FROM public.units WHERE owner_id = auth.uid()));
+
+-- ==========================================
+-- 5. Configuración de Storage
+-- ==========================================
+-- Crear bucket de Avatares (Privado)
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('avatars', 'avatars', false) 
+ON CONFLICT (id) DO NOTHING;
+
+-- Habilitar RLS en storage.objects
+ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+
+-- Política de Privacidad: Solo el propio usuario, o el admin/conserje del mismo edificio pueden ver la foto
+CREATE POLICY "Privacidad de Fotos de Residentes" ON storage.objects
+FOR SELECT USING (
+    bucket_id = 'avatars' 
+    AND (
+        owner = auth.uid()
+        OR (
+            (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('admin', 'concierge')
+            AND (SELECT tenant_id FROM public.profiles WHERE id = auth.uid()) = (SELECT tenant_id FROM public.profiles WHERE id = owner)
+        )
+    )
+);
+
+CREATE POLICY "Usuarios suben y editan su propio avatar" ON storage.objects
+FOR ALL USING (
+    bucket_id = 'avatars' AND owner = auth.uid()
+);
 
 -- Políticas para Multas
 CREATE POLICY "Admins ven multas" ON public.fines FOR ALL USING (EXISTS (SELECT 1 FROM public.profiles WHERE profiles.id = auth.uid() AND (profiles.role = 'admin' OR profiles.role = 'concierge')));
