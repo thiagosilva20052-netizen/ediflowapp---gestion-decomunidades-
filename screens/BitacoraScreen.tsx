@@ -188,7 +188,7 @@ const BitacoraScreen: React.FC<Props> = ({ navigate, role }) => {
                             bg={bg}
                             borderColor={borderColor}
                             priority={priority}
-                            createdBy={log.profiles?.name || 'Sistema'}
+                            createdBy={(log.profiles as any)?.name || 'Sistema'}
                         />
                       );
                   })}

@@ -171,10 +171,7 @@ export const OnboardingScreen: React.FC<Props> = ({ onComplete, registeredEmail 
       }
       setStep(2);
     } else if (step === 2) {
-      if (fileValidationStatus !== 'success' && fileValidationStatus !== 'warning') {
-         setErrorMsg("Por favor, carga un archivo Excel válido con prorrateos al 100%.");
-         return;
-      }
+      // Step 2 is now optional
       setStep(3);
     } else {
       finalizeOnboarding();

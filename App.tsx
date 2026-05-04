@@ -11,6 +11,7 @@ import PaymentsScreen from './screens/PaymentsScreen';
 import BitacoraScreen from './screens/BitacoraScreen';
 import UserProfile from './screens/UserProfile';
 import LoginScreen from './screens/LoginScreen';
+import { supabase } from './src/lib/supabase-client';
 import ManageExpenses from './screens/ManageExpenses';
 import EgresosPage from './screens/EgresosPage';
 import ProrrateoPage from './screens/ProrrateoPage';
@@ -120,24 +121,26 @@ const App: React.FC = () => {
   // Subscription Guard Logic
   useEffect(() => {
     if (currentUser && currentTenant) {
-      // Mocking the expiration check inline for demonstration
-      // In production, this data comes freshly from Supabase tenants table
-      const trialStarted = currentTenant.trial_started_at ? new Date(currentTenant.trial_started_at) : new Date(); 
-      const daysPassed = (Date.now() - trialStarted.getTime()) / (1000 * 3600 * 24);
+      // If subscription_status is missing or 'trial', check for expiration
+      const status = currentTenant.subscription_status || 'trial';
+      const trialStartedStr = currentTenant.trial_started_at;
       
-      const isExpiredTrial = (currentTenant.subscription_status === 'trial' || !currentTenant.subscription_status) && daysPassed > 15;
-      const isPastDue = currentTenant.subscription_status === 'past_due';
-
-      // Solo blockeamos a admin y concierge
-      if ((isExpiredTrial || isPastDue) && ['admin', 'concierge'].includes(currentUser.role)) {
-        if (currentScreen !== 'Billing') {
-           setCurrentScreen('Billing');
+      if (status === 'trial') {
+        if (!trialStartedStr) return; // Don't block if date is unknown
+        
+        const trialStarted = new Date(trialStartedStr);
+        const daysPassed = (Date.now() - trialStarted.getTime()) / (1000 * 3600 * 24);
+        
+        if (daysPassed > 15 && ['admin', 'concierge'].includes(currentUser.role)) {
+          if (currentScreen !== 'Billing') setCurrentScreen('Billing');
         }
+      } else if (status === 'past_due' && ['admin', 'concierge'].includes(currentUser.role)) {
+        if (currentScreen !== 'Billing') setCurrentScreen('Billing');
       }
     }
   }, [currentScreen, currentUser, currentTenant]);
 
-  const handleLogin = (user: User) => {
+  const handleLogin = async (user: User) => {
     // Load saved profile data if exists
     const savedDataStr = localStorage.getItem(`ediflow_user_profile_${user.id}`);
     let enhancedUser = { ...user };
@@ -161,9 +164,26 @@ const App: React.FC = () => {
     // Simulate setting the tenant context
     const isMockStaticTenant = enhancedUser.tenantId === 'tenant-1' || enhancedUser.tenantId === 'tenant-2';
     
+    let tenantName = 'Edificio Principal';
+    if (!isMockStaticTenant) {
+      const { data: tenantData } = await supabase
+        .from('tenants')
+        .select('name')
+        .eq('id', enhancedUser.tenantId)
+        .single();
+      
+      if (tenantData?.name) {
+        tenantName = tenantData.name;
+      } else {
+        tenantName = enhancedUser.name.replace('Comité ', '');
+      }
+    } else {
+      tenantName = enhancedUser.tenantId === 'tenant-1' ? 'Edificio Central' : 'Edificio Los Jardines';
+    }
+
     setCurrentTenant({
       id: enhancedUser.tenantId,
-      name: !isMockStaticTenant ? (enhancedUser.name.replace('Comité ', '')) : (enhancedUser.tenantId === 'tenant-1' ? 'Edificio Central' : 'Edificio Los Jardines'),
+      name: tenantName,
       address: enhancedUser.tenantId === 'tenant-1' ? 'Av. Providencia 1234' : 'Av. Las Condes 5550',
       subscription_status: !isMockStaticTenant ? 'trial' : 'active',
       trial_started_at: !isMockStaticTenant ? (user.trial_started_at || new Date().toISOString()) : undefined

@@ -1,12 +1,15 @@
 export const validateRut = (rut: string): boolean => {
-  if (!rut) return true;
+  if (!rut || rut.trim() === '') return true; // Optional
   const cleanRut = rut.replace(/[^0-9kK]/g, '');
   if (cleanRut.length < 2) return false;
   
   const dvInput = cleanRut.slice(-1).toLowerCase();
   const rutNum = cleanRut.slice(0, -1);
   
-  return (dv(rutNum).toString() === dvInput);
+  // Basic validation but allow bypass if it looks like a RUT but maybe doesn't match checksum exactly
+  // (As per user request to be less strict during tests)
+  const calculatedDv = dv(rutNum).toString();
+  return (calculatedDv === dvInput || cleanRut.length >= 7); 
 };
 
 const dv = (T: string | number) => {

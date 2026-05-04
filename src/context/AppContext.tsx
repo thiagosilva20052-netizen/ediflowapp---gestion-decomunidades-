@@ -34,11 +34,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return (saved === 'dark' || saved === 'light') ? saved : 'light';
   });
 
-  const [currentTenant, setCurrentTenant] = useState<Tenant | null>({
-    id: 'tenant-1',
-    name: 'Edificio Central',
-    address: 'Av. Providencia 1234'
-  });
+  const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
 
   const setTheme = (newTheme: 'light' | 'dark') => {
     setThemeState(newTheme);

@@ -91,7 +91,7 @@ const ProrrateoPage: React.FC<Props> = ({ navigate }) => {
         .select('*')
         .eq('tenant_id', currentTenant.id)
         .eq('status', 'Aprobado')
-        .gte('expense_date', firstDay);
+        .gte('date', firstDay);
 
       if (expData) setExpenses(expData);
 

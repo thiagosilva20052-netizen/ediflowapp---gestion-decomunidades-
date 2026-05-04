@@ -15,7 +15,7 @@ export const AdminDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
   const [isApproved, setIsApproved] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
-  const [viewMode, setViewMode] = useState<'tenant' | 'consolidated'>('consolidated');
+  const [viewMode, setViewMode] = useState<'tenant' | 'consolidated'>('tenant');
   const [showMigrationModal, setShowMigrationModal] = useState(false);
   const [migrationData, setMigrationData] = useState({ unitId: '', amount: '', description: '' });
   const [unitsList, setUnitsList] = useState<any[]>([]);
@@ -243,11 +243,11 @@ export const AdminDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
         {/* Premium Desktop Header */}
         <header className="px-6 md:px-16 pt-8 md:pt-16 pb-8 md:pb-12 sticky top-0 z-20 bg-gradient-to-b from-[#0A0A0A] via-[#0A0A0A]/95 to-transparent pointer-events-none md:bg-none flex flex-col md:flex-row justify-between md:items-start gap-6 md:gap-0">
           <div className="pointer-events-auto">
-             <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight text-white leading-none">
-               Hola, Administrador.
+             <h1 className="text-4xl md:text-5xl lg:text-3xl font-medium tracking-tight text-white leading-none">
+               {viewMode === 'consolidated' ? 'Portafolio Global' : currentTenant?.name}
              </h1>
-             <p className="text-gray-400 text-lg md:text-2xl mt-4 font-light block">
-               El pulso de tu comunidad.
+             <p className="text-gray-400 text-sm md:text-lg mt-2 font-light">
+               Hola, Administrador. {viewMode === 'consolidated' ? 'Resumen general de tus comunidades.' : 'Estado actual de tu edificio.'}
              </p>
           </div>
           

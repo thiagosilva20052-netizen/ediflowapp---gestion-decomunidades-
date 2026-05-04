@@ -62,7 +62,7 @@ const EgresosPage: React.FC<Props> = ({ navigate }) => {
       const { data, error } = await supabase
          .from('expenses')
          .select('*')
-         .order('expense_date', { ascending: false });
+         .order('date', { ascending: false });
 
       if (error) {
         console.error('Error fetching expenses:', error);
@@ -71,13 +71,13 @@ const EgresosPage: React.FC<Props> = ({ navigate }) => {
       if (data && data.length > 0) {
         const formatted = data.map(e => ({
           id: e.id,
-          provider: e.provider_name,
+          provider: e.description || 'Proveedor Genérico',
           amount: e.amount,
-          date: new Date(e.expense_date + 'T12:00:00Z').toLocaleDateString('es-CL'),
+          date: new Date(e.date + 'T12:00:00Z').toLocaleDateString('es-CL'),
           category: e.category || 'Gastos Administrativos',
           status: (e.status as 'Aprobado' | 'Pendiente') || 'Aprobado',
           aiMatched: false,
-          receipt_url: e.receipt_url
+          receipt_url: e.evidence_url
         }));
         setExpenses(formatted);
       } else {
@@ -193,13 +193,11 @@ const EgresosPage: React.FC<Props> = ({ navigate }) => {
       
       const { error } = await supabase.from('expenses').insert({
         tenant_id: tenantId,
-        provider_name: manualFormData.provider,
-        provider_rut: manualFormData.rut || null,
+        description: manualFormData.provider,
         amount: expenseAmount,
-        expense_date: manualFormData.date,
+        date: manualFormData.date,
         category: manualFormData.category,
         status: 'Aprobado',
-        is_reserve_fund_expense: manualFormData.isReserveFund,
         created_by: userProfile?.user?.id || null,
       });
 
@@ -246,9 +244,9 @@ const EgresosPage: React.FC<Props> = ({ navigate }) => {
           await supabase.from('expenses').insert([
             {
                 tenant_id: tenantId,
-                provider_name: 'Sueldos Líquidos (Nómina Bancaria)',
+                description: 'Sueldos Líquidos (Nómina Bancaria)',
                 amount: 2850000,
-                expense_date: today,
+                date: today,
                 category: 'Remuneraciones',
                 status: 'Pendiente',
                 created_by: user?.id || null
@@ -309,12 +307,12 @@ const EgresosPage: React.FC<Props> = ({ navigate }) => {
 
         const { error } = await supabase.from('expenses').insert({
           tenant_id: tenantId,
-          provider_name: scannedInvoice.provider,
+          description: scannedInvoice.provider,
           amount: scannedInvoice.amount,
-          expense_date: isoDate,
+          date: isoDate,
           category: scannedInvoice.category,
           status: 'Aprobado',
-          receipt_url: scannedInvoice.receipt_url || null,
+          evidence_url: scannedInvoice.receipt_url || null,
           created_by: userProfile?.user?.id || null,
         });
 

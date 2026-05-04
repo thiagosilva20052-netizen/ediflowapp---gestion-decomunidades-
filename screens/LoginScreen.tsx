@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from '../src/lib/supabase-client';
 import { Logo } from '../components/Logo';
 import { User, UserRole } from '../src/types';
 
@@ -20,59 +21,67 @@ const LoginScreen: React.FC<Props> = ({ onLogin, onBack, initialMode = 'login' }
   const [buildingName, setBuildingName] = useState('');
   const [units, setUnits] = useState('40');
   const [painPoint, setPainPoint] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Password validation
   const isPasswordValid = password.length >= 8;
 
-  // Mock users for prototyping
-  const mockUsers: Record<string, User> = {
-    'admin@ediflow.cl': { id: '1', name: 'Carlos Admin', email: 'admin@ediflow.cl', role: 'admin', tenantId: 'tenant-1' },
-    'conserje@ediflow.cl': { id: '2', name: 'Juan Pérez', email: 'conserje@ediflow.cl', role: 'concierge', tenantId: 'tenant-1' },
-    'residente@ediflow.cl': { id: '3', name: 'María González', email: 'residente@ediflow.cl', role: 'resident', tenantId: 'tenant-1', apartment: '402' },
-    
-    // Segundo tenant para probar multi-tenencia
-    'admin2@edificiob.cl': { id: '4', name: 'Ana Admin B', email: 'admin2@edificiob.cl', role: 'admin', tenantId: 'tenant-2' },
-    'conserje2@edificiob.cl': { id: '5', name: 'Pedro Conserje B', email: 'conserje2@edificiob.cl', role: 'concierge', tenantId: 'tenant-2' },
-  };
-
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+    setError(null);
     
-    const user = mockUsers[email.toLowerCase()];
-    
-    if (!user) {
-      alert('Credenciales inválidas. Usa los botones de atajo para probar.');
-      return;
-    }
+    try {
+      const { data: { user }, error: authError } = await supabase.auth.signInWithPassword({
+        email: email.toLowerCase(),
+        password: password,
+      });
 
-    setTimeout(() => {
-      onLogin(user);
-    }, 500);
+      if (authError) throw authError;
+
+      if (user) {
+        // Fetch profile to get role and tenantId
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) throw profileError;
+
+        onLogin({
+          id: user.id,
+          email: user.email!,
+          name: profile.full_name || user.email!.split('@')[0],
+          role: profile.role,
+          tenantId: profile.tenant_id,
+          apartment: profile.apartment
+        });
+      }
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setError(err.message || 'Error al iniciar sesión. Por favor verifica tus credenciales.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleRegisterNext = (e: React.FormEvent) => {
+  const handleRegisterNext = async (e: React.FormEvent) => {
     e.preventDefault();
     if (registerStep < 3) {
       setRegisterStep(registerStep + 1);
     } else {
-      // Finish registration and auto-login as Admin
-      setTimeout(() => {
-        onLogin(mockUsers['admin@ediflow.cl']);
-      }, 500);
+      // In case of success login, return basic user info
+      onLogin({
+        id: 'user-' + Math.random(),
+        email: email,
+        name: email.split('@')[0],
+        role: 'admin',
+        tenantId: 'new-tenant-' + Math.random(),
+      });
     }
   };
-
-  // Demo direct login buttons for fast testing
-  const renderDemoLogins = () => (
-    <div className="mt-8 pt-6 border-t border-white/10">
-      <p className="text-xs text-center text-gray-500 mb-4 uppercase tracking-widest">Atajos de Prueba (Role Detection)</p>
-      <div className="flex gap-2 justify-center">
-        <button type="button" onClick={() => setEmail('admin@ediflow.cl')} className="px-3 py-1.5 rounded bg-white/5 hover:bg-white/10 text-[10px] text-gray-400 font-medium transition-colors">Admin</button>
-        <button type="button" onClick={() => setEmail('conserje@ediflow.cl')} className="px-3 py-1.5 rounded bg-white/5 hover:bg-white/10 text-[10px] text-gray-400 font-medium transition-colors">Conserje</button>
-        <button type="button" onClick={() => setEmail('residente@ediflow.cl')} className="px-3 py-1.5 rounded bg-white/5 hover:bg-white/10 text-[10px] text-gray-400 font-medium transition-colors">Residente</button>
-      </div>
-    </div>
-  );
 
   return (
     <div className="flex min-h-screen bg-black">
@@ -131,11 +140,18 @@ const LoginScreen: React.FC<Props> = ({ onLogin, onBack, initialMode = 'login' }
 
                 <button 
                   type="submit"
-                  className="w-full bg-ediflow-primary text-black font-bold tracking-tight py-3.5 rounded-xl text-sm hover:bg-white transition-colors mt-2"
+                  disabled={loading}
+                  className="w-full bg-ediflow-primary text-black font-bold tracking-tight py-3.5 rounded-xl text-sm hover:bg-white transition-colors mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Acceder al Sistema
+                  {loading ? 'Iniciando sesión...' : 'Acceder al Sistema'}
                 </button>
               </form>
+
+              {error && (
+                <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs text-center">
+                  {error}
+                </div>
+              )}
 
               <div className="mt-6 text-center">
                 <p className="text-sm text-gray-500">
@@ -146,7 +162,6 @@ const LoginScreen: React.FC<Props> = ({ onLogin, onBack, initialMode = 'login' }
                 </p>
               </div>
 
-              {renderDemoLogins()}
             </div>
           ) : (
             /* ==================== REGISTER FLOW ==================== */
