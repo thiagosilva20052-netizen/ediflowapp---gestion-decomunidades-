@@ -114,12 +114,58 @@ export const OnboardingScreen: React.FC<Props> = ({ onComplete, registeredEmail 
     }
   };
 
+  const finalizeOnboarding = () => {
+    setIsLoading(true);
+    
+    setTimeout(async () => {
+      // Create actual tenant in Supabase
+      const newTenantId = crypto.randomUUID();
+      const trialStartedAt = new Date().toISOString();
+      
+      try {
+        const { data: user } = await supabase.auth.getUser();
+        if (user?.user) {
+          // Clear supabase draft
+          await supabase.from('onboarding_drafts').delete().eq('user_id', user.user.id);
+          
+          // Insert tenant
+          const { error: tenantError } = await supabase.from('tenants').insert({
+            id: newTenantId,
+            name: buildingName,
+            address: buildingAddress,
+            rut_edificio: buildingRut,
+            subscription_status: 'trial',
+            trial_started_at: trialStartedAt,
+            bank_name: bankName,
+            account_number: accountNumber,
+            account_type: accountType
+          });
+          
+          if (tenantError) console.error("Error creating tenant in DB", tenantError);
+        }
+      } catch (err) {
+        console.error("Error finalizing onboarding", err);
+      }
+
+      setIsLoading(false);
+      // Creamos la sesión para la cuenta maestra, que tiene rol 'admin' (Comité/Dueño)
+      onComplete({
+        id: 'user-' + Math.random(),
+        name: 'Comité ' + buildingName,
+        email: registeredEmail,
+        role: 'admin',
+        tenantId: newTenantId,
+        trial_started_at: trialStartedAt
+      });
+    }, 1500);
+  };
+
   const handleNext = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
 
     if (step === 1) {
-      if (!validateRut(buildingRut)) {
+      if (buildingRut && !validateRut(buildingRut)) {
         setErrorMsg("El RUT de la comunidad no es válido");
         return;
       }
@@ -131,29 +177,7 @@ export const OnboardingScreen: React.FC<Props> = ({ onComplete, registeredEmail 
       }
       setStep(3);
     } else {
-      setIsLoading(true);
-      // Simulate Database Insertion for Tenant
-      setTimeout(async () => {
-        setIsLoading(false);
-        // Clear supabase draft
-        try {
-          const { data: user } = await supabase.auth.getUser();
-          if (user?.user) {
-            await supabase.from('onboarding_drafts').delete().eq('user_id', user.user.id);
-          }
-        } catch (err) {
-          console.error("Error deleting draft", err);
-        }
-
-        // Creamos la sesión para la cuenta maestra, que tiene rol 'admin' (Comité/Dueño)
-        onComplete({
-          id: 'user-' + Math.random(),
-          name: 'Comité ' + buildingName,
-          email: registeredEmail,
-          role: 'admin',
-          tenantId: 'tenant-new-' + Math.random() // Simulation of generated UUID
-        });
-      }, 1500);
+      finalizeOnboarding();
     }
   };
 
@@ -218,10 +242,9 @@ export const OnboardingScreen: React.FC<Props> = ({ onComplete, registeredEmail 
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 ml-1">RUT Comunidad</label>
+                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 ml-1">RUT Comunidad (Opcional)</label>
                     <input
                       type="text"
-                      required
                       value={buildingRut}
                       onChange={handleRutChange}
                       placeholder="65.000.000-0"
@@ -308,6 +331,15 @@ export const OnboardingScreen: React.FC<Props> = ({ onComplete, registeredEmail 
                          )}
                      </label>
                  </div>
+
+                 <button 
+                   type="button"
+                   onClick={finalizeOnboarding}
+                   className="w-full py-4 text-xs font-bold text-gray-500 hover:text-white transition-all flex items-center justify-center gap-2 border border-white/5 rounded-xl hover:bg-white/5 group mt-2"
+                 >
+                   CONTINUAR SIN IMPORTAR
+                   <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                 </button>
               </>
             )}
 

@@ -9,6 +9,7 @@ export interface User {
   apartment?: string; // Solo para residentes
   rut?: string;
   phone?: string;
+  trial_started_at?: string;
 }
 
 export interface Tenant {

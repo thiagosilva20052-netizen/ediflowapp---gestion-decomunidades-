@@ -1,13 +1,12 @@
 export const validateRut = (rut: string): boolean => {
-  if (!/^[0-9]+[-|‐]{1}[0-9kK]{1}$/.test(rut)) return false;
+  if (!rut) return true;
+  const cleanRut = rut.replace(/[^0-9kK]/g, '');
+  if (cleanRut.length < 2) return false;
   
-  let tmp = rut.split('-');
-  let digv = tmp[1]; 
-  let rutNum = tmp[0];
+  const dvInput = cleanRut.slice(-1).toLowerCase();
+  const rutNum = cleanRut.slice(0, -1);
   
-  if(digv === 'K') digv = 'k';
-  
-  return (dv(rutNum) == digv);
+  return (dv(rutNum).toString() === dvInput);
 };
 
 const dv = (T: string | number) => {

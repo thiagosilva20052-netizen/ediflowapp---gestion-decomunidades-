@@ -220,7 +220,7 @@ export const BuildingSettings: React.FC<Props> = ({ navigate }) => {
                         </div>
                         <div className="space-y-2">
                           <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">
-                            RUT de la Comunidad
+                            RUT de la Comunidad (Opcional)
                           </label>
                           <input 
                             type="text" 
@@ -229,7 +229,6 @@ export const BuildingSettings: React.FC<Props> = ({ navigate }) => {
                             onChange={handleRUTChange}
                             maxLength={12}
                             className="w-full h-14 bg-[#0A0A0A] border border-white/5 rounded-xl px-4 text-white focus:outline-none focus:border-white/20 focus:bg-[#141414] transition-all font-mono tracking-widest text-sm"
-                            required
                           />
                         </div>
                         <div className="space-y-2 md:col-span-2">

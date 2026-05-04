@@ -122,7 +122,7 @@ const App: React.FC = () => {
     if (currentUser && currentTenant) {
       // Mocking the expiration check inline for demonstration
       // In production, this data comes freshly from Supabase tenants table
-      const trialStarted = currentTenant.trial_started_at ? new Date(currentTenant.trial_started_at) : new Date(Date.now() - 16 * 24 * 60 * 60 * 1000); // MOCK: Expired 16 days ago
+      const trialStarted = currentTenant.trial_started_at ? new Date(currentTenant.trial_started_at) : new Date(); 
       const daysPassed = (Date.now() - trialStarted.getTime()) / (1000 * 3600 * 24);
       
       const isExpiredTrial = (currentTenant.subscription_status === 'trial' || !currentTenant.subscription_status) && daysPassed > 15;
@@ -159,10 +159,14 @@ const App: React.FC = () => {
     setCurrentUser(enhancedUser);
     
     // Simulate setting the tenant context
+    const isMockStaticTenant = enhancedUser.tenantId === 'tenant-1' || enhancedUser.tenantId === 'tenant-2';
+    
     setCurrentTenant({
       id: enhancedUser.tenantId,
-      name: enhancedUser.tenantId === 'tenant-1' ? 'Edificio Central' : 'Edificio Los Jardines',
-      address: enhancedUser.tenantId === 'tenant-1' ? 'Av. Providencia 1234' : 'Av. Las Condes 5550'
+      name: !isMockStaticTenant ? (enhancedUser.name.replace('Comité ', '')) : (enhancedUser.tenantId === 'tenant-1' ? 'Edificio Central' : 'Edificio Los Jardines'),
+      address: enhancedUser.tenantId === 'tenant-1' ? 'Av. Providencia 1234' : 'Av. Las Condes 5550',
+      subscription_status: !isMockStaticTenant ? 'trial' : 'active',
+      trial_started_at: !isMockStaticTenant ? (user.trial_started_at || new Date().toISOString()) : undefined
     });
 
     // Route to default screen based on role
