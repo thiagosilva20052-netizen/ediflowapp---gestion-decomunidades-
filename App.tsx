@@ -1,54 +1,56 @@
-import React, { useState, useEffect } from 'react';
-import ConciergeDashboard from './screens/ConciergeDashboard';
-import PackageEntry from './screens/PackageEntry';
-import CommunityWall from './screens/CommunityWall';
-import ResidentServices from './screens/ResidentServices';
-import AdminDashboard from './screens/AdminDashboard';
-import QRCodeScreen from './screens/QRCodeScreen';
-import AccessControl from './screens/AccessControl';
-import MessagesScreen from './screens/MessagesScreen';
-import PaymentsScreen from './screens/PaymentsScreen';
-import BitacoraScreen from './screens/BitacoraScreen';
-import UserProfile from './screens/UserProfile';
-import LoginScreen from './screens/LoginScreen';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { supabase } from './src/lib/supabase-client';
-import ManageExpenses from './screens/ManageExpenses';
-import EgresosPage from './screens/EgresosPage';
-import ProrrateoPage from './screens/ProrrateoPage';
-import MapConfigPage from './screens/MapConfigPage';
-import RecaudacionPage from './screens/RecaudacionPage';
-import FinanceCommunicationsPage from './screens/FinanceCommunicationsPage';
-import MorosidadPage from './screens/MorosidadPage';
-import MultasPage from './screens/MultasPage';
-import ReportesFinancierosPage from './screens/ReportesFinancierosPage';
-import MedidoresPage from './screens/MedidoresPage';
-import ManualVisitorRegistration from './screens/ManualVisitorRegistration';
-import StaffManagement from './screens/StaffManagement';
-import RegisterPayment from './screens/RegisterPayment';
-import NovedadEntry from './screens/NovedadEntry';
-import ResidentDirectory from './screens/ResidentDirectory';
-import Emergency from './screens/Emergency';
-import Maintenance from './screens/Maintenance';
-import Reservations from './screens/Reservations';
-import LandingPage from './screens/LandingPage';
-import SolutionsPage from './screens/SolutionsPage';
-import ResourcesPage from './screens/ResourcesPage';
-import OS10SimulatorPublic from './screens/OS10SimulatorPublic';
-import PricingPage from './screens/PricingPage';
-import BookDemoPage from './screens/BookDemoPage';
-import BuildingSettings from './screens/BuildingSettings';
-import PrivacyPage from './screens/PrivacyPage';
-import TermsPage from './screens/TermsPage';
-import NoiseGuidePage from './screens/NoiseGuidePage';
-import ProrrationTemplatePage from './screens/ProrrationTemplatePage';
-import ChecklistLeyPage from './screens/ChecklistLeyPage';
-import { RegisterScreen } from './screens/RegisterScreen';
-import { OnboardingScreen } from './screens/OnboardingScreen';
-import { AuditLogsPage } from './screens/AuditLogsPage';
-import { BillingPage } from './screens/BillingPage';
 import { useAppContext } from './src/context/AppContext';
 import { User, UserRole } from './src/types';
 import { ModuleHub } from './components/ModuleHub';
+
+const ConciergeDashboard = lazy(() => import('./screens/ConciergeDashboard'));
+const PackageEntry = lazy(() => import('./screens/PackageEntry'));
+const CommunityWall = lazy(() => import('./screens/CommunityWall'));
+const ResidentServices = lazy(() => import('./screens/ResidentServices'));
+const AdminDashboard = lazy(() => import('./screens/AdminDashboard'));
+const QRCodeScreen = lazy(() => import('./screens/QRCodeScreen'));
+const AccessControl = lazy(() => import('./screens/AccessControl'));
+const MessagesScreen = lazy(() => import('./screens/MessagesScreen'));
+const PaymentsScreen = lazy(() => import('./screens/PaymentsScreen'));
+const BitacoraScreen = lazy(() => import('./screens/BitacoraScreen'));
+const UserProfile = lazy(() => import('./screens/UserProfile'));
+const LoginScreen = lazy(() => import('./screens/LoginScreen'));
+const ManageExpenses = lazy(() => import('./screens/ManageExpenses'));
+const EgresosPage = lazy(() => import('./screens/EgresosPage'));
+const ProrrateoPage = lazy(() => import('./screens/ProrrateoPage'));
+const MapConfigPage = lazy(() => import('./screens/MapConfigPage'));
+const RecaudacionPage = lazy(() => import('./screens/RecaudacionPage'));
+const FinanceCommunicationsPage = lazy(() => import('./screens/FinanceCommunicationsPage'));
+const MorosidadPage = lazy(() => import('./screens/MorosidadPage'));
+const MultasPage = lazy(() => import('./screens/MultasPage'));
+const ReportesFinancierosPage = lazy(() => import('./screens/ReportesFinancierosPage'));
+const MedidoresPage = lazy(() => import('./screens/MedidoresPage'));
+const ManualVisitorRegistration = lazy(() => import('./screens/ManualVisitorRegistration'));
+const StaffManagement = lazy(() => import('./screens/StaffManagement'));
+const RegisterPayment = lazy(() => import('./screens/RegisterPayment'));
+const NovedadEntry = lazy(() => import('./screens/NovedadEntry'));
+const ResidentDirectory = lazy(() => import('./screens/ResidentDirectory'));
+const Emergency = lazy(() => import('./screens/Emergency'));
+const Maintenance = lazy(() => import('./screens/Maintenance'));
+const Reservations = lazy(() => import('./screens/Reservations'));
+const LandingPage = lazy(() => import('./screens/LandingPage'));
+const SolutionsPage = lazy(() => import('./screens/SolutionsPage'));
+const ResourcesPage = lazy(() => import('./screens/ResourcesPage'));
+const OS10SimulatorPublic = lazy(() => import('./screens/OS10SimulatorPublic'));
+const PricingPage = lazy(() => import('./screens/PricingPage'));
+const BookDemoPage = lazy(() => import('./screens/BookDemoPage'));
+const BuildingSettings = lazy(() => import('./screens/BuildingSettings'));
+const PrivacyPage = lazy(() => import('./screens/PrivacyPage'));
+const TermsPage = lazy(() => import('./screens/TermsPage'));
+const NoiseGuidePage = lazy(() => import('./screens/NoiseGuidePage'));
+const ProrrationTemplatePage = lazy(() => import('./screens/ProrrationTemplatePage'));
+const ChecklistLeyPage = lazy(() => import('./screens/ChecklistLeyPage'));
+const RegisterScreen = lazy(() => import('./screens/RegisterScreen').then(m => ({ default: m.RegisterScreen })));
+const OnboardingScreen = lazy(() => import('./screens/OnboardingScreen').then(m => ({ default: m.OnboardingScreen })));
+const AuditLogsPage = lazy(() => import('./screens/AuditLogsPage').then(m => ({ default: m.AuditLogsPage })));
+const BillingPage = lazy(() => import('./screens/BillingPage').then(m => ({ default: m.BillingPage })));
+
 
 // Navigation types
 export type ScreenName = 
@@ -117,6 +119,40 @@ const App: React.FC = () => {
       document.documentElement.classList.remove('dark');
     }
   }, [theme]);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user && !currentUser) {
+        // Auto login on start if session exists
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+
+          if (profile) {
+            handleLogin({
+              id: session.user.id,
+              email: session.user.email!,
+              name: profile.full_name || session.user.email!.split('@')[0],
+              role: profile.role,
+              tenantId: profile.tenant_id,
+              apartment: profile.apartment
+            });
+          }
+        } catch (err) {
+          console.error("Error loading user profile on auth state change", err);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        handleLogout();
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [currentUser]);
 
   // Subscription Guard Logic
   useEffect(() => {
@@ -328,7 +364,9 @@ const App: React.FC = () => {
       <div className="flex h-screen overflow-hidden">
         {/* Screen Content */}
         <div className="flex-1 overflow-y-auto no-scrollbar relative">
-          {renderScreen()}
+          <Suspense fallback={<div className="flex h-full items-center justify-center bg-black text-white">Cargando...</div>}>
+            {renderScreen()}
+          </Suspense>
         </div>
 
         {currentUser && (

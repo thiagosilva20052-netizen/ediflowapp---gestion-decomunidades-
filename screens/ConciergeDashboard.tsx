@@ -131,7 +131,7 @@ export const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
           tenant_id: currentTenant.id,
           user_id: currentUserId,
           action: 'Ingreso Visita por PIN',
-          details: `Visita ${visitData.visitor_name} (PIN: ${pinValue}) al Depto ${visitData.units?.unit_number}`,
+          details: `Visita ${visitData.visitor_name} (PIN: ${pinValue}) al Depto ${(visitData.units as any)?.unit_number}`,
           module: 'access_control',
           severity: 'info'
         });
@@ -144,13 +144,13 @@ export const ConciergeDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
            unitId: visitData.unit_id,
            tenantId: currentTenant.id,
            visitorName: visitData.visitor_name,
-           unitNumber: visitData.units?.unit_number,
+           unitNumber: (visitData.units as any)?.unit_number,
            tenantName: currentTenant.name,
            accessedAt: new Date().toLocaleString()
         })
       }).catch(err => console.error('Push error:', err));
 
-      alert(`✅ Acceso Aprobado:\nVisita: ${visitData.visitor_name}\nDepto: ${visitData.units?.unit_number}`);
+      alert(`✅ Acceso Aprobado:\nVisita: ${visitData.visitor_name}\nDepto: ${(visitData.units as any)?.unit_number}`);
       setPinValue("");
       pinInputRef.current?.focus();
 

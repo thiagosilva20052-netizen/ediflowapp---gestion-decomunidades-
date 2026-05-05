@@ -98,16 +98,16 @@ const ManualVisitorRegistration: React.FC<Props> = ({ navigate, from }) => {
         module: 'access',
         severity: 'info'
     };
-    supabase.from('audit_logs').insert(payload).catch(console.error);
+    supabase.from('audit_logs').insert(payload as any).then(({error}) => { if(error) console.error(error) });
 
     const logPayload = {
         tenant_id: currentTenant.id,
         type: 'visita',
         title: `Ingreso Visita ${formData.depto}`,
         description: `Rut: ${formData.rut}, Nombre: ${formData.name}, Motivo: ${formData.reason}`,
-        user_id: currentUser?.id
+        created_by: currentUser?.id
     };
-    supabase.from('logs').insert(logPayload).catch(console.error);
+    supabase.from('logs').insert(logPayload as any).then(({error}) => { if(error) console.error(error) });
   };
 
     if (showSuccess) {

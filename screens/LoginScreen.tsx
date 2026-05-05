@@ -72,14 +72,35 @@ const LoginScreen: React.FC<Props> = ({ onLogin, onBack, initialMode = 'login' }
     if (registerStep < 3) {
       setRegisterStep(registerStep + 1);
     } else {
-      // In case of success login, return basic user info
-      onLogin({
-        id: 'user-' + Math.random(),
-        email: email,
-        name: email.split('@')[0],
-        role: 'admin',
-        tenantId: 'new-tenant-' + Math.random(),
-      });
+      setLoading(true);
+      setError(null);
+      try {
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email: email.toLowerCase(),
+          password: password,
+          options: {
+            data: {
+              building_name: buildingName,
+              units_count: units,
+              pain_point: painPoint
+            }
+          }
+        });
+        
+        if (signUpError) throw signUpError;
+        
+        // Wait, normally OnboardingScreen handles this correctly in our app.
+        // It's better if we just alert success or login directly.
+        if (data.user) {
+          setError("Registro exitoso. Revisa tu correo o inicia sesión ahora.");
+          setMode('login');
+        }
+      } catch (err: any) {
+        console.error('Register error:', err);
+        setError(err.message || 'Error al registrar la cuenta.');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -279,6 +300,11 @@ const LoginScreen: React.FC<Props> = ({ onLogin, onBack, initialMode = 'login' }
                   </div>
                 )}
 
+                {error && (
+                  <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs text-center">
+                    {error}
+                  </div>
+                )}
                 <div className="pt-4 flex gap-3">
                   {registerStep > 1 && (
                     <button 

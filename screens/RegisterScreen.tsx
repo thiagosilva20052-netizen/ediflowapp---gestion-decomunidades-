@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ScreenName } from '../App';
 import { motion, AnimatePresence } from 'motion/react';
 import { Logo } from '../components/Logo';
+import { supabase } from '../src/lib/supabase-client';
 import { validateEmail, validatePassword } from '../src/lib/validations';
 
 interface Props {
@@ -16,7 +17,7 @@ export const RegisterScreen: React.FC<Props> = ({ onRegisterDetails, navigate })
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
 
@@ -37,13 +38,27 @@ export const RegisterScreen: React.FC<Props> = ({ onRegisterDetails, navigate })
     }
     
     setIsLoading(true);
-    // Simular registro en Supabase Auth
-    setTimeout(() => {
-      setIsLoading(false);
-      // Avanzamos al Onboarding del Edificio
-      onRegisterDetails({ email });
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: email.toLowerCase(),
+        password,
+        options: {
+          data: {
+            role: 'admin',
+          }
+        }
+      });
+
+      if (error) throw error;
+      
+      onRegisterDetails({ email, userId: data.user?.id });
       navigate('Onboarding');
-    }, 1000);
+    } catch (err: any) {
+      console.error(err);
+      setErrorMsg(err.message || 'Error al crear la cuenta.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

@@ -50,6 +50,35 @@ async function startServer() {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
+  // Admin User Creation (Conserjes / Residentes)
+  app.post('/api/admin/create-user', async (req, res) => {
+    try {
+      const { email, password, full_name, role, tenant_id } = req.body;
+      if (!email || !password || !tenant_id) {
+        return res.status(400).json({ error: 'Faltan datos requeridos (email, password, tenant_id)' });
+      }
+
+      const { supabaseServer } = await import('./src/lib/supabase-server.js');
+      const { data, error } = await (supabaseServer as any).auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: {
+          full_name,
+          role,
+          tenant_id
+        }
+      });
+
+      if (error) throw error;
+
+      res.json({ user: data.user });
+    } catch (err: any) {
+      console.error('Error creating user via admin API:', err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // MercadoPago - Crear Preferencia Suscripción Ediflow
   app.post('/api/checkout/create-preference', async (req, res) => {
     try {

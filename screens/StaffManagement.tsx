@@ -1,13 +1,57 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScreenName } from '../App';
+import { supabase } from '../src/lib/supabase-client';
+import { useAppContext } from '../src/context/AppContext';
 
 interface Props {
   navigate: (screen: ScreenName) => void;
 }
 
+interface StaffMember {
+  id: string;
+  name: string;
+  rut: string;
+  role: string;
+  initials: string;
+  isNew?: boolean;
+  email?: string;
+  password?: string;
+}
+
 const StaffManagement: React.FC<Props> = ({ navigate }) => {
+  const { currentTenant } = useAppContext();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isAddingMode, setIsAddingMode] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [newCredentials, setNewCredentials] = useState<{name: string, email: string, password: string} | null>(null);
+
+  const [staffList, setStaffList] = useState<StaffMember[]>([]);
+
+  useEffect(() => {
+    if (currentTenant?.id) {
+       fetchStaff();
+    }
+  }, [currentTenant?.id]);
+
+  const fetchStaff = async () => {
+    const { data, error } = await supabase
+       .from('profiles')
+       .select('id, full_name, email, role')
+       .eq('tenant_id', currentTenant!.id)
+       .in('role', ['admin', 'concierge']);
+    
+    if (data && !error) {
+       const formatted = data.map((user: any) => ({
+         id: user.id,
+         name: user.full_name || user.email.split('@')[0],
+         rut: 'N/A',
+         role: user.role === 'admin' ? 'Administración' : 'Conserjería',
+         initials: (user.full_name ? user.full_name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : 'US'),
+         email: user.email
+       }));
+       setStaffList(formatted);
+    }
+  };
 
   const [formData, setFormData] = useState({
     name: '',
@@ -19,13 +63,48 @@ const StaffManagement: React.FC<Props> = ({ navigate }) => {
   const showToast = (msg: string) => {
       setToastMessage(msg);
       setTimeout(() => setToastMessage(null), 3000);
-      setIsAddingMode(false);
   };
 
-  const handleSaveConserje = (e: React.FormEvent) => {
+  const handleSaveConserje = async (e: React.FormEvent) => {
       e.preventDefault();
-      showToast("Conserje registrado exitosamente");
-      setFormData({ name: '', rut: '', email: '', password: '' });
+      
+      if (!currentTenant?.id) return;
+      setIsLoading(true);
+
+      try {
+        const response = await fetch(`${(import.meta as any).env.VITE_BASE_URL || 'http://localhost:3000'}/api/admin/create-user`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+               email: formData.email,
+               password: formData.password,
+               full_name: formData.name,
+               role: 'concierge',
+               tenant_id: currentTenant.id
+            })
+        });
+
+        if (!response.ok) {
+           const errData = await response.json();
+           throw new Error(errData.error || 'Failed to create user');
+        }
+
+        await fetchStaff(); // Reload the staff list
+
+        setNewCredentials({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password
+        });
+        showToast("Conserje registrado exitosamente");
+        setFormData({ name: '', rut: '', email: '', password: '' });
+        setIsAddingMode(false);
+      } catch (err) {
+         console.error(err);
+         alert("Error al registrar conserje");
+      } finally {
+         setIsLoading(false);
+      }
   };
 
   return (
@@ -55,7 +134,10 @@ const StaffManagement: React.FC<Props> = ({ navigate }) => {
         </div>
         <div className="hidden md:flex items-center gap-3">
              <button 
-                 onClick={() => setIsAddingMode(true)}
+                 onClick={() => {
+                   setNewCredentials(null);
+                   setIsAddingMode(true);
+                 }}
                  className="h-10 px-5 rounded-xl bg-ediflow-primary text-black hover:bg-white active:scale-95 transition-all text-xs font-bold uppercase tracking-widest flex items-center gap-2 shadow-[0_0_15px_rgba(0,174,239,0.3)]"
              >
                  <span className="material-symbols-outlined text-[18px]">person_add</span> Nuevo Conserje
@@ -155,10 +237,10 @@ const StaffManagement: React.FC<Props> = ({ navigate }) => {
                   </button>
                   <button 
                      type="submit"
-                     disabled={!formData.name || !formData.rut || !formData.email || !formData.password}
+                     disabled={isLoading || !formData.name || !formData.rut || !formData.email || !formData.password}
                      className="px-8 py-4 rounded-xl bg-ediflow-primary text-black font-bold text-xs uppercase tracking-widest hover:bg-white transition-all active:scale-95 disabled:opacity-50 disabled:grayscale flex items-center gap-2"
                   >
-                     Crear Cuenta <span className="material-symbols-outlined text-[18px]">person_add</span>
+                     {isLoading ? 'Creando...' : 'Crear Cuenta'} {isLoading ? <div className="w-4 h-4 border-2 border-black border-t-white rounded-full animate-spin"></div> : <span className="material-symbols-outlined text-[18px]">person_add</span>}
                   </button>
                </div>
             </form>
@@ -167,61 +249,78 @@ const StaffManagement: React.FC<Props> = ({ navigate }) => {
                <div className="md:hidden flex justify-between items-center mb-6">
                  <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">Personal Activo</h2>
                  <button 
-                     onClick={() => setIsAddingMode(true)}
+                     onClick={() => {
+                       setNewCredentials(null);
+                       setIsAddingMode(true);
+                     }}
                      className="h-10 px-4 rounded-xl bg-ediflow-primary text-black active:scale-95 transition-all text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5"
                  >
                      <span className="material-symbols-outlined text-[16px]">add</span> Nuevo
                  </button>
                </div>
 
-               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {/* Persona Card */}
-                  <div className="bg-[#111] p-6 rounded-[2rem] border border-white/5 hover:border-white/15 hover:bg-[#141414] transition-all group flex flex-col">
-                     <div className="flex items-start justify-between mb-6">
-                        <div className="relative">
-                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=100" className="w-16 h-16 rounded-full object-cover border border-white/10" alt="Avatar"/>
-                            <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-[#111]"></div>
-                        </div>
-                        <span className="text-[9px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-md bg-white/5 text-gray-400 group-hover:text-white transition-colors border border-white/5">
-                           Conserjería
-                        </span>
-                     </div>
+               {newCredentials && (
+                 <div className="mb-8 p-6 bg-green-500/10 border border-green-500/30 rounded-2xl animate-fade-in-up">
+                   <div className="flex items-start gap-4">
+                     <span className="material-symbols-outlined text-green-500 text-3xl">check_circle</span>
                      <div>
-                        <h3 className="text-xl font-medium text-white tracking-tight mb-1">Carlos Mendoza</h3>
-                        <p className="text-sm font-mono text-gray-500 mb-6">RUT: 15.340.211-K</p>
+                       <h3 className="text-xl font-medium text-white mb-2">¡Cuenta creada para {newCredentials.name}!</h3>
+                       <p className="text-gray-400 text-sm mb-4">Entrega estas credenciales temporales a {newCredentials.name} para que pueda acceder a su cuenta. Se le solicitará cambiar la contraseña en su primer inicio de sesión.</p>
+                       <div className="bg-[#0A0A0A] p-4 rounded-xl flex gap-6 items-center w-max">
+                         <div>
+                           <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1 font-bold">Usuario / Email</p>
+                           <p className="font-mono text-ediflow-primary">{newCredentials.email}</p>
+                         </div>
+                         <div className="w-px h-10 bg-white/10"></div>
+                         <div>
+                           <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1 font-bold">Contraseña</p>
+                           <p className="font-mono text-white">{newCredentials.password}</p>
+                         </div>
+                       </div>
+                       <button onClick={() => setNewCredentials(null)} className="mt-4 text-xs text-green-400 font-medium hover:text-green-300">
+                         Cerrar Aviso
+                       </button>
                      </div>
-                     
-                     <div className="mt-auto pt-5 border-t border-white/5 flex grid grid-cols-2 gap-3">
-                         <button className="flex items-center justify-center gap-2 h-10 rounded-xl bg-[#0A0A0A] border border-white/10 text-gray-400 hover:text-ediflow-primary hover:border-ediflow-primary/30 transition-all font-semibold text-[11px] uppercase tracking-wider">
-                            <span className="material-symbols-outlined text-[16px]">edit</span> Editar
-                         </button>
-                         <button className="flex items-center justify-center gap-2 h-10 rounded-xl bg-[#0A0A0A] border border-white/10 text-gray-400 hover:text-red-500 hover:bg-red-500/10 hover:border-red-500/30 transition-all font-semibold text-[11px] uppercase tracking-wider">
-                            <span className="material-symbols-outlined text-[16px]">block</span> Suspender
-                         </button>
-                     </div>
-                  </div>
+                   </div>
+                 </div>
+               )}
 
-                  {/* Persona Card 2 */}
-                  <div className="bg-[#111] p-6 rounded-[2rem] border border-white/5 hover:border-white/15 hover:bg-[#141414] transition-all group flex flex-col">
-                     <div className="flex items-start justify-between mb-6">
-                        <div className="w-16 h-16 rounded-full bg-[#1A1A1A] border border-white/10 flex items-center justify-center text-gray-500 text-xl font-medium">
-                            AM
-                        </div>
-                     </div>
-                     <div>
-                        <h3 className="text-xl font-medium text-white tracking-tight mb-1">Ana Martínez</h3>
-                        <p className="text-sm font-mono text-gray-500 mb-6">RUT: 18.234.900-1</p>
-                     </div>
-                     
-                     <div className="mt-auto pt-5 border-t border-white/5 flex grid grid-cols-2 gap-3">
-                         <button className="flex items-center justify-center gap-2 h-10 rounded-xl bg-[#0A0A0A] border border-white/10 text-gray-400 hover:text-ediflow-primary hover:border-ediflow-primary/30 transition-all font-semibold text-[11px] uppercase tracking-wider">
-                            <span className="material-symbols-outlined text-[16px]">edit</span> Editar
-                         </button>
-                         <button className="flex items-center justify-center gap-2 h-10 rounded-xl bg-[#0A0A0A] border border-white/10 text-gray-400 hover:text-red-500 hover:bg-red-500/10 hover:border-red-500/30 transition-all font-semibold text-[11px] uppercase tracking-wider">
-                            <span className="material-symbols-outlined text-[16px]">block</span> Suspender
-                         </button>
-                     </div>
-                  </div>
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {staffList.map((member) => (
+                    <div key={member.id} className={`bg-[#111] p-6 rounded-[2rem] border transition-all group flex flex-col ${member.isNew ? 'border-ediflow-primary hover:border-ediflow-primary bg-ediflow-primary/5' : 'border-white/5 hover:border-white/15 hover:bg-[#141414]'}`}>
+                       <div className="flex items-start justify-between mb-6">
+                          <div className="relative">
+                              {member.name === 'Carlos Mendoza' ? (
+                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=100" className="w-16 h-16 rounded-full object-cover border border-white/10" alt="Avatar"/>
+                              ) : (
+                                <div className="w-16 h-16 rounded-full bg-[#1A1A1A] border border-white/10 flex items-center justify-center text-gray-500 text-xl font-medium">
+                                    {member.initials}
+                                </div>
+                              )}
+                              <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-[#111]"></div>
+                          </div>
+                          <span className="text-[9px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-md bg-white/5 text-gray-400 group-hover:text-white transition-colors border border-white/5">
+                             {member.role}
+                          </span>
+                       </div>
+                       <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="text-xl font-medium text-white tracking-tight">{member.name}</h3>
+                            {member.isNew && <span className="bg-ediflow-primary/20 text-ediflow-primary text-[10px] px-2 py-0.5 rounded font-bold uppercase">Nuevo</span>}
+                          </div>
+                          <p className="text-sm font-mono text-gray-500 mb-6">RUT: {member.rut}</p>
+                       </div>
+                       
+                       <div className="mt-auto pt-5 border-t border-white/5 flex grid grid-cols-2 gap-3">
+                           <button className="flex items-center justify-center gap-2 h-10 rounded-xl bg-[#0A0A0A] border border-white/10 text-gray-400 hover:text-ediflow-primary hover:border-ediflow-primary/30 transition-all font-semibold text-[11px] uppercase tracking-wider">
+                              <span className="material-symbols-outlined text-[16px]">edit</span> Editar
+                           </button>
+                           <button className="flex items-center justify-center gap-2 h-10 rounded-xl bg-[#0A0A0A] border border-white/10 text-gray-400 hover:text-red-500 hover:bg-red-500/10 hover:border-red-500/30 transition-all font-semibold text-[11px] uppercase tracking-wider">
+                              <span className="material-symbols-outlined text-[16px]">block</span> Suspender
+                           </button>
+                       </div>
+                    </div>
+                  ))}
                </div>
             </>
          )}
@@ -231,3 +330,4 @@ const StaffManagement: React.FC<Props> = ({ navigate }) => {
 };
 
 export default StaffManagement;
+

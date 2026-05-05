@@ -168,8 +168,8 @@ const ResidentDirectory: React.FC<Props> = ({ navigate, role }) => {
 
   const filteredUnits = units.filter(u => 
     u.unit_number.includes(searchQuery) ||
-    u.profiles?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    u.profiles?.email?.toLowerCase().includes(searchQuery.toLowerCase())
+    (u.profiles as any)?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (u.profiles as any)?.email?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -477,8 +477,8 @@ const ResidentDirectory: React.FC<Props> = ({ navigate, role }) => {
 
                           {/* Avatar */}
                           <div className="w-16 h-16 md:w-24 md:h-24 rounded-full bg-[#1A1A1A] border-2 border-white/10 mb-3 md:mb-4 overflow-hidden relative shadow-inner group-hover:scale-105 transition-transform duration-500 mt-4 md:mt-2">
-                             {unit.profiles?.metadata?.avatar_url ? (
-                                <img src={unit.profiles.metadata.avatar_url} alt="Resident Avatar" className="w-full h-full object-cover" />
+                             {(unit.profiles as any)?.metadata?.avatar_url ? (
+                                <img src={(unit.profiles as any).metadata.avatar_url} alt="Resident Avatar" className="w-full h-full object-cover" />
                              ) : (
                                 <div className="w-full h-full flex flex-col items-center justify-center text-gray-600 bg-gradient-to-tr from-[#0A0A0A] to-[#141414]">
                                    <span className="material-symbols-outlined text-[24px] md:text-[40px] opacity-50">person</span>
@@ -487,9 +487,9 @@ const ResidentDirectory: React.FC<Props> = ({ navigate, role }) => {
                           </div>
 
                           {/* Details */}
-                          <h3 className="font-semibold text-white tracking-tight mb-0.5 text-sm md:text-base leading-tight">{unit.profiles?.full_name || 'Sin asignación'}</h3>
+                          <h3 className="font-semibold text-white tracking-tight mb-0.5 text-sm md:text-base leading-tight">{(unit.profiles as any)?.full_name || 'Sin asignación'}</h3>
                           <p className="text-[9px] md:text-[10px] text-gray-500 font-mono tracking-widest uppercase mb-1 truncate max-w-full px-2">
-                             {unit.profiles?.role === 'resident' ? 'Residente' : (unit.profiles?.role || 'Vacante')}
+                             {(unit.profiles as any)?.role === 'resident' ? 'Residente' : ((unit.profiles as any)?.role || 'Vacante')}
                           </p>
 
                           {role === 'admin' ? (
@@ -505,9 +505,9 @@ const ResidentDirectory: React.FC<Props> = ({ navigate, role }) => {
 
                           {/* Quick Call Action */}
                           <div className="w-full mt-auto">
-                              {(unit.contact_phone || unit.profiles?.metadata?.phone) ? (
+                              {(unit.contact_phone || (unit.profiles as any)?.metadata?.phone) ? (
                                 <a 
-                                  href={`tel:${unit.contact_phone || unit.profiles?.metadata?.phone}`}
+                                  href={`tel:${unit.contact_phone || (unit.profiles as any)?.metadata?.phone}`}
                                   className="w-full py-2.5 bg-white/5 hover:bg-ediflow-primary hover:text-black border border-white/5 rounded-xl flex items-center justify-center gap-1.5 text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all shadow-sm group/btn active:scale-95"
                                 >
                                   <span className="material-symbols-outlined text-[16px]">call</span>

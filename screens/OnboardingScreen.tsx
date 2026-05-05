@@ -114,50 +114,57 @@ export const OnboardingScreen: React.FC<Props> = ({ onComplete, registeredEmail 
     }
   };
 
-  const finalizeOnboarding = () => {
+  const finalizeOnboarding = async () => {
     setIsLoading(true);
     
-    setTimeout(async () => {
-      // Create actual tenant in Supabase
-      const newTenantId = crypto.randomUUID();
-      const trialStartedAt = new Date().toISOString();
-      
-      try {
-        const { data: user } = await supabase.auth.getUser();
-        if (user?.user) {
-          // Clear supabase draft
-          await supabase.from('onboarding_drafts').delete().eq('user_id', user.user.id);
-          
-          // Insert tenant
-          const { error: tenantError } = await supabase.from('tenants').insert({
-            id: newTenantId,
-            name: buildingName,
-            address: buildingAddress,
-            rut_edificio: buildingRut,
-            subscription_status: 'trial',
-            trial_started_at: trialStartedAt,
-            bank_name: bankName,
-            account_number: accountNumber,
-            account_type: accountType
-          });
-          
-          if (tenantError) console.error("Error creating tenant in DB", tenantError);
-        }
-      } catch (err) {
-        console.error("Error finalizing onboarding", err);
-      }
+    // Create actual tenant in Supabase
+    const newTenantId = crypto.randomUUID();
+    const trialStartedAt = new Date().toISOString();
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        // Clear supabase draft
+        await supabase.from('onboarding_drafts').delete().eq('user_id', user.id);
+        
+        // Insert tenant
+        const { error: tenantError } = await supabase.from('tenants').insert({
+          id: newTenantId,
+          name: buildingName,
+          address: buildingAddress,
+          rut_edificio: buildingRut,
+          subscription_status: 'trial',
+          trial_started_at: trialStartedAt,
+          bank_name: bankName,
+          account_number: accountNumber,
+          account_type: accountType
+        });
+        
+        if (tenantError) throw tenantError;
 
+        // Update profile
+        const { error: profileError } = await supabase.from('profiles').update({
+          tenant_id: newTenantId,
+          full_name: 'Comité ' + buildingName,
+        }).eq('id', user.id);
+
+        if (profileError) throw profileError;
+
+        setIsLoading(false);
+        onComplete({
+          id: user.id,
+          name: 'Comité ' + buildingName,
+          email: user.email || registeredEmail,
+          role: 'admin',
+          tenantId: newTenantId,
+          trial_started_at: trialStartedAt
+        });
+      }
+    } catch (err: any) {
+      console.error("Error finalizing onboarding", err);
+      setErrorMsg(err.message || 'Error al completar el registro.');
       setIsLoading(false);
-      // Creamos la sesión para la cuenta maestra, que tiene rol 'admin' (Comité/Dueño)
-      onComplete({
-        id: 'user-' + Math.random(),
-        name: 'Comité ' + buildingName,
-        email: registeredEmail,
-        role: 'admin',
-        tenantId: newTenantId,
-        trial_started_at: trialStartedAt
-      });
-    }, 1500);
+    }
   };
 
   const handleNext = (e: React.FormEvent) => {
