@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ScreenName } from '../App';
+import type { ScreenName } from '../App';
 import { motion, AnimatePresence } from 'motion/react';
 import { Logo } from '../components/Logo';
 import { supabase } from '../src/lib/supabase-client';
@@ -11,9 +11,9 @@ interface Props {
 }
 
 export const RegisterScreen: React.FC<Props> = ({ onRegisterDetails, navigate }) => {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -32,8 +32,8 @@ export const RegisterScreen: React.FC<Props> = ({ onRegisterDetails, navigate })
       return;
     }
 
-    if (password !== confirmPassword) {
-      setErrorMsg("Las contraseñas no coinciden");
+    if (!name.trim()) {
+      setErrorMsg("El nombre completo es requerido");
       return;
     }
     
@@ -45,6 +45,7 @@ export const RegisterScreen: React.FC<Props> = ({ onRegisterDetails, navigate })
         options: {
           data: {
             role: 'admin',
+            full_name: name,
           }
         }
       });
@@ -100,6 +101,20 @@ export const RegisterScreen: React.FC<Props> = ({ onRegisterDetails, navigate })
             </AnimatePresence>
             <div>
               <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 ml-1">
+                Nombre Completo
+              </label>
+              <input
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Juan Pérez"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-ediflow-primary/50 focus:border-ediflow-primary transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 ml-1">
                 Correo Institucional
               </label>
               <input
@@ -121,20 +136,6 @@ export const RegisterScreen: React.FC<Props> = ({ onRegisterDetails, navigate })
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-ediflow-primary/50 focus:border-ediflow-primary transition-all"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 ml-1">
-                Confirmar Contraseña
-              </label>
-              <input
-                type="password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-ediflow-primary/50 focus:border-ediflow-primary transition-all"
               />

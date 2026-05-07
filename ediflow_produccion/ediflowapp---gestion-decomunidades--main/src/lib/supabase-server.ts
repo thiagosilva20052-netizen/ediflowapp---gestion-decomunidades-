@@ -3,7 +3,7 @@ import type { Database } from '../types/database.types';
 import dotenv from 'dotenv';
 dotenv.config();
 
-let supabaseUrl = process.env.VITE_SUPABASE_URL || '';
+let supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
 if (supabaseUrl) {
   supabaseUrl = supabaseUrl.trim().replace(/\/+$/, '');
   if (!supabaseUrl.startsWith('http://') && !supabaseUrl.startsWith('https://')) {

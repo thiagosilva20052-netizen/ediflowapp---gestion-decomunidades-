@@ -105,7 +105,6 @@ const App: React.FC = () => {
   const { currentUser, setCurrentUser, isGlobalMenuOpen, setIsGlobalMenuOpen, theme, setCurrentTenant, currentTenant } = useAppContext();
   const [currentScreen, setCurrentScreen] = useState<ScreenName>('Landing');
   const [previousScreen, setPreviousScreen] = useState<ScreenName | null>(null);
-  const [registeredEmail, setRegisteredEmail] = useState<string>('');
 
   const handleNavigate = (screen: ScreenName) => {
     setPreviousScreen(currentScreen);
@@ -197,38 +196,43 @@ const App: React.FC = () => {
 
     setCurrentUser(enhancedUser);
     
-    // Simulate setting the tenant context
-    const isMockStaticTenant = enhancedUser.tenantId === 'tenant-1' || enhancedUser.tenantId === 'tenant-2';
+    // Set the tenant context
+    const { data: tenantData } = await supabase
+      .from('tenants')
+      .select('*')
+      .eq('id', enhancedUser.tenantId)
+      .single();
     
-    let tenantName = 'Edificio Principal';
-    if (!isMockStaticTenant) {
-      const { data: tenantData } = await supabase
-        .from('tenants')
-        .select('name')
-        .eq('id', enhancedUser.tenantId)
-        .single();
-      
-      if (tenantData?.name) {
-        tenantName = tenantData.name;
-      } else {
-        tenantName = enhancedUser.name.replace('Comité ', '');
-      }
+    if (tenantData) {
+      setCurrentTenant({
+        id: tenantData.id,
+        name: tenantData.name,
+        address: tenantData.address,
+        subscription_status: tenantData.subscription_status || 'trial',
+        trial_started_at: tenantData.trial_started_at
+      });
     } else {
-      tenantName = enhancedUser.tenantId === 'tenant-1' ? 'Edificio Central' : 'Edificio Los Jardines';
+      // Fallback if tenant not found (shouldn't happen in production)
+      setCurrentTenant({
+        id: enhancedUser.tenantId,
+        name: 'Comunidad en Configuración',
+        address: 'Dirección pendiente',
+        subscription_status: 'trial'
+      });
     }
 
-    setCurrentTenant({
-      id: enhancedUser.tenantId,
-      name: tenantName,
-      address: enhancedUser.tenantId === 'tenant-1' ? 'Av. Providencia 1234' : 'Av. Las Condes 5550',
-      subscription_status: !isMockStaticTenant ? 'trial' : 'active',
-      trial_started_at: !isMockStaticTenant ? (user.trial_started_at || new Date().toISOString()) : undefined
-    });
-
     // Route to default screen based on role
-    if (enhancedUser.role === 'admin') setCurrentScreen('AdminDashboard');
-    else if (enhancedUser.role === 'concierge') setCurrentScreen('ConciergeDashboard');
-    else if (enhancedUser.role === 'resident') setCurrentScreen('ResidentServices');
+    if (enhancedUser.role === 'admin') {
+      if (!enhancedUser.tenantId) {
+        setCurrentScreen('Onboarding');
+      } else {
+        setCurrentScreen('AdminDashboard');
+      }
+    } else if (enhancedUser.role === 'concierge') {
+      setCurrentScreen('ConciergeDashboard');
+    } else if (enhancedUser.role === 'resident') {
+      setCurrentScreen('ResidentServices');
+    }
   };
 
   const handleLogout = () => {
@@ -239,13 +243,19 @@ const App: React.FC = () => {
   const renderScreen = () => {
     if (!currentUser) {
       if (currentScreen === 'Login') {
-        return <LoginScreen onLogin={handleLogin} onBack={() => setCurrentScreen('Landing')} initialMode="login" />;
+        return (
+          <LoginScreen 
+            onLogin={handleLogin} 
+            onRegisterClick={() => setCurrentScreen('Register')}
+            onBack={() => setCurrentScreen('Landing')} 
+          />
+        );
       }
       if (currentScreen === 'Register') {
-        return <RegisterScreen onRegisterDetails={(details) => setRegisteredEmail(details.email)} navigate={setCurrentScreen} />;
+        return <RegisterScreen onRegisterDetails={() => {}} navigate={setCurrentScreen} />;
       }
       if (currentScreen === 'Onboarding') {
-        return <OnboardingScreen onComplete={handleLogin} registeredEmail={registeredEmail} />;
+        return <OnboardingScreen onComplete={handleLogin} />;
       }
       if (currentScreen === 'Solutions') {
         return <SolutionsPage onLoginClick={() => setCurrentScreen('Login')} onNavigate={setCurrentScreen} />;
@@ -280,8 +290,12 @@ const App: React.FC = () => {
       return <LandingPage onLoginClick={() => setCurrentScreen('Login')} onNavigate={setCurrentScreen} />;
     }
 
+    if (!currentUser?.tenantId) {
+      return <OnboardingScreen onComplete={handleLogin} />;
+    }
+
     const roleAccess: Record<UserRole, ScreenName[]> = {
-      admin: ['AdminDashboard', 'ManageExpenses', 'EgresosPage', 'ProrrateoPage', 'RecaudacionPage', 'ReportesFinancierosPage', 'RegisterPayment', 'BitacoraScreen', 'UserProfile', 'AuditLogs'],
+      admin: ['AdminDashboard', 'ManageExpenses', 'EgresosPage', 'ProrrateoPage', 'RecaudacionPage', 'ReportesFinancierosPage', 'RegisterPayment', 'BitacoraScreen', 'UserProfile', 'AuditLogs', 'BuildingSettings', 'StaffManagement', 'Billing'],
       concierge: ['ConciergeDashboard', 'PackageEntry', 'AccessControl', 'MessagesScreen', 'BitacoraScreen', 'UserProfile', 'ManualVisitorRegistration', 'RegisterPayment', 'ResidentDirectory', 'Reservations', 'Maintenance', 'Emergency', 'NovedadEntry', 'Billing'],
       resident: ['ResidentServices', 'CommunityWall', 'MessagesScreen', 'PaymentsScreen', 'UserProfile', 'QRCodeScreen', 'Reservations', 'Maintenance', 'Emergency']
     };

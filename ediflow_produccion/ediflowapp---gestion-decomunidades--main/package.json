@@ -8,7 +8,11 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "tsc --noEmit",
-    "start": "node --experimental-strip-types server.ts"
+    "start": "node --experimental-strip-types server.ts",
+    "supabase:secrets:set": "supabase secrets set VAPID_PRIVATE_KEY=\"<your-private-key>\" VAPID_PUBLIC_KEY=\"<your-public-key>\"",
+    "functions:deploy": "supabase functions deploy sendPush --project-ref <your-project-ref>",
+    "deploy:notifications": "npm run supabase:secrets:set && npm run functions:deploy",
+    "test:notifications:mock": "node ./scripts/test_notifications_mock.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.1",

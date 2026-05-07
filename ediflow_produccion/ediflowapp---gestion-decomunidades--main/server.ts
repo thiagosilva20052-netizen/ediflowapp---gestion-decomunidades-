@@ -11,13 +11,46 @@ import { Resend } from 'resend';
 
 dotenv.config();
 
-// Web Push Config
-if (process.env.VITE_VAPID_PUBLIC_KEY && process.env.VITE_VAPID_PRIVATE_KEY) {
+// Web Push Config (use non-client-prefixed env vars)
+if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
   webpush.setVapidDetails(
     'mailto:admin@ediflow.cl',
-    process.env.VITE_VAPID_PUBLIC_KEY,
-    process.env.VITE_VAPID_PRIVATE_KEY
+    process.env.VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
   );
+}
+
+// Helper: invoke Supabase Edge Function `sendPush`
+async function sendPushViaEdge(subscription: any, payload: any) {
+  try {
+    const supabaseUrl = (process.env.SUPABASE_URL || '').replace(/\/+$/,'');
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
+
+    if (!supabaseUrl) throw new Error('SUPABASE_URL not configured');
+    if (!serviceKey) throw new Error('SUPABASE_SERVICE_ROLE_KEY not configured');
+
+    const fnUrl = `${supabaseUrl}/functions/v1/sendPush`;
+
+    const resp = await fetch(fnUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${serviceKey}`,
+        'apikey': serviceKey
+      },
+      body: JSON.stringify({ subscription, payload })
+    });
+
+    if (!resp.ok) {
+      const text = await resp.text();
+      throw new Error(`Edge function error: ${resp.status} ${text}`);
+    }
+
+    return await resp.json();
+  } catch (err) {
+    console.error('sendPushViaEdge failed:', err);
+    throw err;
+  }
 }
 
 // MercadoPago Config
@@ -115,9 +148,9 @@ async function startServer() {
              }
           ],
           back_urls: {
-            success: `${process.env.VITE_BASE_URL || 'http://localhost:3000'}/`,
-            failure: `${process.env.VITE_BASE_URL || 'http://localhost:3000'}/`,
-            pending: `${process.env.VITE_BASE_URL || 'http://localhost:3000'}/`
+            success: `${process.env.BASE_URL || 'http://localhost:3000'}/`,
+            failure: `${process.env.BASE_URL || 'http://localhost:3000'}/`,
+            pending: `${process.env.BASE_URL || 'http://localhost:3000'}/`
           },
           auto_return: 'approved',
           external_reference: tenantId, // Pass the tenantId to activate it on webhook
@@ -338,14 +371,37 @@ async function startServer() {
                     }
       }
       
-      // Simulated Push
-      const payload = JSON.stringify({
+      // Push payload
+      const payload = {
         title,
         body,
         icon: '/apple-touch-icon.png',
         badge: '/favicon.ico',
-      });
-      // webpush.sendNotification(...) logic goes here
+      };
+
+      // Attempt to fetch stored push subscriptions for the unit and trigger Edge Function
+      try {
+        const { supabaseServer } = await import('./src/lib/supabase-server.js');
+        const { data: subs } = await (supabaseServer as any)
+          .from('push_subscriptions')
+          .select('subscription')
+          .eq('unit_id', unitId)
+          .eq('tenant_id', tenantId);
+
+        if (subs && Array.isArray(subs) && subs.length > 0) {
+          for (const s of subs) {
+            try {
+              await sendPushViaEdge(s.subscription, payload);
+            } catch (err) {
+              console.error('Failed to send push to subscription:', err);
+            }
+          }
+        } else {
+          console.debug('No push subscriptions found for unit', unitId);
+        }
+      } catch (err) {
+        console.error('Error querying push_subscriptions or sending push:', err);
+      }
       
       res.status(200).json({ success: true, message: 'Notification sent.' });
 
@@ -399,12 +455,13 @@ async function startServer() {
                      <p style="margin: 0; color: #991B1B;"><strong>Hora de Activación:</strong> ${activatedAt}</p>
                   </div>
                   <p>Por favor, revisa el panel de administración o conserjería de inmediato.</p>
-                  <a href="${process.env.VITE_BASE_URL || 'https://seguify.app'}/dashboard" style="display: inline-block; padding: 12px 24px; background-color: #EF4444; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 10px;">Ver Panel de Control</a>
+                       <a href="${process.env.BASE_URL || 'https://seguify.app'}/dashboard" style="display: inline-block; padding: 12px 24px; background-color: #EF4444; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 10px;">Ver Panel de Control</a>
                   <p>Saludos,<br/>Sistema de Seguridad Seguify</p>
                 </div>
               `;
               
               const adminEmails = adminProfiles.map((p: any) => p.email).filter(Boolean);
+              const adminIds = adminProfiles.map((p: any) => p.id).filter(Boolean);
               
               if (adminEmails.length > 0) {
                  const { error: emailError } = await resend.emails.send({
@@ -418,6 +475,35 @@ async function startServer() {
                     console.error('[SOS Email Failed]', emailError);
                  } else {
                  }
+                // Push notifications to admins
+                try {
+                  if (adminIds.length > 0) {
+                    const { data: adminSubs } = await (supabaseServer as any)
+                      .from('push_subscriptions')
+                      .select('subscription')
+                      .in('user_id', adminIds)
+                      .eq('tenant_id', tenantId);
+
+                    if (adminSubs && adminSubs.length > 0) {
+                      const payload = {
+                        title: '🚨 ALERTA SOS',
+                        body: `SOS activado en unidad ${unitNumber}`,
+                        icon: '/apple-touch-icon.png',
+                        badge: '/favicon.ico',
+                      };
+
+                      for (const s of adminSubs) {
+                        try {
+                          await sendPushViaEdge(s.subscription, payload);
+                        } catch (err) {
+                          console.error('Failed to send SOS push to admin subscription:', err);
+                        }
+                      }
+                    }
+                  }
+                } catch (pushErr) {
+                  console.error('Failed to query/send admin push subscriptions:', pushErr);
+                }
               }
            }
          } catch (bgError) {
@@ -482,13 +568,33 @@ async function startServer() {
                                }
            }
            
-           // Simulated Push
-           const payload = JSON.stringify({
+           // Push payload
+           const payload = {
              title: '🚪 Tu visita ha ingresado',
              body: `${visitorName} ha entrado al predio.`,
              icon: '/apple-touch-icon.png',
              badge: '/favicon.ico',
-           });
+           };
+
+           try {
+             const { data: subs } = await (supabaseServer as any)
+               .from('push_subscriptions')
+               .select('subscription')
+               .eq('unit_id', unitId)
+               .eq('tenant_id', tenantId);
+
+             if (subs && subs.length > 0) {
+               for (const s of subs) {
+                 try {
+                   await sendPushViaEdge(s.subscription, payload);
+                 } catch (err) {
+                   console.error('Failed to send visit push to subscription:', err);
+                 }
+               }
+             }
+           } catch (pushErr) {
+             console.error('[Visit Push Error]', pushErr);
+           }
            
          } catch (bgError) {
            console.error('[Background Notification Error - Visit]', bgError);

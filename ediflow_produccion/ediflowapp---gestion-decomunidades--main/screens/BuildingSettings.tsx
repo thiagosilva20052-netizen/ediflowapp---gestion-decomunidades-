@@ -17,9 +17,6 @@ export const BuildingSettings: React.FC<Props> = ({ navigate }) => {
     name: currentTenant?.name || '',
     rut: currentTenant?.rut_edificio || '',
     address: currentTenant?.address || '',
-    bankAccount: currentTenant?.config?.bank_account || '',
-    bankName: currentTenant?.config?.bank_name || '',
-    bankType: currentTenant?.config?.bank_type || 'Corriente',
     adminEmail: currentTenant?.config?.admin_email || '',
     adminPhone: currentTenant?.config?.admin_phone || '',
     unitsCount: currentTenant?.config?.units_count || '120',
@@ -114,9 +111,6 @@ export const BuildingSettings: React.FC<Props> = ({ navigate }) => {
         rut_edificio: formData.rut,
         config: {
           ...currentTenant.config,
-          bank_account: formData.bankAccount,
-          bank_name: formData.bankName,
-          bank_type: formData.bankType,
           admin_email: formData.adminEmail,
           admin_phone: formData.adminPhone,
           units_count: formData.unitsCount
@@ -289,54 +283,7 @@ export const BuildingSettings: React.FC<Props> = ({ navigate }) => {
                     </div>
                 </div>
 
-                {/* Bank Information (New Section) */}
-                <div className="bg-[#111] p-8 rounded-[2rem] border border-white/5 shadow-2xl border-l-4 border-l-amber-500">
-                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-6 pb-4 border-b border-white/5 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[16px]">account_balance</span>
-                        Cuenta Bancaria de la Comunidad
-                    </h3>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">
-                            Banco
-                          </label>
-                          <input 
-                            type="text" 
-                            placeholder="Ej: Banco Estado"
-                            value={formData.bankName}
-                            onChange={(e) => setFormData({...formData, bankName: e.target.value})}
-                            className="w-full h-14 bg-[#0A0A0A] border border-white/5 rounded-xl px-4 text-white focus:outline-none focus:border-white/20 focus:bg-[#141414] transition-all text-sm font-medium"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">
-                            Tipo de Cuenta
-                          </label>
-                          <select 
-                            value={formData.bankType}
-                            onChange={(e) => setFormData({...formData, bankType: e.target.value})}
-                            className="w-full h-14 bg-[#0A0A0A] border border-white/5 rounded-xl px-4 text-white focus:outline-none focus:border-white/20 focus:bg-[#141414] transition-all text-sm font-medium appearance-none"
-                          >
-                            <option value="Corriente">Cuenta Corriente</option>
-                            <option value="Vista">Cuenta Vista / RUT</option>
-                            <option value="Ahorro">Cuenta de Ahorro</option>
-                          </select>
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-1">
-                            Número de Cuenta
-                          </label>
-                          <input 
-                            type="text" 
-                            placeholder="Ej: 123456789"
-                            value={formData.bankAccount}
-                            onChange={(e) => setFormData({...formData, bankAccount: e.target.value})}
-                            className="w-full h-14 bg-[#0A0A0A] border border-white/5 rounded-xl px-4 text-white focus:outline-none focus:border-white/20 focus:bg-[#141414] transition-all font-mono tracking-widest text-sm"
-                          />
-                        </div>
-                    </div>
-                </div>
+
 
                 {/* Contact Information */}
                 <div className="bg-[#111] p-8 rounded-[2rem] border border-white/5 shadow-2xl">

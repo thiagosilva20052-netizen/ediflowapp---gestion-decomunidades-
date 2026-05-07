@@ -41,7 +41,8 @@ export const env = {
   supabaseAnonKey: supabaseAnonKey!,
   resendApiKey: (import.meta as any).env.VITE_RESEND_API_KEY || '',
   vapidPublicKey: (import.meta as any).env.VITE_VAPID_PUBLIC_KEY || '',
-  vapidPrivateKey: (import.meta as any).env.VITE_VAPID_PRIVATE_KEY || '',
+  // NOTE: The VAPID private key must never be included in client bundles.
+  // Keep signing operations on the server (Edge Function / backend) instead.
   isProduction: (import.meta as any).env.PROD,
   baseUrl: (import.meta as any).env.VITE_BASE_URL || 'http://localhost:3000',
 };

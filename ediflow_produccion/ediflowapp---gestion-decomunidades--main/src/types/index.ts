@@ -1,5 +1,19 @@
 export type UserRole = 'admin' | 'concierge' | 'resident';
 
+export interface BuildingData {
+  name: string;
+  rut: string;
+  address: string;
+  commune: string;
+}
+
+export interface ImportedResident {
+  depto: string;
+  name: string;
+  email: string;
+  phone: string;
+}
+
 export interface User {
   id: string;
   name: string;

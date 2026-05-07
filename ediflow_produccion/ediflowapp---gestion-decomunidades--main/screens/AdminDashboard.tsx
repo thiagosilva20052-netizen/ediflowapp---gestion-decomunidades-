@@ -22,12 +22,29 @@ export const AdminDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
   const [globalSOS, setGlobalSOS] = useState<any[]>([]);
   const [failedLogs, setFailedLogs] = useState<any[]>([]);
   
-  // Available Communities Mock (Simulating Multi-Tenant)
-  const availableCommunities = [
-     { id: currentTenant?.id || '1', name: currentTenant?.name || 'Edificio Principal', role: 'admin' },
-     { id: '2', name: 'Torre Reñaca (Demo)', role: 'admin' },
-     { id: '3', name: 'Condominio El Bosque (Demo)', role: 'concierge' } 
-  ];
+  const [availableCommunities, setAvailableCommunities] = useState<any[]>([]);
+
+  useEffect(() => {
+    const loadUserCommunities = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session?.user) return;
+
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('role, tenant_id, tenants(name)')
+        .eq('id', sessionData.session.user.id);
+      
+      if (profiles) {
+        const formatted = profiles.map(p => ({
+          id: p.tenant_id,
+          name: (p.tenants as any)?.name || 'Edificio',
+          role: p.role
+        }));
+        setAvailableCommunities(formatted);
+      }
+    };
+    loadUserCommunities();
+  }, []);
 
   const handleSelectCommunity = (tenantId: string) => {
      if (tenantId === 'consolidated') {

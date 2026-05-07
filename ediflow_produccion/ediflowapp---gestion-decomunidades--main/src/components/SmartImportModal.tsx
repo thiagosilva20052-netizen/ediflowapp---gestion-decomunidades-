@@ -32,73 +32,98 @@ const SmartImportModal: React.FC<Props> = ({ isOpen, onClose, onImport, existing
 
   if (!isOpen) return null;
 
-  // Simulate AI Analysis and Validation
   const analyzeData = (data: any[]) => {
     setStep('analyzing');
     
-    setTimeout(() => {
-      const analyzedRows: ImportRow[] = data.map((item, index) => {
-        const errors: string[] = [];
-        const warnings: string[] = [];
-        let duplicateOf: string | undefined = undefined;
+    // Process data (AI-like validation)
+    const analyzedRows: ImportRow[] = data.map((item, index) => {
+      const errors: string[] = [];
+      const warnings: string[] = [];
+      let duplicateOf: string | undefined = undefined;
 
-        // 1. Validate Required Fields
-        if (!item.name || item.name.trim() === '') errors.push('Falta el nombre');
-        if (!item.depto || item.depto.trim() === '') errors.push('Falta el departamento');
+      // 1. Validate Required Fields
+      if (!item.name || item.name.trim() === '') errors.push('Falta el nombre');
+      if (!item.depto || item.depto.trim() === '') errors.push('Falta el departamento');
 
-        // 2. Validate Formats
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (item.email && !emailRegex.test(item.email)) {
-          errors.push('Formato de correo inválido');
-        }
+      // 2. Validate Formats
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (item.email && !emailRegex.test(item.email)) {
+        errors.push('Formato de correo inválido');
+      }
 
-        // 3. Check Duplicates against existing residents
-        const existingMatch = existingResidents.find(
-          r => r.name.toLowerCase() === item.name?.toLowerCase() || 
-               (r.depto === item.depto && item.depto !== '')
-        );
+      // 3. Check Duplicates against existing residents
+      const existingMatch = existingResidents.find(
+        r => r.name.toLowerCase() === item.name?.toLowerCase() || 
+             (r.depto === item.depto && item.depto !== '')
+      );
 
-        if (existingMatch) {
-          warnings.push(`Posible duplicado con residente existente: ${existingMatch.name} (Depto ${existingMatch.depto})`);
-          duplicateOf = existingMatch.id;
-        }
+      if (existingMatch) {
+        warnings.push(`Posible duplicado con residente existente: ${existingMatch.name} (Depto ${existingMatch.depto})`);
+        duplicateOf = existingMatch.id;
+      }
 
-        // 4. Check Duplicates within the import file itself
-        const fileMatchIndex = data.findIndex((r, i) => i < index && r.name?.toLowerCase() === item.name?.toLowerCase());
-        if (fileMatchIndex !== -1) {
-          warnings.push(`Nombre repetido en la fila ${fileMatchIndex + 1} de este archivo`);
-        }
+      // 4. Check Duplicates within the import file itself
+      const fileMatchIndex = data.findIndex((r, i) => i < index && r.name?.toLowerCase() === item.name?.toLowerCase());
+      if (fileMatchIndex !== -1) {
+        warnings.push(`Nombre repetido en la fila ${fileMatchIndex + 1} de este archivo`);
+      }
 
-        return {
-          ...item,
-          _id: Math.random().toString(36).substr(2, 9),
-          rowNumber: index + 1,
-          errors,
-          warnings,
-          duplicateOf,
-          action: errors.length > 0 ? 'skip' : 'import' // Skip by default if errors exist
-        };
-      });
+      return {
+        ...item,
+        _id: crypto.randomUUID(),
+        rowNumber: index + 1,
+        errors,
+        warnings,
+        duplicateOf,
+        action: errors.length > 0 ? 'skip' : 'import'
+      };
+    });
 
-      setRows(analyzedRows);
-      setStep('review');
-    }, 1500); // Simulate processing time
+    setRows(analyzedRows);
+    setStep('review');
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // In a real app, we would parse the CSV/Excel here.
-    // For this demo, we will load a predefined "messy" dataset to showcase the AI features.
-    loadDemoData();
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      if (!text) return;
+
+      // Basic CSV Parser
+      const lines = text.split(/\r?\n/);
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+      
+      const parsedData = lines.slice(1).filter(line => line.trim() !== '').map(line => {
+        const values = line.split(',').map(v => v.trim());
+        const entry: any = {};
+        headers.forEach((header, i) => {
+          // Map headers to internal keys
+          if (header.includes('nombre')) entry.name = values[i];
+          else if (header.includes('depto') || header.includes('unidad')) entry.depto = values[i];
+          else if (header.includes('tel') || header.includes('fono')) entry.phone = values[i];
+          else if (header.includes('mail') || header.includes('correo')) entry.email = values[i];
+          else if (header.includes('bodega')) entry.bodega = values[i];
+          else if (header.includes('estac')) entry.parking = values[i];
+        });
+        return entry;
+      });
+
+      analyzeData(parsedData);
+    };
+    reader.readAsText(file);
   };
 
   const loadDemoData = () => {
     const messyData = [
-      { name: 'Roberto Gómez', depto: '501', phone: '+56 9 1111 2222', email: 'roberto@mail.com', parking: 'E-10' }, // Valid
-      { name: '', depto: '502', phone: '+56 9 3333 4444', email: 'sin-nombre@mail.com' }, // Error: No name
-      { name: 'Lucía Fernández', depto: '', phone: '+56 9 5555 6666', email: 'lucia@mail.com' }, // Error: No depto
-      { name: 'Pedro Pascal', depto: '601', phone: '12345', email: 'pedro.pascal.com' }, // Error: Invalid email
-      { name: 'María González', depto: '402', phone: '+56 9 1234 5678', email: 'maria.g@example.com' }, // Warning: Duplicate with existing
-      { name: 'Roberto Gómez', depto: '501', phone: '+56 9 1111 2222', email: 'roberto2@mail.com' }, // Warning: Duplicate in file
+      { name: 'Roberto Gómez', depto: '501', phone: '+56 9 1111 2222', email: 'roberto@mail.com', parking: 'E-10' },
+      { name: '', depto: '502', phone: '+56 9 3333 4444', email: 'sin-nombre@mail.com' },
+      { name: 'Lucía Fernández', depto: '', phone: '+56 9 5555 6666', email: 'lucia@mail.com' },
+      { name: 'Pedro Pascal', depto: '601', phone: '12345', email: 'pedro.pascal.com' },
+      { name: 'María González', depto: '402', phone: '+56 9 1234 5678', email: 'maria.g@example.com' },
+      { name: 'Roberto Gómez', depto: '501', phone: '+56 9 1111 2222', email: 'roberto2@mail.com' },
     ];
     analyzeData(messyData);
   };

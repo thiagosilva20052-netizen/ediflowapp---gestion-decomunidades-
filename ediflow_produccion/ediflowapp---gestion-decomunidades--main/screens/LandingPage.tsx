@@ -1,71 +1,52 @@
 import React, { useState, useEffect } from 'react';
 import { Logo } from '../components/Logo';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { motion, AnimatePresence, useScroll, useTransform } from 'motion/react';
 
 interface Props {
   onLoginClick: () => void;
   onNavigate?: (screen: any) => void;
 }
 
-const FadeIn = ({ children, delay, duration = 1000, className = '' }: any) => {
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setVisible(true), delay);
-    return () => clearTimeout(t);
-  }, [delay]);
-
-  return (
-    <div
-      className={`transition-opacity ${className}`}
-      style={{
-        opacity: visible ? 1 : 0,
-        transitionDuration: `${duration}ms`
-      }}
-    >
-      {children}
-    </div>
-  );
-};
+const FadeIn = ({ children, delay = 0, duration = 0.8, className = '' }: any) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true }}
+    transition={{ duration, delay: delay / 1000, ease: [0.21, 0.47, 0.32, 0.98] }}
+    className={className}
+  >
+    {children}
+  </motion.div>
+);
 
 const AnimatedHeading = ({ text }: { text: string }) => {
-  const [started, setStarted] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setStarted(true), 200);
-    return () => clearTimeout(t);
-  }, []);
-
-  const lines = text.split('\n');
-  const charDelay = 30;
-
+  const words = text.split(' ');
+  
   return (
-    <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-normal mb-4" style={{ letterSpacing: '-0.04em' }}>
-      {lines.map((line, lineIndex) => {
-        const lineLength = line.length;
-        return (
-          <div key={lineIndex} className="block whitespace-nowrap">
-            {line.split('').map((char, charIndex) => {
-              const delayMs = (lineIndex * lineLength * charDelay) + (charIndex * charDelay);
-              return (
-                <span
-                  key={charIndex}
-                  className="inline-block transition-all ease-out"
-                  style={{
-                    opacity: started ? 1 : 0,
-                    transform: started ? 'translateX(0)' : 'translateX(-18px)',
-                    transitionDuration: '500ms',
-                    transitionDelay: `${delayMs}ms`
-                  }}
-                >
-                  {char === ' ' ? '\u00A0' : char}
-                </span>
-              );
-            })}
-          </div>
-        );
-      })}
+    <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-normal mb-4 leading-[1.05]" style={{ letterSpacing: '-0.04em' }}>
+      {words.map((word, i) => (
+        <motion.span
+          key={i}
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{
+            duration: 0.5,
+            delay: i * 0.1,
+            ease: "easeOut"
+          }}
+          className="inline-block mr-[0.2em]"
+        >
+          {word === 'segundos' ? (
+            <span className="font-light text-ediflow-primary">{word}</span>
+          ) : (
+            word
+          )}
+        </motion.span>
+      ))}
     </h1>
   );
-}
+};
 
 const LandingPage: React.FC<Props> = ({ onLoginClick, onNavigate }) => {
   const [scrollOpacity, setScrollOpacity] = useState(0);
@@ -170,7 +151,7 @@ const LandingPage: React.FC<Props> = ({ onLoginClick, onNavigate }) => {
                 </FadeIn>
 
                 <FadeIn delay={600} duration={1000} className="w-full">
-                    <div className="flex flex-col sm:flex-row items-center gap-4 mb-10 text-gray-900 dark:text-white">
+                    <div className="flex flex-col sm:flex-row items-center gap-4 mb-6 text-gray-900 dark:text-white">
                     <button 
                       onClick={() => onNavigate && onNavigate('Register')}
                       className="group bg-gray-900 dark:bg-white dark:text-gray-900 text-white px-8 py-4 rounded-xl font-bold tracking-tight hover:bg-ediflow-primary dark:hover:bg-ediflow-primary dark:hover:text-white active:scale-95 transition-all shadow-xl w-full sm:w-auto flex justify-center items-center gap-2"
@@ -185,6 +166,19 @@ const LandingPage: React.FC<Props> = ({ onLoginClick, onNavigate }) => {
                       <span className="material-symbols-outlined text-[20px] text-gray-400 dark:text-gray-500 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">play_circle</span>
                       <span>Ver IA en acción</span>
                     </button>
+                  </div>
+
+                  <div className="flex items-center gap-2 mb-10 ml-1">
+                    <div className="flex -space-x-2">
+                      {[1,2,3].map(i => (
+                        <div key={i} className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-800 border-2 border-white dark:border-[#0A0A0A] flex items-center justify-center">
+                          <span className="material-symbols-outlined text-[10px]">person</span>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">
+                      <span className="text-gray-900 dark:text-white font-bold">Registro en 60 segundos</span> — Sin tarjetas de crédito.
+                    </p>
                   </div>
                   
                   {/* Social Proof */}
@@ -596,24 +590,15 @@ const LandingPage: React.FC<Props> = ({ onLoginClick, onNavigate }) => {
               Las multas de la Ley 21.442 no perdonan. Evalúa a tu equipo gratis con nuestro <strong className="text-white font-bold hover:text-ediflow-primary transition-colors cursor-default">Simulador OS10 oficial</strong> (basado en 50 preguntas reales de Carabineros de Chile).
             </p>
             
-            <form className="w-full max-w-md flex flex-col gap-4" onSubmit={(e) => {
-              e.preventDefault();
-              alert('Lead capturado. Iniciando simulación OS10 y retargeting pixel tag...');
-            }}>
-              <input 
-                type="email" 
-                placeholder="Tu correo corporativo" 
-                className="w-full bg-white/5 border border-white/10 text-white px-6 h-14 rounded-xl outline-none font-light placeholder:text-gray-600 focus:border-ediflow-primary/50 focus:ring-1 focus:ring-ediflow-primary/50 transition-all"
-                required
-              />
+            <div className="w-full max-w-md flex flex-col gap-4">
               <button 
-                type="submit"
+                onClick={() => onNavigate && onNavigate('Register')}
                 className="w-full h-14 bg-white hover:bg-ediflow-primary text-black font-bold tracking-tight rounded-xl transition-all shadow-xl flex items-center justify-center gap-3 group active:scale-[0.98]"
               >
-                Iniciar Evaluación Gratuita
+                Crear Cuenta para Evaluar
                 <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
               </button>
-            </form>
+            </div>
             
             <div className="mt-8 flex items-center gap-3">
               <span className="relative flex h-2.5 w-2.5">
