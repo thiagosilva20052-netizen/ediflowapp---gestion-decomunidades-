@@ -197,11 +197,21 @@ const App: React.FC = () => {
     setCurrentUser(enhancedUser);
     
     // Set the tenant context
-    const { data: tenantData } = await supabase
-      .from('tenants')
-      .select('*')
-      .eq('id', enhancedUser.tenantId)
-      .single();
+    let tenantData = null;
+    try {
+      const { data, error: tenantError } = await supabase
+        .from('tenants')
+        .select('*')
+        .eq('id', enhancedUser.tenantId)
+        .single();
+      
+      if (tenantError) {
+        console.error('Tenant error:', tenantError);
+      }
+      tenantData = data;
+    } catch (err) {
+      console.error('Unexpected error fetching tenant:', err);
+    }
     
     if (tenantData) {
       setCurrentTenant({

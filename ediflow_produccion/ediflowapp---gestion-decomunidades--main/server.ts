@@ -4,6 +4,7 @@ import cors from 'cors';
 import { MercadoPagoConfig, Preference } from 'mercadopago';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import webpush from 'web-push';
 import rateLimit from 'express-rate-limit';
 
@@ -613,6 +614,24 @@ async function startServer() {
       appType: 'spa',
     });
     app.use(vite.middlewares);
+
+    app.use(async (req, res, next) => {
+      // Solo manejar peticiones que no sean API y que acepten HTML
+      if (!req.url.startsWith('/api') && req.headers.accept?.includes('text/html')) {
+        const url = req.originalUrl;
+        try {
+          let template = fs.readFileSync(path.resolve(process.cwd(), 'index.html'), 'utf-8');
+          template = await vite.transformIndexHtml(url, template);
+          res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
+          return;
+        } catch (e) {
+          vite.ssrFixStacktrace(e as Error);
+          next(e);
+          return;
+        }
+      }
+      next();
+    });
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
