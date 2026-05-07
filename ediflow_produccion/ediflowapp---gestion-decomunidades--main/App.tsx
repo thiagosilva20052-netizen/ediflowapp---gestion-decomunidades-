@@ -295,7 +295,7 @@ const App: React.FC = () => {
     }
 
     const roleAccess: Record<UserRole, ScreenName[]> = {
-      admin: ['AdminDashboard', 'ManageExpenses', 'EgresosPage', 'ProrrateoPage', 'RecaudacionPage', 'ReportesFinancierosPage', 'RegisterPayment', 'BitacoraScreen', 'UserProfile', 'AuditLogs', 'BuildingSettings', 'StaffManagement', 'Billing', 'ResidentDirectory', 'FinanceCommunicationsPage'],
+      admin: ['AdminDashboard', 'ManageExpenses', 'EgresosPage', 'ProrrateoPage', 'RecaudacionPage', 'ReportesFinancierosPage', 'RegisterPayment', 'BitacoraScreen', 'UserProfile', 'AuditLogs', 'BuildingSettings', 'StaffManagement', 'Billing', 'ResidentDirectory', 'FinanceCommunicationsPage', 'Reservations'],
       concierge: ['ConciergeDashboard', 'PackageEntry', 'AccessControl', 'MessagesScreen', 'BitacoraScreen', 'UserProfile', 'ManualVisitorRegistration', 'RegisterPayment', 'ResidentDirectory', 'Reservations', 'Maintenance', 'Emergency', 'NovedadEntry', 'Billing'],
       resident: ['ResidentServices', 'CommunityWall', 'MessagesScreen', 'PaymentsScreen', 'UserProfile', 'QRCodeScreen', 'Reservations', 'Maintenance', 'Emergency']
     };
