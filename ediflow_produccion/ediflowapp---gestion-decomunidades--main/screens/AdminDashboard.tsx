@@ -224,7 +224,7 @@ export const AdminDashboard: React.FC<Props> = ({ navigate, onLogout }) => {
           <SidebarItem icon="account_balance_wallet" label="Finanzas" onClick={() => navigate('ManageExpenses')} expanded={isSidebarExpanded} />
           <SidebarItem icon="deck" label="Espacios Comunes" onClick={() => navigate('Reservations')} expanded={isSidebarExpanded} />
           <SidebarItem icon="groups" label="Equipo de Trabajo" onClick={() => navigate('StaffManagement')} expanded={isSidebarExpanded} />
-          <SidebarItem icon="campaign" label="Comunicaciones" onClick={() => navigate('CommunityWall')} expanded={isSidebarExpanded} />
+          <SidebarItem icon="campaign" label="Comunicaciones" onClick={() => navigate('FinanceCommunicationsPage')} expanded={isSidebarExpanded} />
           <SidebarItem icon="policy" label="Auditoría" onClick={() => navigate('AuditLogs')} expanded={isSidebarExpanded} />
           
           <div className="pt-6 mt-4 border-t border-white/5">
