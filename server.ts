@@ -1,0 +1,523 @@
+import express from 'express';
+import { createServer as createViteServer } from 'vite';
+import cors from 'cors';
+import { MercadoPagoConfig, Preference } from 'mercadopago';
+import dotenv from 'dotenv';
+import path from 'path';
+import webpush from 'web-push';
+import rateLimit from 'express-rate-limit';
+
+import { Resend } from 'resend';
+
+dotenv.config();
+
+// Web Push Config
+if (process.env.VITE_VAPID_PUBLIC_KEY && process.env.VITE_VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(
+    'mailto:admin@ediflow.cl',
+    process.env.VITE_VAPID_PUBLIC_KEY,
+    process.env.VITE_VAPID_PRIVATE_KEY
+  );
+}
+
+// MercadoPago Config
+const client = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN || 'APP_USR-mock-token' });
+
+// Resend Config
+const resend = new Resend(process.env.RESEND_API_KEY || 're_mock_key');
+
+async function startServer() {
+  const app = express();
+  const PORT = 3000;
+
+  // Rate Limiting (Seguridad de Escalado)
+  const apiLimiter = rateLimit({
+    windowMs: 1 * 60 * 1000, // 1 minuto
+    max: 150, // Límite de 150 peticiones por minuto por IP para evitar vecinos ruidosos
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Límite de tasa excedido. Por favor, modere sus peticiones.' }
+  });
+
+  app.use(cors());
+  app.use(express.json());
+
+  // Aplicar rate limiter a todas las rutas API
+  app.use('/api/', apiLimiter);
+
+  // API Routes
+  app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
+  // Admin User Creation (Conserjes / Residentes)
+  app.post('/api/admin/create-user', async (req, res) => {
+    try {
+      const { email, password, full_name, role, tenant_id } = req.body;
+      if (!email || !password || !tenant_id) {
+        return res.status(400).json({ error: 'Faltan datos requeridos (email, password, tenant_id)' });
+      }
+
+      const { supabaseServer } = await import('./src/lib/supabase-server.js');
+      const { data, error } = await (supabaseServer as any).auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: {
+          full_name,
+          role,
+          tenant_id
+        }
+      });
+
+      if (error) throw error;
+
+      res.json({ user: data.user });
+    } catch (err: any) {
+      console.error('Error creating user via admin API:', err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // MercadoPago - Crear Preferencia Suscripción Ediflow
+  app.post('/api/checkout/create-preference', async (req, res) => {
+    try {
+      const { tenantId } = req.body;
+      if (!tenantId) {
+        return res.status(400).json({ error: 'tenantId is required' });
+      }
+
+      // 1. Fetch exact units using Supabase Server
+      const { supabaseServer } = await import('./src/lib/supabase-server.js');
+      const { count, error: countError } = await (supabaseServer as any)
+        .from('units')
+        .select('*', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId);
+
+      if (countError) {
+        throw new Error(`Failed to count units: ${countError.message}`);
+      }
+
+      // 2. Dynamic pricing algorithm: min 40 units
+      const totalUnits = Math.max(count || 0, 40);
+      const calculatedPrice = totalUnits * 2000;
+      
+      const preference = new Preference(client);
+      const result = await preference.create({
+        body: {
+          items: [
+             {
+               id: 'ediflow-pro-monthly',
+               title: `Suscripción Mensual EdiFlow - ${totalUnits} Departamentos`,
+               quantity: 1,
+               unit_price: calculatedPrice,
+               currency_id: 'CLP',
+             }
+          ],
+          back_urls: {
+            success: `${process.env.VITE_BASE_URL || 'http://localhost:3000'}/`,
+            failure: `${process.env.VITE_BASE_URL || 'http://localhost:3000'}/`,
+            pending: `${process.env.VITE_BASE_URL || 'http://localhost:3000'}/`
+          },
+          auto_return: 'approved',
+          external_reference: tenantId, // Pass the tenantId to activate it on webhook
+        }
+      });
+      
+      res.json({ id: result.id, init_point: result.init_point, totalUnits, calculatedPrice });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Failed to create preference' });
+    }
+  });
+
+  // MercadoPago - Webhook (Suscripción)
+  app.post('/api/checkout/webhook', async (req, res) => {
+    // Return 200 OK immediately for serverless timeout optimization
+    res.status(200).send('OK');
+
+    try {
+      // Validar firma aquí en producción (X-Signature)
+      const data = req.body;
+            
+      // Update en Supabase
+      if (data.type === 'payment' && data.data && data.data.id) {
+        try {
+          const { supabaseServer } = await import('./src/lib/supabase-server.js');
+          
+          const tenantId = data.data.external_reference;
+
+          if (tenantId && tenantId !== 'guest') {
+             // Activate subscription
+             await (supabaseServer as any)
+               .from('tenants')
+               .update({ 
+                 subscription_status: 'active', 
+                 mercado_pago_id: String(data.data.id),
+                 last_payment_date: new Date().toISOString()
+               })
+               .eq('id', tenantId);
+          }
+
+        } catch (dbError) {
+          console.error('Error actualizando Supabase:', dbError);
+        }
+      }
+    } catch (error) {
+      console.error('Webhook error:', error);
+    }
+  });
+
+  // Resend - Batch Email notifications (send-billing)
+  app.post('/api/email/send-billing', async (req, res) => {
+    try {
+      const { units, tenantId, tenantName, tenantRut, billingMonth } = req.body;
+      
+      if (!units || !Array.isArray(units)) {
+        return res.status(400).json({ error: 'Missing units array' });
+      }
+
+      
+      // We dynamically import to avoid breaking normal flow if file not found locally
+      const { getBillingEmailHtml } = await import('./src/lib/emailTemplates.js');
+
+      // The payload structure for Resend Batch:
+      const emailsToSend = units.map((u: any) => ({
+        from: 'Ediflow Billing <billing@resend.dev>', // Update with verified domain
+        to: u.contact_email,
+        subject: `Gastos Comunes Emitidos - ${billingMonth}`,
+        html: getBillingEmailHtml(u.unitNumber, billingMonth, u.totalAmount, tenantName, tenantRut)
+      })).filter((emailConfig: any) => emailConfig.to); // Only those with email
+
+      if (emailsToSend.length > 0) {
+        // Chunk arrays to size of 50 to avoid Rate Limit / Payload Too Large errors
+        const CHUNK_SIZE = 50;
+        let successCount = 0;
+        let failedCount = 0;
+
+        for (let i = 0; i < emailsToSend.length; i += CHUNK_SIZE) {
+          const chunk = emailsToSend.slice(i, i + CHUNK_SIZE);
+          
+          let retries = 0;
+          let success = false;
+          
+          while (!success && retries < 3) {
+            try {
+              // const data = await resend.batch.send(chunk);
+                            
+              // We could also loop through 'data' checking for specific failures per-email 
+              // and update 'notification_logs' accordingly here if this wasn't simulated.
+              success = true;
+              successCount += chunk.length;
+            } catch (chunkError: any) {
+              if (chunkError?.statusCode === 429) {
+                retries++;
+                await new Promise(resolve => setTimeout(resolve, 2000));
+              } else {
+                failedCount += chunk.length;
+                console.error(`[Resend Batch] Non-retryable error for chunk:`, chunkError);
+                break; // Give up on this chunk
+              }
+            }
+          }
+        }
+      }
+
+      res.status(200).json({ success: true, attempted: emailsToSend.length });
+    } catch (error) {
+      console.error('Batch email error:', error);
+      res.status(500).json({ error: 'Failed to send batch emails' });
+    }
+  });
+
+  // Resend - Welcome Onboarding
+  app.post('/api/email/send-welcome', async (req, res) => {
+    try {
+      const { to, unitNumber, setPasswordUrl, tenantName, tenantRut } = req.body;
+      
+      if (!to || !unitNumber || !setPasswordUrl) {
+        return res.status(400).json({ error: 'Missing required parameters' });
+      }
+
+            
+      // We dynamically import to avoid breaking normal flow if file not found locally
+      const { getWelcomeEmailHtml } = await import('./src/lib/emailTemplates.js');
+      const html = getWelcomeEmailHtml(unitNumber, setPasswordUrl, tenantName, tenantRut);
+
+      const data = await resend.emails.send({
+        from: 'Ediflow Onboarding <onboarding@resend.dev>',
+        to,
+        subject: `Bienvenido a Ediflow - Configura tu acceso`,
+        html,
+      });
+
+      res.status(200).json(data);
+    } catch (error) {
+      console.error('Welcome email error:', error);
+      res.status(500).json({ error: 'Failed to send welcome email' });
+    }
+  });
+
+  // Resend - Webhook (Bounces, Complaints, Deliveries)
+  app.post('/api/webhooks/resend', async (req, res) => {
+    // Return 200 OK immediately to avoid timeouts
+    res.status(200).send('OK');
+
+    try {
+      const payload = req.body;
+      
+      if (payload.type === 'email.bounced' || payload.type === 'email.delivered' || payload.type === 'email.complained') {
+        const emailId = payload.data?.email_id;
+        const status = payload.type === 'email.bounced' ? 'bounced' : payload.type === 'email.delivered' ? 'delivered' : 'complained';
+        const reason = payload.data?.reason || (status === 'delivered' ? 'Entregado' : 'Rechazado');
+
+        // We use the Supabase admin client to update the logging record using the metadata we passed
+        // For example, if we stored the emailId or if we match by email target:
+        const toEmail = payload.data?.to?.[0]; // Usually returned in the payload
+
+        if (toEmail) {
+          const { supabaseServer } = await import('./src/lib/supabase-server.js');
+          
+          await (supabaseServer as any)
+            .from('notification_logs')
+            .update({ status: status, details: `Resend: ${reason}` })
+            .ilike('details', `%${toEmail}%`) // Very simple matching by email text stored in details
+            .eq('status', 'enviando...');
+        }
+      }
+    } catch (error) {
+      console.error('Resend Webhook error:', error);
+    }
+  });
+
+  // Web Push and Email - Notify Resident of Parcel
+  app.post('/api/notify/parcel', async (req, res) => {
+    try {
+      const { unitId, tenantId, title, body, packageType, unitNumber, tenantName, receivedAt } = req.body;
+            
+      const { supabaseServer } = await import('./src/lib/supabase-server.js');
+      const { data: unitData } = await (supabaseServer as any)
+        .from('units')
+        .select('contact_email')
+        .eq('id', unitId)
+        .single();
+        
+      if (unitData && unitData.contact_email) {
+         const html = `
+           <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+             <h2 style="color: #00AEEF;">📦 Tienes un nuevo paquete en conserjería</h2>
+             <p>Hola,</p>
+             <p>Ha llegado una encomienda nueva a la conserjería de tu edificio <strong>${tenantName || 'tu comunidad'}</strong>.</p>
+             <div style="background-color: #f4f4f5; padding: 16px; border-radius: 8px; margin: 20px 0;">
+                <p style="margin: 0 0 8px 0;"><strong>Departamento:</strong> ${unitNumber}</p>
+                <p style="margin: 0 0 8px 0;"><strong>Tipo de paquete:</strong> ${packageType}</p>
+                <p style="margin: 0;"><strong>Hora de Recepción:</strong> ${receivedAt}</p>
+             </div>
+             <p>Por favor, recuerda pasar a retirarlo cuando puedas para no saturar la bodega.</p>
+             <p>Saludos,<br/>El conserje de turno via Seguify</p>
+           </div>
+         `;
+         
+         const { data: emailData, error: emailError } = await resend.emails.send({
+           from: 'Conserjería Seguify <conserjeria@resend.dev>',
+           to: unitData.contact_email,
+           subject: `¡Nuevo paquete recibido! (${packageType})`,
+           html,
+         });
+         
+         if (emailError) {
+           console.error('[Parcel Email Failed]', emailError);
+           await (supabaseServer as any).from('audit_logs').insert({
+             tenant_id: tenantId,
+             action: 'Fallo de Notificación Email (Encomienda)',
+             details: `Error al enviar notificación de paquete a Unidad ${unitNumber} (${unitData.contact_email}): ${JSON.stringify(emailError)}`,
+             module: 'packages',
+             severity: 'warning'
+           });
+         } else {
+                    }
+      }
+      
+      // Simulated Push
+      const payload = JSON.stringify({
+        title,
+        body,
+        icon: '/apple-touch-icon.png',
+        badge: '/favicon.ico',
+      });
+      // webpush.sendNotification(...) logic goes here
+      
+      res.status(200).json({ success: true, message: 'Notification sent.' });
+
+    } catch (error) {
+       console.error('Notify Parcel error:', error);
+       
+       try {
+         const { supabaseServer } = await import('./src/lib/supabase-server.js');
+         if (req.body.tenantId && req.body.unitNumber) {
+           await (supabaseServer as any).from('audit_logs').insert({
+             tenant_id: req.body.tenantId,
+             action: 'Fallo Crítico de Notificación (Encomienda)',
+             details: `Excepción general al notificar unidad ${req.body.unitNumber}: ${error instanceof Error ? error.message : String(error)}`,
+             module: 'packages',
+             severity: 'critical'
+           });
+         }
+       } catch (dbErr) {
+         console.error('Failed to log critical error to audit_logs:', dbErr);
+       }
+       
+       res.status(500).json({ error: 'Failed to send notification' });
+    }
+  });
+
+  // Web Push and Email - Notify Admin of SOS Emergency
+  app.post('/api/notify/sos', async (req, res) => {
+    try {
+      const { unitId, tenantId, unitNumber, tenantName, activatedAt } = req.body;
+            
+      res.status(200).json({ success: true, message: 'SOS Notification queued.' });
+
+      (async () => {
+         try {
+           const { supabaseServer } = await import('./src/lib/supabase-server.js');
+           const { data: adminProfiles } = await (supabaseServer as any)
+             .from('profiles')
+             .select('email')
+             .eq('tenant_id', tenantId)
+             .eq('role', 'admin');
+             
+           // Email all admins
+           if (adminProfiles && adminProfiles.length > 0) {
+              const html = `
+                <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+                  <h2 style="color: #EF4444; font-size: 24px;">🚨 ALERTA DE EMERGENCIA (SOS)</h2>
+                  <p>Hola,</p>
+                  <p>Se ha activado el botón de pánico en <strong>${tenantName || 'tu comunidad'}</strong>.</p>
+                  <div style="background-color: #FEF2F2; padding: 16px; border-radius: 8px; margin: 20px 0; border: 1px solid #FCA5A5;">
+                     <p style="margin: 0 0 8px 0; color: #991B1B;"><strong>Departamento:</strong> ${unitNumber}</p>
+                     <p style="margin: 0; color: #991B1B;"><strong>Hora de Activación:</strong> ${activatedAt}</p>
+                  </div>
+                  <p>Por favor, revisa el panel de administración o conserjería de inmediato.</p>
+                  <a href="${process.env.VITE_BASE_URL || 'https://seguify.app'}/dashboard" style="display: inline-block; padding: 12px 24px; background-color: #EF4444; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 10px;">Ver Panel de Control</a>
+                  <p>Saludos,<br/>Sistema de Seguridad Seguify</p>
+                </div>
+              `;
+              
+              const adminEmails = adminProfiles.map((p: any) => p.email).filter(Boolean);
+              
+              if (adminEmails.length > 0) {
+                 const { error: emailError } = await resend.emails.send({
+                   from: 'Alerta Seguify <conserjeria@resend.dev>',
+                   to: adminEmails,
+                   subject: `🚨 ALERTA SOS - Unidad ${unitNumber}`,
+                   html,
+                 });
+                 
+                 if (emailError) {
+                    console.error('[SOS Email Failed]', emailError);
+                 } else {
+                 }
+              }
+           }
+         } catch (bgError) {
+           console.error('[Background Notification Error - SOS]', bgError);
+         }
+      })();
+    } catch (error) {
+       console.error('Notify SOS error:', error);
+       res.status(500).json({ error: 'Failed to send notification' });
+    }
+  });
+
+  // Web Push and Email - Notify Resident of Visitor Access
+  app.post('/api/notify/visit', async (req, res) => {
+    try {
+      const { unitId, tenantId, visitorName, unitNumber, tenantName, accessedAt } = req.body;
+            
+      res.status(200).json({ success: true, message: 'Notification job queued.' });
+
+      (async () => {
+         try {
+           const { supabaseServer } = await import('./src/lib/supabase-server.js');
+           const { data: unitData } = await (supabaseServer as any)
+             .from('units')
+             .select('contact_email')
+             .eq('id', unitId)
+             .single();
+             
+           // Email
+           if (unitData && unitData.contact_email) {
+              const html = `
+                <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+                  <h2 style="color: #00AEEF;">🚪 Tu visita ha ingresado</h2>
+                  <p>Hola,</p>
+                  <p>Tenemos un ingreso registrado en <strong>${tenantName || 'tu comunidad'}</strong>.</p>
+                  <div style="background-color: #f4f4f5; padding: 16px; border-radius: 8px; margin: 20px 0;">
+                     <p style="margin: 0 0 8px 0;"><strong>Departamento:</strong> ${unitNumber}</p>
+                     <p style="margin: 0 0 8px 0;"><strong>Nombre de la Visita:</strong> ${visitorName}</p>
+                     <p style="margin: 0;"><strong>Hora de Ingreso:</strong> ${accessedAt}</p>
+                  </div>
+                  <p>Saludos,<br/>El conserje de turno via Seguify</p>
+                </div>
+              `;
+              
+              const { error: emailError } = await resend.emails.send({
+                from: 'Conserjería Seguify <conserjeria@resend.dev>',
+                to: unitData.contact_email,
+                subject: `¡Tu visita ha ingresado! (${visitorName})`,
+                html,
+              });
+              
+              if (emailError) {
+                 console.error('[Visit Email Failed]', emailError);
+                 await (supabaseServer as any).from('audit_logs').insert({
+                   tenant_id: tenantId,
+                   action: 'Fallo de Notificación Email (Ingreso Visita)',
+                   details: `Error al enviar notificación de visita a Unidad ${unitNumber}: ${JSON.stringify(emailError)}`,
+                   module: 'access_control',
+                   severity: 'warning'
+                 });
+              } else {
+                               }
+           }
+           
+           // Simulated Push
+           const payload = JSON.stringify({
+             title: '🚪 Tu visita ha ingresado',
+             body: `${visitorName} ha entrado al predio.`,
+             icon: '/apple-touch-icon.png',
+             badge: '/favicon.ico',
+           });
+           
+         } catch (bgError) {
+           console.error('[Background Notification Error - Visit]', bgError);
+         }
+      })();
+    } catch (error) {
+       console.error('Notify Visit error:', error);
+       res.status(500).json({ error: 'Failed to send notification' });
+    }
+  });
+
+  // Vite Integration
+  if (process.env.NODE_ENV !== 'production') {
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: 'spa',
+    });
+    app.use(vite.middlewares);
+  } else {
+    const distPath = path.join(process.cwd(), 'dist');
+    app.use(express.static(distPath));
+    // Express 5 format for catch-all
+    app.get('*all', (req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
+  }
+
+  app.listen(PORT, "0.0.0.0", () => {
+      });
+}
+
+startServer();
